@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Rifa Solidária para o Miguel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             background-color: #f4f4f4;
             color: #333;
         }
@@ -19,8 +18,7 @@
             text-align: center;
         }
         header h1 {
-            margin: 0;
-            font-size: 2em;
+            margin: 0; font-size: 2em;
         }
         nav a {
             color: white;
@@ -40,7 +38,8 @@
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .form-container input, .form-container select {
+        .form-container input,
+        .form-container select {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -61,12 +60,14 @@
             padding: 10px;
             border-radius: 5px;
             margin-top: 10px;
+            min-height: 30px;
         }
         footer {
             background-color: #333;
             color: white;
             text-align: center;
             padding: 10px;
+            margin-top: 40px;
         }
     </style>
 </head>
@@ -89,15 +90,30 @@
 
     <section class="form-container">
         <h3>Escolha a quantidade de números</h3>
-        <form id="raffle-form">
-            <input type="text" placeholder="Nome Completo" required>
-            <input type="tel" placeholder="Telefone (WhatsApp)" required>
+        <form id="raffle-form" onsubmit="event.preventDefault(); alert('Obrigado pela compra! Entraremos em contato.');">
+            <input type="text" placeholder="Nome Completo" required />
+            <input type="tel" placeholder="Telefone (WhatsApp)" required />
             <select id="quantity" required>
                 <option value="">Quantos números deseja?</option>
                 <option value="1">1 número (R$ 10)</option>
                 <option value="2">2 números (R$ 20)</option>
+                <option value="3">3 números (R$ 30)</option>
+                <option value="4">4 números (R$ 40)</option>
                 <option value="5">5 números (R$ 50)</option>
+                <option value="6">6 números (R$ 60)</option>
+                <option value="7">7 números (R$ 70)</option>
+                <option value="8">8 números (R$ 80)</option>
+                <option value="9">9 números (R$ 90)</option>
                 <option value="10">10 números (R$ 100)</option>
+                <option value="11">11 números (R$ 110)</option>
+                <option value="12">12 números (R$ 120)</option>
+                <option value="13">13 números (R$ 130)</option>
+                <option value="14">14 números (R$ 140)</option>
+                <option value="15">15 números (R$ 150)</option>
+                <option value="16">16 números (R$ 160)</option>
+                <option value="17">17 números (R$ 170)</option>
+                <option value="18">18 números (R$ 180)</option>
+                <option value="19">19 números (R$ 190)</option>
                 <option value="20">20 números (R$ 200)</option>
             </select>
             <div class="assigned-numbers" id="assigned-numbers">
@@ -115,7 +131,7 @@
 
     <script>
         const totalNumbers = 1700;
-        const soldNumbers = []; // Aqui você pode adicionar os números já vendidos se quiser bloquear eles
+        const soldNumbers = []; // Pode adicionar números já vendidos aqui, se quiser bloquear
 
         function generateRandomNumbers() {
             const quantity = parseInt(document.getElementById('quantity').value);
