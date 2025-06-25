@@ -56,7 +56,7 @@
             text-align: center;
             cursor: pointer;
             border-radius: 5px;
-            font-size: 0.9em;
+            font-size: 1.5em; /* Aumenta o tamanho para emojis */
         }
         .number.sold {
             background-color: #ccc;
@@ -90,27 +90,11 @@
             cursor: pointer;
             width: 100%;
         }
-        .info-section {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
         footer {
             background-color: #333;
             color: white;
             text-align: center;
             padding: 10px;
-        }
-        .contact-section {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .share-button {
             background-color: #25d366;
@@ -130,8 +114,8 @@
     <h1>Rifa Solidária para o Miguel</h1>
     <nav>
         <a href="#home">Início</a>
-        <a href="#como-funciona">Como Funciona</a>
-        <a href="#estrabismo">Sobre o Estrabismo</a>
+        <a href="como-funciona.html">Como Funciona</a>
+        <a href="sobre-estrabismo.html">Sobre o Estrabismo</a>
         <a href="#contato">Contato</a>
         <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
     </nav>
@@ -139,31 +123,15 @@
 
 <section class="hero" id="home">
     <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
-    <p>Compre números por R$ 10 e concorra a R$ 2.000. Todo o valor será usado para a cirurgia de estrabismo do Miguel!</p>
+    <p>Compre símbolos por R$ 10 e concorra a R$ 2.000. Todo o valor será usado para a cirurgia de estrabismo do Miguel!</p>
     <div class="progress-container">
         <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
     </div>
-    <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
-</section>
-
-<section id="como-funciona" class="info-section">
-    <h3>Como Funciona</h3>
-    <p>A rifa oferece 1700 números, cada um custando R$ 10, com um prêmio de R$ 2.000. O sorteio será realizado no dia 24 de dezembro ou assim que 75% dos números (1275) forem vendidos, o que ocorrer primeiro. Os números comprados e pagos ficam indisponíveis para outros participantes. Se um número for selecionado e não pago, ele volta a ficar disponível após 24 horas. Participe e ajude o Miguel!</p>
-</section>
-
-<section id="estrabismo" class="info-section">
-    <h3>Sobre o Estrabismo e a Importância da Cirurgia aos 4 Anos</h3>
-    <p>O estrabismo é uma condição em que os olhos não estão alinhados corretamente, podendo apontar em direções diferentes. No caso do Miguel, que tem 4 anos, essa cirurgia é crucial porque:</p>
-    <ul>
-        <li><strong>Desenvolvimento Visual**: Aos 4 anos, a visão do Miguel ainda está se desenvolvendo. Corrigir o estrabismo agora ajuda a evitar que ele perca profundidade ou desenvolva ambliopia (olho preguiçoso).</li>
-        <li><strong>Saúde Ocular**: A cirurgia pode prevenir problemas futuros, como dor de cabeça ou tensão ocular, além de melhorar a estética e a autoestima.</li>
-        <li><strong>Benefícios para a Vida**: Com os olhos alinhados, Miguel terá uma visão binocular melhor, essencial para atividades como esportes, leitura e aprendizado, impactando positivamente sua infância e futuro.</li>
-    </ul>
-    <p>Fazer a cirurgia agora é ideal porque o cérebro de uma criança pequena é mais adaptável, aumentando as chances de sucesso e recuperação completa.</p>
+    <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus símbolos agora</button>
 </section>
 
 <section id="numbers" class="number-grid">
-    <!-- Os números serão gerados via JavaScript -->
+    <!-- Os símbolos serão gerados via JavaScript -->
 </section>
 
 <section class="form-container">
@@ -171,21 +139,18 @@
     <form id="payment-form">
         <input type="text" id="buyer-name" placeholder="Nome Completo" required>
         <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
-        <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
+        <p>Símbolos selecionados: <span id="selected-numbers">Nenhum</span></p>
         <p>Total: R$ <span id="total-price">0</span></p>
         <button type="submit">Pagar com Pix/Cartão</button>
     </form>
 </section>
 
-<section id="contato" class="contact-section">
-    <h3>Contato</h3>
+<footer id="contato">
+    <p>Contato:</p>
     <p>Evelyn Mae do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
     <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
     <p>Para dúvidas, entre em contato via WhatsApp!</p>
-</section>
-
-<footer>
-    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Ajude%20o%20Miguel%20na%20rifa%20solidária!%20Compre%20números%20por%20R$10%20e%20concorra%20a%20R$2.000.%20Mais%20info:%20[insira%20link]%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Ajude%20o%20Miguel%20na%20rifa%20solidária!%20Compre%20símbolos%20por%20R$10%20e%20concorra%20a%20R$2.000.%20Mais%20info:%20[insira%20link]%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
     <p>© 2025 Rifa Solidária para o Miguel</p>
 </footer>
 
@@ -207,30 +172,29 @@
     const selectedNumbers = [];
     const pricePerNumber = 10;
 
-    // Função para gerar números localmente (temporário até a API funcionar)
-    function generateNumbers() {
-        // Simulação: todos os números estão disponíveis inicialmente
+    // Função para gerar símbolos localmente (temporário até a API funcionar)
+    function generateSymbols() {
         for (let i = 1; i <= 1700; i++) {
-            const num = String(i).padStart(4, '0');
-            const numDiv = document.createElement('div');
-            numDiv.classList.add('number');
-            numDiv.textContent = num;
+            const symbol = '📱'; // Emoji de WhatsApp como símbolo
+            const symbolDiv = document.createElement('div');
+            symbolDiv.classList.add('number');
+            symbolDiv.textContent = symbol;
 
-            numDiv.addEventListener('click', () => {
-                if (!numDiv.classList.contains('sold')) {
-                    numDiv.classList.toggle('selected');
-                    if (numDiv.classList.contains('selected')) {
-                        selectedNumbers.push(num);
+            symbolDiv.addEventListener('click', () => {
+                if (!symbolDiv.classList.contains('sold')) {
+                    symbolDiv.classList.toggle('selected');
+                    if (symbolDiv.classList.contains('selected')) {
+                        selectedNumbers.push(i); // Armazena o índice (número real) internamente
                     } else {
-                        const index = selectedNumbers.indexOf(num);
+                        const index = selectedNumbers.indexOf(i);
                         if (index > -1) selectedNumbers.splice(index, 1);
                     }
-                    document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                    document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.length + ' símbolos' : 'Nenhum';
                     document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                 }
             });
 
-            numberContainer.appendChild(numDiv);
+            numberContainer.appendChild(symbolDiv);
         }
     }
 
@@ -241,30 +205,30 @@
             const availableNumbers = await availableRes.json();
 
             for (let i = 1; i <= 1700; i++) {
-                const num = String(i).padStart(4, '0');
-                const numDiv = document.createElement('div');
-                numDiv.classList.add('number');
-                numDiv.textContent = num;
+                const symbol = '📱'; // Emoji de WhatsApp como símbolo
+                const symbolDiv = document.createElement('div');
+                symbolDiv.classList.add('number');
+                symbolDiv.textContent = symbol;
 
-                if (!availableNumbers.includes(num)) {
-                    numDiv.classList.add('sold');
+                if (!availableNumbers.includes(i)) { // Verifica se o número (índice) está disponível
+                    symbolDiv.classList.add('sold');
                 } else {
-                    numDiv.addEventListener('click', () => {
-                        if (!numDiv.classList.contains('sold')) {
-                            numDiv.classList.toggle('selected');
-                            if (numDiv.classList.contains('selected')) {
-                                selectedNumbers.push(num);
+                    symbolDiv.addEventListener('click', () => {
+                        if (!symbolDiv.classList.contains('sold')) {
+                            symbolDiv.classList.toggle('selected');
+                            if (symbolDiv.classList.contains('selected')) {
+                                selectedNumbers.push(i); // Armazena o índice (número real)
                             } else {
-                                const index = selectedNumbers.indexOf(num);
+                                const index = selectedNumbers.indexOf(i);
                                 if (index > -1) selectedNumbers.splice(index, 1);
                             }
-                            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.length + ' símbolos' : 'Nenhum';
                             document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                         }
                     });
                 }
 
-                numberContainer.appendChild(numDiv);
+                numberContainer.appendChild(symbolDiv);
             }
 
             const progressRes = await fetch('https://mp-api.onrender.com/progress');
@@ -273,8 +237,8 @@
             progressBar.style.width = `${progress}%`;
             progressBar.textContent = `${progress}% Arrecadado`;
         } catch (error) {
-            console.error('Erro ao carregar dados da API, usando números locais:', error);
-            generateNumbers(); // Fallback para gerar números localmente se a API falhar
+            console.error('Erro ao carregar dados da API, usando símbolos locais:', error);
+            generateSymbols(); // Fallback para gerar símbolos localmente se a API falhar
             document.getElementById('progress-bar').style.width = `0%`; // Progresso inicial 0% sem API
             document.getElementById('progress-bar').textContent = `0% Arrecadado`;
         }
@@ -291,7 +255,7 @@
         const quantity = selectedNumbers.length;
 
         if (quantity === 0) {
-            alert('Por favor, selecione pelo menos um número.');
+            alert('Por favor, selecione pelo menos um símbolo.');
             return;
         }
 
@@ -310,7 +274,7 @@
                     quantity,
                     buyerName,
                     buyerPhone,
-                    numbers: selectedNumbers
+                    numbers: selectedNumbers // Envia os índices (números reais) para a API
                 })
             });
 
@@ -322,8 +286,8 @@
                 alert(data.error || 'Erro ao criar o pagamento. Tente novamente.');
             }
         } catch (error) {
-            console.error(error);
-            alert('Erro ao conectar com o servidor. Tente novamente mais tarde.');
+            console.error('Erro ao conectar ao servidor:', error);
+            alert('Erro ao conectar ao servidor. Verifique sua conexão ou tente novamente mais tarde.');
         }
     });
 </script>
