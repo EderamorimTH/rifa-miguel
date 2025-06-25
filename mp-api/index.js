@@ -154,7 +154,7 @@ app.post('/create_preference', async (req, res) => {
         },
         back_urls: {
           success: "https://ederamorimth.github.io/rifa-miguel/sucesso.html",
-          failure: "https://ederamorimth.github.io/rifa-miguel/erro.html",
+          failure: "https://ederamorimth.github.io/rufa-miguel/erro.html",
           pending: "https://ederamorimth.github.io/rifa-miguel/pendente.html"
         },
         auto_return: "approved",
@@ -203,11 +203,17 @@ app.all('/webhook', async (req, res) => {
           console.log('Payment approved, processing webhook...', 'Payment data:', data);
           const preferenceId = data.preference_id || (data && data.id && await getPreferenceIdFromPayment(data.id));
           if (!preferenceId) {
-            console.log('Preference ID não encontrado, ignor skipping');
+            console.log('Preference ID não encontrado, ignorando');
             return res.status(200).send('OK');
           }
-          const preference = await new Preference(mp).get({ id: preferenceId });
-          console.log('Preference retrieved:', preference);
+          let preference;
+          try {
+            preference = await new Preference(mp).get({ id: preferenceId });
+            console.log('Preference retrieved:', preference);
+          } catch (error) {
+            console.error('Erro ao buscar preferência:', error.message);
+            return res.status(200).send('OK');
+          }
           let externalReference;
           try {
             externalReference = JSON.parse(preference.external_reference);
@@ -251,7 +257,8 @@ async function getPreferenceIdFromPayment(paymentId) {
   try {
     const payment = new Payment(mp);
     const paymentDetails = await payment.get({ id: paymentId });
-    return paymentDetails.preference_id;
+    console.log('Payment details for preference_id:', paymentDetails);
+    return paymentDetails.preference_id || null;
   } catch (error) {
     console.error('Erro ao buscar preference_id:', error.message);
     return null;
