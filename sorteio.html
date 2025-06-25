@@ -72,6 +72,19 @@
         .draw-button:hover {
             background-color: #e0a800;
         }
+        .view-phone-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        .view-phone-button:hover {
+            background-color: #0056b3;
+        }
         .winner {
             background-color: #e7f3ff;
             padding: 20px;
@@ -150,6 +163,7 @@
 
     <script>
         let purchasesData = [];
+        let currentWinner = null;
 
         // Função para mascarar o telefone
         function maskPhone(phone) {
@@ -252,6 +266,8 @@
                 return;
             }
 
+            currentWinner = winner;
+
             // Exibir o ganhador
             winnerMessage.innerHTML = `
                 <h3>Parabéns ao Ganhador!</h3>
@@ -259,9 +275,25 @@
                 <p><strong>Número Sorteado:</strong> ${winningNumber}</p>
                 <p><strong>Números Comprados:</strong> ${winner.numbers ? winner.numbers.join(', ') : 'N/A'}</p>
                 <p><strong>Telefone:</strong> ${maskPhone(winner.buyerPhone)}</p>
+                <button class="view-phone-button" onclick="viewWinnerPhone()">Ver Telefone do Ganhador</button>
             `;
             winnerMessage.style.display = 'block';
             console.log(`Sorteio realizado at ${new Date().toISOString()}: Número ${winningNumber}, Ganhador: ${winner.buyerName}`);
+        }
+
+        // Mostrar telefone completo com senha
+        function viewWinnerPhone() {
+            if (!currentWinner) {
+                alert('Nenhum ganhador selecionado.');
+                return;
+            }
+
+            const password = prompt('Digite a senha para ver o telefone do ganhador:');
+            if (password === 'VAIDACERTO') {
+                alert(`Telefone do ganhador (${currentWinner.buyerName}): ${currentWinner.buyerPhone}`);
+            } else {
+                alert('Senha incorreta!');
+            }
         }
 
         // Carregar compras ao abrir a página
