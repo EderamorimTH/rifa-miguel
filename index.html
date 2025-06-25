@@ -90,6 +90,10 @@
             cursor: pointer;
             width: 100%;
         }
+        .form-container button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
         footer {
             background-color: #333;
             color: white;
@@ -105,6 +109,11 @@
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin: 10px 0;
         }
     </style>
 </head>
@@ -136,12 +145,13 @@
 
 <section class="form-container">
     <h3>Finalize sua compra</h3>
+    <div id="error-message" class="error-message"></div>
     <form id="payment-form">
         <input type="text" id="buyer-name" placeholder="Nome Completo" required>
         <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
         <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
         <p>Total: R$ <span id="total-price">0</span></p>
-        <button type="submit">Pagar com Pix/Cartão</button>
+        <button type="submit" id="submit-button" disabled>Pagar com Pix/Cartão</button>
     </form>
 </section>
 
@@ -171,70 +181,73 @@
     const numberContainer = document.getElementById('numbers');
     const selectedNumbers = [];
     const pricePerNumber = 10;
+    const errorMessageDiv = document.getElementById('error-message');
+    const submitButton = document.getElementById('submit-button');
 
-    // Função para carregar números da API
+    // Função para carregar números da API com retry
     async function loadData() {
-        try {
-            const availableRes = await fetch('https://mp-api.onrender.com/available_numbers');
-            if (!availableRes.ok) throw new Error('Failed to fetch available numbers');
-            const availableNumbers = await availableRes.json();
+        const maxRetries = 3;
+        let retries = 0;
 
-            for (let i = 1; i <= 1700; i++) {
-                const num = String(i).padStart(4, '0');
-                const numDiv = document.createElement('div');
-                numDiv.classList.add('number');
-                numDiv.textContent = num;
+        while (retries < maxRetries) {
+            try {
+                console.log(`Tentativa ${retries + 1} de carregar números...`);
+                const availableRes = await fetch('https://mp-api.onrender.com/available_numbers', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!availableRes.ok) throw new Error(`HTTP error: ${availableRes.status}`);
+                const availableNumbers = await availableRes.json();
 
-                if (!availableNumbers.includes(num)) {
-                    numDiv.classList.add('sold');
-                } else {
-                    numDiv.addEventListener('click', () => {
-                        if (!numDiv.classList.contains('sold')) {
-                            numDiv.classList.toggle('selected');
-                            if (numDiv.classList.contains('selected')) {
-                                selectedNumbers.push(num);
-                            } else {
-                                const index = selectedNumbers.indexOf(num);
-                                if (index > -1) selectedNumbers.splice(index, 1);
+                for (let i = 1; i <= 1700; i++) {
+                    const num = String(i).padStart(4, '0');
+                    const numDiv = document.createElement('div');
+                    numDiv.classList.add('number');
+                    numDiv.textContent = num;
+
+                    if (!availableNumbers.includes(num)) {
+                        numDiv.classList.add('sold');
+                    } else {
+                        numDiv.addEventListener('click', () => {
+                            if (!numDiv.classList.contains('sold')) {
+                                numDiv.classList.toggle('selected');
+                                if (numDiv.classList.contains('selected')) {
+                                    selectedNumbers.push(num);
+                                } else {
+                                    const index = selectedNumbers.indexOf(num);
+                                    if (index > -1) selectedNumbers.splice(index, 1);
+                                }
+                                document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                                document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                             }
-                            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
-                            document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
-                        }
-                    });
+                        });
+                    }
+
+                    numberContainer.appendChild(numDiv);
                 }
 
-                numberContainer.appendChild(numDiv);
-            }
+                const progressRes = await fetch('https://mp-api.onrender.com/progress');
+                if (!progressRes.ok) throw new Error(`HTTP error: ${progressRes.status}`);
+                const { progress } = await progressRes.json();
+                const progressBar = document.getElementById('progress-bar');
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${progress}% Arrecadado`;
 
-            const progressRes = await fetch('https://mp-api.onrender.com/progress');
-            const { progress } = await progressRes.json();
-            const progressBar = document.getElementById('progress-bar');
-            progressBar.style.width = `${progress}%`;
-            progressBar.textContent = `${progress}% Arrecadado`;
-        } catch (error) {
-            console.error('Erro ao carregar dados da API:', error);
-            alert('Erro ao carregar números. Tente novamente mais tarde.');
-            // Fallback: Generate all numbers as available
-            for (let i = 1; i <= 1700; i++) {
-                const num = String(i).padStart(4, '0');
-                const numDiv = document.createElement('div');
-                numDiv.classList.add('number');
-                numDiv.textContent = num;
-                numDiv.addEventListener('click', () => {
-                    numDiv.classList.toggle('selected');
-                    if (numDiv.classList.contains('selected')) {
-                        selectedNumbers.push(num);
-                    } else {
-                        const index = selectedNumbers.indexOf(num);
-                        if (index > -1) selectedNumbers.splice(index, 1);
-                    }
-                    document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
-                    document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
-                });
-                numberContainer.appendChild(numDiv);
+                console.log('Números carregados com sucesso!');
+                submitButton.disabled = false; // Habilita o botão de pagamento
+                errorMessageDiv.textContent = '';
+                return;
+            } catch (error) {
+                console.error(`Erro na tentativa ${retries + 1}:`, error.message);
+                retries++;
+                if (retries === maxRetries) {
+                    alert('Não foi possível carregar os números disponíveis. Por favor, tente novamente mais tarde.');
+                    errorMessageDiv.textContent = 'Erro ao carregar números. Tente recarregar a página.';
+                    submitButton.disabled = true; // Mantém o botão desabilitado
+                    return;
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Espera 2 segundos
             }
-            document.getElementById('progress-bar').style.width = `0%`;
-            document.getElementById('progress-bar').textContent = `0% Arrecadado`;
         }
     }
 
@@ -248,7 +261,7 @@
         const buyerPhone = document.getElementById('buyer-phone').value;
         const quantity = selectedNumbers.length;
 
-        console.log('Selected numbers:', selectedNumbers); // Debug log
+        console.log('Selected numbers:', selectedNumbers);
         console.log('Sending to API:', { quantity, buyerName, buyerPhone, numbers: selectedNumbers });
 
         if (quantity === 0) {
