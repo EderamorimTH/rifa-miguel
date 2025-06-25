@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'; // Adicionado Payment
 import { MongoClient } from 'mongodb';
 
 const app = express();
@@ -182,24 +182,43 @@ app.all('/webhook', async (req, res) => {
     if (req.method === 'POST') {
       const { type, data } = req.body;
       console.log('Processing POST webhook...', 'Type:', type, 'Data:', data);
-      if (type === 'payment' && data.status === 'approved') {
-        console.log('Payment approved, processing webhook...', 'Payment data:', data);
-        const preference = await new Preference(mp).get({ id: data.preference_id });
-        console.log('Preference retrieved:', preference);
-        const { buyerName, buyerPhone, numbers } = JSON.parse(preference.external_reference);
-        console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
+      if (type === 'payment') {
+        let paymentStatus;
+        if (data && data.id) {
+          // Buscar o status do pagamento via API do Mercado Pago
+          const payment = new Payment(mp);
+          const paymentDetails = await payment.get({ id: data.id });
+          paymentStatus = paymentDetails.status;
+          console.log('Payment status retrieved from API:', paymentStatus);
+        } else if (data && data.status) {
+          paymentStatus = data.status;
+          console.log('Payment status from request body:', paymentStatus);
+        } else {
+          console.log('No payment ID or status found, skipping processing');
+          return res.status(200).send('OK');
+        }
 
-        // Salvar no MongoDB
-        const result = await db.collection('purchases').insertOne({
-          buyerName,
-          buyerPhone,
-          numbers,
-          purchaseDate: new Date(),
-          paymentId: data.id
-        });
-        console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers });
+        if (paymentStatus === 'approved') {
+          console.log('Payment approved, processing webhook...', 'Payment data:', data);
+          const preference = await new Preference(mp).get({ id: data.preference_id || (data && data.id && await getPreferenceIdFromPayment(data.id)) });
+          console.log('Preference retrieved:', preference);
+          const { buyerName, buyerPhone, numbers } = JSON.parse(preference.external_reference);
+          console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
+
+          // Salvar no MongoDB
+          const result = await db.collection('purchases').insertOne({
+            buyerName,
+            buyerPhone,
+            numbers,
+            purchaseDate: new Date(),
+            paymentId: data.id
+          });
+          console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers });
+        } else {
+          console.log('Webhook ignored, status:', paymentStatus);
+        }
       } else {
-        console.log('Webhook ignored, type:', type, 'status:', data?.status);
+        console.log('Webhook ignored, type:', type);
       }
       return res.status(200).send('OK');
     }
@@ -209,6 +228,18 @@ app.all('/webhook', async (req, res) => {
     res.status(500).send('Erro no webhook');
   }
 });
+
+// Função auxiliar para buscar preference_id a partir do payment_id
+async function getPreferenceIdFromPayment(paymentId) {
+  try {
+    const payment = new Payment(mp);
+    const paymentDetails = await payment.get({ id: paymentId });
+    return paymentDetails.preference_id;
+  } catch (error) {
+    console.error('Erro ao buscar preference_id:', error.message);
+    return null;
+  }
+}
 
 app.get('/', (req, res) => {
   res.send('API da Rifa está online!');
