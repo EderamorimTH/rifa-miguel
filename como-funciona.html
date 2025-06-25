@@ -30,15 +30,45 @@
             background-color: white;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            line-height: 1.6;
+        }
+        h2, h3 {
+            color: #007bff;
+        }
+        .highlight {
+            background-color: #e7f3ff;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 20px;
         }
         footer {
             background-color: #333;
             color: white;
             text-align: center;
             padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
+        }
+        .share-button {
+            background-color: #25d366;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .share-button:hover {
+            background-color: #1ebe5a;
         }
     </style>
 </head>
@@ -46,25 +76,38 @@
     <header>
         <h1>Rifa Solidária para o Miguel</h1>
         <nav>
-            <a href="index.html">Início</a>
-            <a href="como-funciona.html">Como Funciona</a>
-            <a href="sobre-estrabismo.html">Sobre o Estrabismo</a>
-            <a href="index.html#contato">Contato</a>
+            <a href="/rifa-miguel/index.html">Início</a>
+            <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
+            <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
+            <a href="#contato">Contato</a>
             <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
         </nav>
     </header>
 
     <section class="content">
-        <h3>Como Funciona</h3>
-        <p>A rifa oferece 1700 numeros, cada um custando R$ 10, com um prêmio de R$ 2.000. O sorteio será realizado no dia 24 de dezembro ou assim que 100% dos numeros (1700) forem vendidos, o que ocorrer primeiro. Se em 24 de dezembro não forem atingidos 100%, o sorteio só ocorrerá se 70% dos numeros (1190) forem vendidos; caso contrário, será prorrogado. Os numeros comprados e pagos ficam indisponíveis para outros participantes. Se um numero for selecionado e não pago, ele volta a ficar disponível após 24 horas. Participe e ajude o Miguel!</p>
+        
+        <h3>Detalhes Importantes</h3>
+        <ul>
+            <li><strong>Preço</strong>: Cada número custa R$ 10.</li>
+            <li><strong>Prêmio</strong>: O ganhador levará R$ 2.000.</li>
+            <li><strong>Data do Sorteio</strong>: 24 de dezembro de 2025 ou quando 100% dos números forem vendidos.</li>
+            <li><strong>Condição Mínima</strong>: Se 100% não for atingido até 24 de dezembro, o sorteio ocorrerá com pelo menos 70% (1190 números) vendidos. Caso contrário, será adiado.</li>
+            <li><strong>Reserva de Números</strong>: Números pagos são reservados permanentemente. Números selecionados mas não pagos voltam ao sistema após 24 horas.</li>
+        </ul>
+
+        <div class="highlight">
+            <p><strong>Por que participar?</strong> Além de concorrer a R$ 2.000, você estará ajudando o Miguel, uma criança de 4 anos, a realizar uma cirurgia de estrabismo essencial para sua visão e desenvolvimento!</p>
+        </div>
+
+        <a href="/rifa-miguel/index.html" class="cta-button">Participe Agora!</a>
     </section>
 
-    <footer>
+    <footer id="contato">
         <p>Contato:</p>
-        <p>Evelyn Mae do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
+        <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
         <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
         <p>Para dúvidas, entre em contato via WhatsApp!</p>
-        <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Ajude%20o%20Miguel%20na%20rifa%20solidária!%20Compre%20símbolos%20por%20R$10%20e%20concorra%20a%20R$2.000.%20Mais%20info:%20[insira%20link]%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+        <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
         <p>© 2025 Rifa Solidária para o Miguel</p>
     </footer>
 
@@ -72,7 +115,7 @@
         function checkPassword() {
             const password = prompt("Digite a senha para acessar a página de sorteio:");
             if (password === "VAIDACERTO") {
-                window.location.href = "sorteio.html";
+                window.location.href = "/rifa-miguel/sorteio.html";
             } else {
                 alert("Senha incorreta!");
             }
