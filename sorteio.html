@@ -55,6 +55,30 @@
             color: #555;
             margin: 20px 0;
         }
+        .draw-section {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .draw-button {
+            background-color: #ffc107;
+            color: black;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .draw-button:hover {
+            background-color: #e0a800;
+        }
+        .winner {
+            background-color: #e7f3ff;
+            padding: 20px;
+            border-left: 4px solid #007bff;
+            margin: 20px 0;
+            text-align: center;
+        }
         footer {
             background-color: #333;
             color: white;
@@ -64,11 +88,16 @@
         .share-button {
             background-color: #25d366;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             border-radius: 5px;
             text-decoration: none;
             display: inline-block;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .share-button:hover {
+            background-color: #1ebe5a;
         }
     </style>
 </head>
@@ -101,6 +130,13 @@
             </thead>
             <tbody id="purchases-body"></tbody>
         </table>
+
+        <div class="draw-section">
+            <h3>Realizar Sorteio</h3>
+            <p>Clique no botão abaixo para sortear um número entre os números comprados.</p>
+            <button class="draw-button" onclick="performDraw()">Sortear Agora</button>
+            <div id="winner-message" class="winner" style="display: none;"></div>
+        </div>
     </section>
 
     <footer id="contato">
@@ -108,11 +144,22 @@
         <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
         <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
         <p>Para dúvidas, entre em contato via WhatsApp!</p>
-        <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Ajude%20o%20Miguel%20na%20rifa%20solidária!%20Compre%20números%20por%20R$10%20e%20concorra%20a%20R$2.000.%20Mais%20info:%20https://ederamorimth.github.io/rifa-miguel/%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+        <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
         <p>© 2025 Rifa Solidária para o Miguel</p>
     </footer>
 
     <script>
+        let purchasesData = [];
+
+        // Função para mascarar o telefone
+        function maskPhone(phone) {
+            if (!phone) return 'N/A';
+            const lastFour = phone.slice(-4);
+            const masked = phone.slice(0, -4).replace(/\d/g, '*');
+            return masked + lastFour;
+        }
+
+        // Carregar compras
         async function loadPurchases() {
             const errorMessage = document.getElementById('error-message');
             const noDataMessage = document.getElementById('no-data-message');
@@ -136,10 +183,10 @@
                         throw new Error(`HTTP error: ${response.status}`);
                     }
 
-                    const purchases = await response.json();
-                    console.log('Compras carregadas com sucesso:', purchases);
+                    purchasesData = await response.json();
+                    console.log('Compras carregadas com sucesso:', purchasesData);
 
-                    if (purchases.length === 0) {
+                    if (purchasesData.length === 0) {
                         noDataMessage.style.display = 'block';
                         errorMessage.style.display = 'none';
                         purchasesBody.innerHTML = '';
@@ -147,11 +194,11 @@
                     }
 
                     purchasesBody.innerHTML = '';
-                    purchases.forEach(purchase => {
+                    purchasesData.forEach(purchase => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td>${purchase.buyerName || 'N/A'}</td>
-                            <td>${purchase.buyerPhone || 'N/A'}</td>
+                            <td>${maskPhone(purchase.buyerPhone)}</td>
                             <td>${purchase.numbers ? purchase.numbers.join(', ') : 'N/A'}</td>
                             <td>${purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleString('pt-BR') : 'N/A'}</td>
                             <td>${purchase.paymentId || 'N/A'}</td>
@@ -174,6 +221,47 @@
                     }
                 }
             }
+        }
+
+        // Realizar sorteio
+        function performDraw() {
+            const winnerMessage = document.getElementById('winner-message');
+            if (purchasesData.length === 0) {
+                winnerMessage.textContent = 'Nenhuma compra registrada para realizar o sorteio.';
+                winnerMessage.style.display = 'block';
+                return;
+            }
+
+            // Coletar todos os números comprados
+            const allNumbers = purchasesData.flatMap(purchase => purchase.numbers || []);
+            if (allNumbers.length === 0) {
+                winnerMessage.textContent = 'Nenhum número comprado encontrado para o sorteio.';
+                winnerMessage.style.display = 'block';
+                return;
+            }
+
+            // Sortear um número aleatoriamente
+            const randomIndex = Math.floor(Math.random() * allNumbers.length);
+            const winningNumber = allNumbers[randomIndex];
+
+            // Encontrar o comprador do número sorteado
+            const winner = purchasesData.find(purchase => purchase.numbers && purchase.numbers.includes(winningNumber));
+            if (!winner) {
+                winnerMessage.textContent = 'Erro: Comprador não encontrado para o número sorteado.';
+                winnerMessage.style.display = 'block';
+                return;
+            }
+
+            // Exibir o ganhador
+            winnerMessage.innerHTML = `
+                <h3>Parabéns ao Ganhador!</h3>
+                <p><strong>Nome:</strong> ${winner.buyerName || 'N/A'}</p>
+                <p><strong>Número Sorteado:</strong> ${winningNumber}</p>
+                <p><strong>Números Comprados:</strong> ${winner.numbers ? winner.numbers.join(', ') : 'N/A'}</p>
+                <p><strong>Telefone:</strong> ${maskPhone(winner.buyerPhone)}</p>
+            `;
+            winnerMessage.style.display = 'block';
+            console.log(`Sorteio realizado at ${new Date().toISOString()}: Número ${winningNumber}, Ganhador: ${winner.buyerName}`);
         }
 
         // Carregar compras ao abrir a página
