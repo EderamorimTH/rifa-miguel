@@ -169,7 +169,7 @@
     }
 
     const numberContainer = document.getElementById('numbers');
-    const selectedNumbers = [];
+    let selectedNumbers = []; // Reiniciada como array vazio
     const pricePerNumber = 10;
 
     // Função para carregar números da API com retry
@@ -206,6 +206,7 @@
                                     const index = selectedNumbers.indexOf(num);
                                     if (index > -1) selectedNumbers.splice(index, 1);
                                 }
+                                console.log('Selected numbers updated:', selectedNumbers); // Log de depuração
                                 document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
                                 document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                             }
@@ -243,6 +244,7 @@
                                 const index = selectedNumbers.indexOf(num);
                                 if (index > -1) selectedNumbers.splice(index, 1);
                             }
+                            console.log('Selected numbers updated (fallback):', selectedNumbers); // Log de depuração
                             document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
                             document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                         });
@@ -267,8 +269,10 @@
         const buyerPhone = document.getElementById('buyer-phone').value;
         const quantity = selectedNumbers.length;
 
-        console.log('Selected numbers:', selectedNumbers);
-        console.log('Sending to API:', { quantity, buyerName, buyerPhone, numbers: selectedNumbers });
+        console.log('Selected numbers before submit:', selectedNumbers); // Log de depuração
+        if (selectedNumbers.length === 0) {
+            console.warn('No numbers selected before submit');
+        }
 
         if (quantity === 0) {
             alert('Por favor, selecione pelo menos um número.');
@@ -289,7 +293,7 @@
                     quantity,
                     buyerName,
                     buyerPhone,
-                    numbers: selectedNumbers
+                    numbers: selectedNumbers // Certifica que numbers é enviado
                 })
             });
 
