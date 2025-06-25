@@ -56,7 +56,7 @@
             text-align: center;
             cursor: pointer;
             border-radius: 5px;
-            font-size: 1.5em; /* Aumenta o tamanho para emojis */
+            font-size: 1.5em;
         }
         .number.sold {
             background-color: #ccc;
@@ -198,47 +198,16 @@
         }
     }
 
-    // Função para carregar dados da API (opcional, se a API estiver pronta)
+    // Função para carregar dados da API (opcional, simulando localmente por agora)
     async function loadData() {
         try {
-            const availableRes = await fetch('https://mp-api.onrender.com/available_numbers');
-            const availableNumbers = await availableRes.json();
-
-            for (let i = 1; i <= 1700; i++) {
-                const symbol = '📱'; // Emoji de WhatsApp como símbolo
-                const symbolDiv = document.createElement('div');
-                symbolDiv.classList.add('number');
-                symbolDiv.textContent = symbol;
-
-                if (!availableNumbers.includes(i)) { // Verifica se o número (índice) está disponível
-                    symbolDiv.classList.add('sold');
-                } else {
-                    symbolDiv.addEventListener('click', () => {
-                        if (!symbolDiv.classList.contains('sold')) {
-                            symbolDiv.classList.toggle('selected');
-                            if (symbolDiv.classList.contains('selected')) {
-                                selectedNumbers.push(i); // Armazena o índice (número real)
-                            } else {
-                                const index = selectedNumbers.indexOf(i);
-                                if (index > -1) selectedNumbers.splice(index, 1);
-                            }
-                            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.length + ' símbolos' : 'Nenhum';
-                            document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
-                        }
-                    });
-                }
-
-                numberContainer.appendChild(symbolDiv);
-            }
-
-            const progressRes = await fetch('https://mp-api.onrender.com/progress');
-            const { progress } = await progressRes.json();
-            const progressBar = document.getElementById('progress-bar');
-            progressBar.style.width = `${progress}%`;
-            progressBar.textContent = `${progress}% Arrecadado`;
+            // Simulação local enquanto a API não está online
+            generateSymbols();
+            document.getElementById('progress-bar').style.width = `0%`; // Progresso inicial 0% sem API
+            document.getElementById('progress-bar').textContent = `0% Arrecadado`;
         } catch (error) {
-            console.error('Erro ao carregar dados da API, usando símbolos locais:', error);
-            generateSymbols(); // Fallback para gerar símbolos localmente se a API falhar
+            console.error('Erro ao carregar dados, usando símbolos locais:', error);
+            generateSymbols(); // Fallback para gerar símbolos localmente
             document.getElementById('progress-bar').style.width = `0%`; // Progresso inicial 0% sem API
             document.getElementById('progress-bar').textContent = `0% Arrecadado`;
         }
@@ -246,7 +215,7 @@
 
     loadData();
 
-    // Enviar dados para a API
+    // Enviar dados para a API (simulação temporária)
     document.getElementById('payment-form').addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -265,29 +234,12 @@
         }
 
         try {
-            const response = await fetch('https://mp-api.onrender.com/create_preference', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    quantity,
-                    buyerName,
-                    buyerPhone,
-                    numbers: selectedNumbers // Envia os índices (números reais) para a API
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.init_point) {
-                window.location.href = data.init_point;
-            } else {
-                alert(data.error || 'Erro ao criar o pagamento. Tente novamente.');
-            }
+            // Simulação: como a API não está online, mostra um alerta temporário
+            alert('Pagamento simulado. A API não está online. Entre em contato para processar manualmente.');
+            console.log('Dados enviados (simulação):', { quantity, buyerName, buyerPhone, numbers: selectedNumbers });
         } catch (error) {
             console.error('Erro ao conectar ao servidor:', error);
-            alert('Erro ao conectar ao servidor. Verifique sua conexão ou tente novamente mais tarde.');
+            alert('Erro ao conectar ao servidor. A API não está online. Tente novamente mais tarde ou contate o suporte.');
         }
     });
 </script>
