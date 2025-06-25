@@ -90,10 +90,6 @@
             cursor: pointer;
             width: 100%;
         }
-        .form-container button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
         footer {
             background-color: #333;
             color: white;
@@ -109,11 +105,6 @@
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
-        }
-        .error-message {
-            color: red;
-            text-align: center;
-            margin: 10px 0;
         }
     </style>
 </head>
@@ -145,13 +136,12 @@
 
 <section class="form-container">
     <h3>Finalize sua compra</h3>
-    <div id="error-message" class="error-message"></div>
     <form id="payment-form">
         <input type="text" id="buyer-name" placeholder="Nome Completo" required>
         <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
         <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
         <p>Total: R$ <span id="total-price">0</span></p>
-        <button type="submit" id="submit-button" disabled>Pagar com Pix/Cartão</button>
+        <button type="submit">Pagar com Pix/Cartão</button>
     </form>
 </section>
 
@@ -181,8 +171,6 @@
     const numberContainer = document.getElementById('numbers');
     const selectedNumbers = [];
     const pricePerNumber = 10;
-    const errorMessageDiv = document.getElementById('error-message');
-    const submitButton = document.getElementById('submit-button');
 
     // Função para carregar números da API com retry
     async function loadData() {
@@ -199,6 +187,7 @@
                 if (!availableRes.ok) throw new Error(`HTTP error: ${availableRes.status}`);
                 const availableNumbers = await availableRes.json();
 
+                numberContainer.innerHTML = ''; // Limpa os números existentes
                 for (let i = 1; i <= 1700; i++) {
                     const num = String(i).padStart(4, '0');
                     const numDiv = document.createElement('div');
@@ -234,19 +223,36 @@
                 progressBar.textContent = `${progress}% Arrecadado`;
 
                 console.log('Números carregados com sucesso!');
-                submitButton.disabled = false;
-                errorMessageDiv.textContent = '';
-                return;
+                return; // Sai do loop em caso de sucesso
             } catch (error) {
                 console.error(`Erro na tentativa ${retries + 1}:`, error.message);
                 retries++;
                 if (retries === maxRetries) {
-                    alert('Não foi possível carregar os números disponíveis. Por favor, tente novamente mais tarde.');
-                    errorMessageDiv.textContent = 'Erro ao carregar números. Tente recarregar a página.';
-                    submitButton.disabled = true;
-                    return;
+                    console.warn('Máximo de tentativas atingido, usando fallback...');
+                    numberContainer.innerHTML = ''; // Limpa os números existentes
+                    for (let i = 1; i <= 1700; i++) {
+                        const num = String(i).padStart(4, '0');
+                        const numDiv = document.createElement('div');
+                        numDiv.classList.add('number');
+                        numDiv.textContent = num;
+                        numDiv.addEventListener('click', () => {
+                            numDiv.classList.toggle('selected');
+                            if (numDiv.classList.contains('selected')) {
+                                selectedNumbers.push(num);
+                            } else {
+                                const index = selectedNumbers.indexOf(num);
+                                if (index > -1) selectedNumbers.splice(index, 1);
+                            }
+                            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                            document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                        });
+                        numberContainer.appendChild(numDiv);
+                    }
+                    document.getElementById('progress-bar').style.width = `0%`;
+                    document.getElementById('progress-bar').textContent = `0% Arrecadado`;
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Espera 2 segundos antes de retry
                 }
-                await new Promise(resolve => setTimeout(resolve, 2000));
             }
         }
     }
