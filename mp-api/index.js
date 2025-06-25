@@ -32,9 +32,9 @@ app.post('/create_preference', async (req, res) => {
           phone: { number: buyerPhone },
         },
         back_urls: {
-          success: "https://seusite.com/sucesso",
-          failure: "seusite.com/erro",
-          pending: "https://seusite.com/pendente"
+          success: "https://ederamorimth.github.io/rifa-miguel/sucesso.html",
+          failure: "https://ederamorimth.github.io/rifa-miguel/erro.html",
+          pending: "https://ederamorimth.github.io/rifa-miguel/pendente.html"
         },
         auto_return: "approved"
       }
