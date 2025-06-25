@@ -107,7 +107,10 @@ app.post('/test_create_preference', (req, res) => {
 app.post('/create_preference', async (req, res) => {
   try {
     const { quantity, buyerName, buyerPhone, numbers } = req.body;
-    console.log('Request body:', { quantity, buyerName, buyerPhone, numbers });
+    console.log('Received request body:', { quantity, buyerName, buyerPhone, numbers }); // Log detalhado
+    if (typeof numbers === 'undefined') {
+      console.log('Warning: numbers is undefined in request body');
+    }
 
     // Validate inputs
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
