@@ -126,14 +126,16 @@ app.post('/create_preference', async (req, res) => {
       return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
     }
 
-    // Verify available numbers
+    console.log('Verifying available numbers...');
     const purchases = await db.collection('purchases').find().toArray();
     const soldNumbers = purchases.flatMap(p => p.numbers || []);
     const invalidNumbers = numbers.filter(num => soldNumbers.includes(num));
     if (invalidNumbers.length > 0) {
+      console.log('Invalid numbers detected:', invalidNumbers);
       return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
     }
 
+    console.log('Creating Mercado Pago preference...');
     const preference = new Preference(mp);
     const preferenceData = {
       body: {
@@ -157,6 +159,7 @@ app.post('/create_preference', async (req, res) => {
     };
 
     const response = await preference.create(preferenceData);
+    console.log('Preference created successfully, init_point:', response.init_point);
     res.json({ init_point: response.init_point });
   } catch (error) {
     console.error('Error in /create_preference:', error.message);
