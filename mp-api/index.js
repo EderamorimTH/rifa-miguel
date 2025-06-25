@@ -28,6 +28,28 @@ async function connectDB() {
 }
 connectDB();
 
+// Test endpoint to check Mercado Pago
+app.get('/test_mp', async (req, res) => {
+  try {
+    const preference = new Preference(mp);
+    res.json({ status: 'Mercado Pago SDK initialized successfully' });
+  } catch (error) {
+    console.error('Mercado Pago test error:', error);
+    res.status(500).json({ error: 'Mercado Pago initialization failed', details: error.message });
+  }
+});
+
+// Test endpoint to check MongoDB
+app.get('/test_db', async (req, res) => {
+  try {
+    await db.collection('purchases').findOne();
+    res.json({ status: 'MongoDB connected successfully' });
+  } catch (error) {
+    console.error('MongoDB test error:', error);
+    res.status(500).json({ error: 'MongoDB connection failed', details: error.message });
+  }
+});
+
 // Endpoint para verificar números disponíveis
 app.get('/available_numbers', async (req, res) => {
   try {
@@ -37,7 +59,7 @@ app.get('/available_numbers', async (req, res) => {
     const availableNumbers = allNumbers.filter(num => !soldNumbers.includes(num));
     res.json(availableNumbers);
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao buscar números disponíveis:', error);
     res.status(500).json({ error: 'Erro ao buscar números disponíveis' });
   }
 });
@@ -51,7 +73,7 @@ app.get('/progress', async (req, res) => {
     const progress = (soldNumbers / totalNumbers) * 100;
     res.json({ progress: progress.toFixed(2) });
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao calcular progresso:', error);
     res.status(500).json({ error: 'Erro ao calcular progresso' });
   }
 });
@@ -62,82 +84,40 @@ app.get('/purchases', async (req, res) => {
     const purchases = await db.collection('purchases').find().toArray();
     res.json(purchases);
   } catch (error) {
-    console.error(error);
+    console.error('Erro ao buscar compras:', error);
     res.status(500).json({ error: 'Erro ao buscar compras' });
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('API da Rifa está online!');
+// Test endpoint to debug request body
+app.post('/test_create_preference', (req, res) => {
+  console.log('Test request body:', req.body);
+  res.json({ received: req.body, status: 'Test endpoint working' });
 });
 
+// Endpoint para criar preferência de pagamento
 app.post('/create_preference', async (req, res) => {
   try {
     const { quantity, buyerName, buyerPhone, numbers } = req.body;
+    console.log('Request body:', { quantity, buyerName, buyerPhone, numbers });
 
-    // Verificar se os números estão disponíveis
+    // Validate inputs
+    if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
+      console.log('Error: Invalid or missing numbers');
+      return res.status(400).json({ error: 'Por favor, selecione pelo menos um número' });
+    }
+    if (!buyerName || !buyerPhone) {
+      console.log('Error: Missing name or phone');
+      return res.status(400).json({ error: 'Nome e telefone são obrigatórios' });
+    }
+    if (!quantity || quantity !== numbers.length) {
+      console.log('Error: Invalid quantity');
+      return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
+    }
+
+    // Verify available numbers
     const purchases = await db.collection('purchases').find().toArray();
     const soldNumbers = purchases.flatMap(p => p.numbers);
     const invalidNumbers = numbers.filter(num => soldNumbers.includes(num));
     if (invalidNumbers.length > 0) {
-      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
-    }
-
-    const preference = new Preference(mp);
-    const preferenceData = {
-      body: {
-        items: [{
-          title: `Rifa - ${quantity} número(s)`,
-          quantity: Number(quantity),
-          unit_price: 10,
-        }],
-        payer: {
-          name: buyerName,
-          phone: { number: buyerPhone },
-        },
-        back_urls: {
-          success: "https://ederamorimth.github.io/rifa-miguel/sucesso.html",
-          failure: "https://ederamorimth.github.io/rifa-miguel/erro.html",
-          pending: "https://ederamorimth.github.io/rifa-miguel/pendente.html"
-        },
-        auto_return: "approved",
-        external_reference: JSON.stringify({ buyerName, buyerPhone, numbers }) // Passar dados para salvar após aprovação
-      }
-    };
-
-    const response = await preference.create(preferenceData);
-    res.json({ init_point: response.init_point });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao criar preferência' });
-  }
-});
-
-// Endpoint para salvar compra após aprovação
-app.post('/webhook', async (req, res) => {
-  try {
-    const { type, data } = req.body;
-    if (type === 'payment' && data.status === 'approved') {
-      const preference = await new Preference(mp).get({ id: data.preference_id });
-      const { buyerName, buyerPhone, numbers } = JSON.parse(preference.external_reference);
-
-      // Salvar no MongoDB
-      await db.collection('purchases').insertOne({
-        buyerName,
-        buyerPhone,
-        numbers,
-        purchaseDate: new Date(),
-        paymentId: data.id
-      });
-    }
-    res.status(200).send('OK');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Erro no webhook');
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+      return res.status(400).json({ error: `Números indisponíveis
