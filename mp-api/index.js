@@ -5,9 +5,11 @@ import { MongoClient } from 'mongodb';
 
 const app = express();
 app.use(cors({
-  origin: 'https://ederamorimth.github.io' // Especifica o domínio do frontend
+  origin: 'https://ederamorimth.github.io',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type']
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Aumenta o limite de payload
 
 // Configura o MercadoPago
 const mp = new MercadoPagoConfig({
@@ -16,7 +18,7 @@ const mp = new MercadoPagoConfig({
 
 // Conecta ao MongoDB
 const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
+const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
 let db;
 
 async function connectDB() {
@@ -109,7 +111,7 @@ app.post('/test_create_preference', (req, res) => {
 app.post('/create_preference', async (req, res) => {
   try {
     const { quantity, buyerName, buyerPhone, numbers } = req.body;
-    console.log('Received request body:', { quantity, buyerName, buyerPhone, numbers }); // Log detalhado
+    console.log('Received request body at:', new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers });
     if (typeof numbers === 'undefined') {
       console.log('Warning: numbers is undefined in request body');
     }
@@ -164,7 +166,7 @@ app.post('/create_preference', async (req, res) => {
     console.log('Preference created successfully, init_point:', response.init_point);
     res.json({ init_point: response.init_point });
   } catch (error) {
-    console.error('Error in /create_preference:', error.message, 'Stack:', error.stack);
+    console.error('Error in /create_preference at:', new Date().toISOString(), error.message, 'Stack:', error.stack);
     res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
   }
 });
@@ -199,5 +201,5 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT} at ${new Date().toISOString()}`);
 });
