@@ -19,7 +19,7 @@ app.post('/create_preference', async (req, res) => {
   try {
     const { quantity, buyerName, buyerPhone } = req.body;
 
-    const preference = new Preference(mp); // Cria uma instância de Preference
+    const preference = new Preference(mp);
     const preferenceData = {
       body: {
         items: [{
@@ -33,7 +33,7 @@ app.post('/create_preference', async (req, res) => {
         },
         back_urls: {
           success: "https://seusite.com/sucesso",
-          failure: "https://seusite.com/erro",
+          failure: "seusite.com/erro",
           pending: "https://seusite.com/pendente"
         },
         auto_return: "approved"
