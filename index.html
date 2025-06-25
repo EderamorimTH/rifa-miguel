@@ -35,12 +35,12 @@
             border-radius: 5px;
         }
         .progress-bar {
-            width: 70%;
             height: 20px;
             background-color: #28a745;
             border-radius: 5px;
             text-align: center;
             color: white;
+            transition: width 0.3s;
         }
         .number-grid {
             display: grid;
@@ -107,6 +107,7 @@
         <a href="#sobre">Sobre o Miguel</a>
         <a href="#como-funciona">Como Funciona</a>
         <a href="#contato">Contato</a>
+        <a href="sorteio.html">Sorteio</a>
     </nav>
 </header>
 
@@ -114,13 +115,13 @@
     <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
     <p>Compre números por R$ 10 e concorra a R$ 2.000. Todo o valor será usado para a cirurgia de estrabismo do Miguel!</p>
     <div class="progress-container">
-        <div class="progress-bar">70% Arrecadado</div>
+        <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
     </div>
     <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
 </section>
 
 <section id="numbers" class="number-grid">
-    <!-- Os 1700 números serão gerados via JavaScript -->
+    <!-- Os números serão gerados via JavaScript -->
 </section>
 
 <section class="form-container">
@@ -148,35 +149,58 @@
     const selectedNumbers = [];
     const pricePerNumber = 10;
 
-    // Gerar números de 1 a 1700
-    for (let i = 1; i <= 1700; i++) {
-        const numDiv = document.createElement('div');
-        numDiv.classList.add('number');
-        numDiv.textContent = String(i).padStart(4, '0');
+    // Buscar números disponíveis e progresso
+    async function loadData() {
+        try {
+            // Buscar números disponíveis
+            const availableRes = await fetch('https://mp-api.onrender.com/available_numbers');
+            const availableNumbers = await availableRes.json();
 
-        numDiv.addEventListener('click', () => {
-            if (!numDiv.classList.contains('sold')) {
-                numDiv.classList.toggle('selected');
-                const numberText = numDiv.textContent;
+            // Gerar números de 1 a 1700
+            for (let i = 1; i <= 1700; i++) {
+                const num = String(i).padStart(4, '0');
+                const numDiv = document.createElement('div');
+                numDiv.classList.add('number');
+                numDiv.textContent = num;
 
-                if (numDiv.classList.contains('selected')) {
-                    selectedNumbers.push(numberText);
+                if (!availableNumbers.includes(num)) {
+                    numDiv.classList.add('sold');
                 } else {
-                    const index = selectedNumbers.indexOf(numberText);
-                    if (index > -1) selectedNumbers.splice(index, 1);
+                    numDiv.addEventListener('click', () => {
+                        if (!numDiv.classList.contains('sold')) {
+                            numDiv.classList.toggle('selected');
+                            if (numDiv.classList.contains('selected')) {
+                                selectedNumbers.push(num);
+                            } else {
+                                const index = selectedNumbers.indexOf(num);
+                                if (index > -1) selectedNumbers.splice(index, 1);
+                            }
+                            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                            document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                        }
+                    });
                 }
 
-                document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
-                document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                numberContainer.appendChild(numDiv);
             }
-        });
 
-        numberContainer.appendChild(numDiv);
+            // Buscar progresso
+            const progressRes = await fetch('https://mp-api.onrender.com/progress');
+            const { progress } = await progressRes.json();
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = `${progress}%`;
+            progressBar.textContent = `${progress}% Arrecadado`;
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao carregar dados. Tente novamente.');
+        }
     }
+
+    loadData();
 
     // Enviar dados para a API
     document.getElementById('payment-form').addEventListener('submit', async (event) => {
-        event.preventDefault(); // Impede o recarregamento da página
+        event.preventDefault();
 
         const buyerName = document.getElementById('buyer-name').value;
         const buyerPhone = document.getElementById('buyer-phone').value;
@@ -193,24 +217,25 @@
         }
 
         try {
-            const response = await fetch('https://rifa-miguel.onrender.com/create_preference', {
+            const response = await fetch('https://mp-api.onrender.com/create_preference', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    quantity: quantity,
-                    buyerName: buyerName,
-                    buyerPhone: buyerPhone
+                    quantity,
+                    buyerName,
+                    buyerPhone,
+                    numbers: selectedNumbers
                 })
             });
 
             const data = await response.json();
 
             if (data.init_point) {
-                window.location.href = data.init_point; // Redireciona para o link de pagamento
+                window.location.href = data.init_point;
             } else {
-                alert('Erro ao criar o pagamento. Tente novamente.');
+                alert(data.error || 'Erro ao criar o pagamento. Tente novamente.');
             }
         } catch (error) {
             console.error(error);
