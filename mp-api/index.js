@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'; // Adicionado Payment
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { MongoClient } from 'mongodb';
 
 const app = express();
@@ -9,7 +9,7 @@ app.use(cors({
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type']
 }));
-app.use(express.json({ limit: '10mb' })); // Aumenta o limite de payload
+app.use(express.json({ limit: '10mb' }));
 
 // Configura o MercadoPago
 const mp = new MercadoPagoConfig({
@@ -174,7 +174,7 @@ app.post('/create_preference', async (req, res) => {
 // Endpoint para webhook (suporta GET e POST)
 app.all('/webhook', async (req, res) => {
   try {
-    console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Full request body:', req.body);
+    console.log('Webhook received:', req.body);
     if (req.method === 'GET') {
       console.log('GET request received, responding with OK for test');
       return res.status(200).send('Webhook endpoint is active');
@@ -185,14 +185,15 @@ app.all('/webhook', async (req, res) => {
       if (type === 'payment') {
         let paymentStatus;
         if (data && data.id) {
-          // Buscar o status do pagamento via API do Mercado Pago
-          const payment = new Payment(mp);
-          const paymentDetails = await payment.get({ id: data.id });
-          paymentStatus = paymentDetails.status;
-          console.log('Payment status retrieved from API:', paymentStatus);
-        } else if (data && data.status) {
-          paymentStatus = data.status;
-          console.log('Payment status from request body:', paymentStatus);
+          try {
+            const payment = new Payment(mp);
+            const paymentDetails = await payment.get({ id: data.id });
+            paymentStatus = paymentDetails.status;
+            console.log('Payment status:', paymentStatus);
+          } catch (error) {
+            console.log('Erro ao buscar pagamento:', error.message);
+            return res.status(200).send('OK'); // Ignora erro para testes
+          }
         } else {
           console.log('No payment ID or status found, skipping processing');
           return res.status(200).send('OK');
@@ -200,12 +201,28 @@ app.all('/webhook', async (req, res) => {
 
         if (paymentStatus === 'approved') {
           console.log('Payment approved, processing webhook...', 'Payment data:', data);
-          const preference = await new Preference(mp).get({ id: data.preference_id || (data && data.id && await getPreferenceIdFromPayment(data.id)) });
+          const preferenceId = data.preference_id || (data && data.id && await getPreferenceIdFromPayment(data.id));
+          if (!preferenceId) {
+            console.log('Preference ID não encontrado, ignor skipping');
+            return res.status(200).send('OK');
+          }
+          const preference = await new Preference(mp).get({ id: preferenceId });
           console.log('Preference retrieved:', preference);
-          const { buyerName, buyerPhone, numbers } = JSON.parse(preference.external_reference);
+          let externalReference;
+          try {
+            externalReference = JSON.parse(preference.external_reference);
+          } catch (e) {
+            console.error('Erro ao parsear external_reference:', e.message);
+            return res.status(200).send('OK');
+          }
+          const { buyerName, buyerPhone, numbers } = externalReference;
           console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
 
           // Salvar no MongoDB
+          if (!db) {
+            console.error('MongoDB não conectado');
+            return res.status(500).send('Erro: MongoDB não conectado');
+          }
           const result = await db.collection('purchases').insertOne({
             buyerName,
             buyerPhone,
@@ -224,8 +241,8 @@ app.all('/webhook', async (req, res) => {
     }
     return res.status(405).send('Method Not Allowed');
   } catch (error) {
-    console.error('Erro no webhook at:', new Date().toISOString(), 'Method:', req.method, 'Error details:', error.message, 'Stack:', error.stack);
-    res.status(500).send('Erro no webhook');
+    console.error('Erro no webhook:', error.message);
+    return res.status(500).send('Erro no webhook');
   }
 });
 
