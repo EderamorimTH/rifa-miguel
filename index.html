@@ -99,12 +99,16 @@
         .share-button {
             background-color: #25d366;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
             text-decoration: none;
             display: inline-block;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .share-button:hover {
+            background-color: #1ebe5a;
         }
     </style>
 </head>
@@ -113,9 +117,9 @@
 <header>
     <h1>Rifa Solidária para o Miguel</h1>
     <nav>
-        <a href="#home">Início</a>
-        <a href="como-funciona.html">Como Funciona</a>
-        <a href="sobre-estrabismo.html">Sobre o Estrabismo</a>
+        <a href="/rifa-miguel/index.html">Início</a>
+        <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
+        <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
         <a href="#contato">Contato</a>
         <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
     </nav>
@@ -147,10 +151,10 @@
 
 <footer id="contato">
     <p>Contato:</p>
-    <p>Evelyn Mae do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
+    <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
     <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
     <p>Para dúvidas, entre em contato via WhatsApp!</p>
-    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Ajude%20o%20Miguel%20na%20rifa%20solidária!%20Compre%20números%20por%20R$10%20e%20concorra%20a%20R$2.000.%20Mais%20info:%20[insira%20link]%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
     <p>© 2025 Rifa Solidária para o Miguel</p>
 </footer>
 
@@ -162,17 +166,17 @@
     function checkPassword() {
         const password = prompt("Digite a senha para acessar a página de sorteio:");
         if (password === "VAIDACERTO") {
-            window.location.href = "sorteio.html";
+            window.location.href = "/rifa-miguel/sorteio.html";
         } else {
             alert("Senha incorreta!");
         }
     }
 
     const numberContainer = document.getElementById('numbers');
-    let selectedNumbers = []; // Reiniciada como array vazio
+    let selectedNumbers = [];
+
     const pricePerNumber = 10;
 
-    // Função para carregar números da API com retry
     async function loadData() {
         const maxRetries = 3;
         let retries = 0;
@@ -183,12 +187,11 @@
                 const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
-                    timeout: 5000 // Timeout de 5 segundos
                 });
                 if (!availableRes.ok) throw new Error(`HTTP error: ${availableRes.status}`);
                 const availableNumbers = await availableRes.json();
 
-                numberContainer.innerHTML = ''; // Limpa os números existentes
+                numberContainer.innerHTML = '';
                 for (let i = 1; i <= 1700; i++) {
                     const num = String(i).padStart(4, '0');
                     const numDiv = document.createElement('div');
@@ -220,7 +223,6 @@
                 const progressRes = await fetch('https://rifa-miguel.onrender.com/progress', {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
-                    timeout: 5000
                 });
                 if (!progressRes.ok) throw new Error(`HTTP error: ${progressRes.status}`);
                 const { progress } = await progressRes.json();
@@ -229,13 +231,13 @@
                 progressBar.textContent = `${progress}% Arrecadado`;
 
                 console.log('Números carregados com sucesso at:', new Date().toISOString());
-                return; // Sai do loop em caso de sucesso
+                return;
             } catch (error) {
                 console.error(`Erro na tentativa ${retries + 1} at ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack);
                 retries++;
                 if (retries === maxRetries) {
                     console.warn('Máximo de tentativas atingido, usando fallback...');
-                    numberContainer.innerHTML = ''; // Limpa os números existentes
+                    numberContainer.innerHTML = '';
                     for (let i = 1; i <= 1700; i++) {
                         const num = String(i).padStart(4, '0');
                         const numDiv = document.createElement('div');
@@ -255,10 +257,10 @@
                         });
                         numberContainer.appendChild(numDiv);
                     }
-                    document.getElementById('progress-bar').style.width = `0%`;
-                    document.getElementById('progress-bar').textContent = `0% Arrecadado`;
+                    document.getElementById('progress-bar').style.width = '0%';
+                    document.getElementById('progress-bar').textContent = '0% Arrecadado';
                 } else {
-                    await new Promise(resolve => setTimeout(resolve, 2000)); // Espera 2 segundos antes de retry
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                 }
             }
         }
@@ -266,7 +268,6 @@
 
     loadData();
 
-    // Enviar dados para a API com retry
     async function sendPaymentRequest(data) {
         const maxRetries = 3;
         let retries = 0;
@@ -275,7 +276,7 @@
             try {
                 console.log(`Tentativa ${retries + 1} de enviar pagamento at ${new Date().toISOString()}...`);
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout de 10 segundos
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
                 const response = await fetch('https://rifa-miguel.onrender.com/create_preference', {
                     method: 'POST',
                     headers: {
@@ -295,20 +296,19 @@
                 } else {
                     alert(responseData.error || 'Erro ao criar o pagamento. Tente novamente.');
                 }
-                return; // Sai do loop em caso de sucesso
+                return;
             } catch (error) {
                 console.error(`Erro na tentativa ${retries + 1} at ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack, 'Code:', error.code);
                 retries++;
                 if (retries === maxRetries) {
                     alert('Erro ao conectar ao servidor após várias tentativas. Detalhes: ' + error.message + '\nCódigo: ' + (error.code || 'unknown') + '\nStatus: ' + (error.status || 'unknown'));
                 } else {
-                    await new Promise(resolve => setTimeout(resolve, 3000)); // Espera 3 segundos antes de retry
+                    await new Promise(resolve => setTimeout(resolve, 3000));
                 }
             }
         }
     }
 
-    // Enviar dados para a API
     document.getElementById('payment-form').addEventListener('submit', async (event) => {
         event.preventDefault();
 
@@ -326,7 +326,7 @@
             return;
         }
         if (!buyerName || !buyerPhone) {
-            alert('Por favor, preencha nome e telefone.');
+            alert('Por favor, preencha todos os campos.');
             return;
         }
 
