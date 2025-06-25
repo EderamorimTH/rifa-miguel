@@ -4,7 +4,9 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { MongoClient } from 'mongodb';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'https://ederamorimth.github.io' // Especifica o domínio do frontend
+}));
 app.use(express.json());
 
 // Configura o MercadoPago
@@ -162,7 +164,7 @@ app.post('/create_preference', async (req, res) => {
     console.log('Preference created successfully, init_point:', response.init_point);
     res.json({ init_point: response.init_point });
   } catch (error) {
-    console.error('Error in /create_preference:', error.message);
+    console.error('Error in /create_preference:', error.message, 'Stack:', error.stack);
     res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
   }
 });
