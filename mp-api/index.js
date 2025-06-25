@@ -171,26 +171,41 @@ app.post('/create_preference', async (req, res) => {
   }
 });
 
-// Endpoint para salvar compra após aprovação
-app.post('/webhook', async (req, res) => {
+// Endpoint para webhook (suporta GET e POST)
+app.all('/webhook', async (req, res) => {
   try {
-    const { type, data } = req.body;
-    if (type === 'payment' && data.status === 'approved') {
-      const preference = await new Preference(mp).get({ id: data.preference_id });
-      const { buyerName, buyerPhone, numbers } = JSON.parse(preference.external_reference);
-
-      // Salvar no MongoDB
-      await db.collection('purchases').insertOne({
-        buyerName,
-        buyerPhone,
-        numbers,
-        purchaseDate: new Date(),
-        paymentId: data.id
-      });
+    console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Full request body:', req.body);
+    if (req.method === 'GET') {
+      console.log('GET request received, responding with OK for test');
+      return res.status(200).send('Webhook endpoint is active');
     }
-    res.status(200).send('OK');
+    if (req.method === 'POST') {
+      const { type, data } = req.body;
+      console.log('Processing POST webhook...', 'Type:', type, 'Data:', data);
+      if (type === 'payment' && data.status === 'approved') {
+        console.log('Payment approved, processing webhook...', 'Payment data:', data);
+        const preference = await new Preference(mp).get({ id: data.preference_id });
+        console.log('Preference retrieved:', preference);
+        const { buyerName, buyerPhone, numbers } = JSON.parse(preference.external_reference);
+        console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
+
+        // Salvar no MongoDB
+        const result = await db.collection('purchases').insertOne({
+          buyerName,
+          buyerPhone,
+          numbers,
+          purchaseDate: new Date(),
+          paymentId: data.id
+        });
+        console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers });
+      } else {
+        console.log('Webhook ignored, type:', type, 'status:', data?.status);
+      }
+      return res.status(200).send('OK');
+    }
+    return res.status(405).send('Method Not Allowed');
   } catch (error) {
-    console.error('Erro no webhook:', error);
+    console.error('Erro no webhook at:', new Date().toISOString(), 'Method:', req.method, 'Error details:', error.message, 'Stack:', error.stack);
     res.status(500).send('Erro no webhook');
   }
 });
