@@ -96,6 +96,40 @@
             text-align: center;
             padding: 10px;
         }
+        .contact-section {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .estrabismo-section {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .como-funciona-section {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .share-button {
+            background-color: #25d366;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -107,11 +141,11 @@
         <a href="#sobre">Sobre o Miguel</a>
         <a href="#como-funciona">Como Funciona</a>
         <a href="#contato">Contato</a>
-        <a href="sorteio.html">Sorteio</a>
+        <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
     </nav>
 </header>
 
-<section class="hero">
+<section class="hero" id="home">
     <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
     <p>Compre números por R$ 10 e concorra a R$ 2.000. Todo o valor será usado para a cirurgia de estrabismo do Miguel!</p>
     <div class="progress-container">
@@ -135,14 +169,46 @@
     </form>
 </section>
 
+<section id="contato" class="contact-section">
+    <h3>Contato</h3>
+    <p>Evelyn Mae do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
+    <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
+    <p>Para dúvidas, entre em contato via WhatsApp!</p>
+</section>
+
+<section id="sobre" class="estrabismo-section">
+    <h3>Sobre o Estrabismo e a Importância da Cirurgia aos 4 Anos</h3>
+    <p>O estrabismo é uma condição em que os olhos não estão alinhados corretamente, podendo apontar em direções diferentes. No caso do Miguel, que tem 4 anos, essa cirurgia é crucial porque:</p>
+    <ul>
+        <li><strong>Desenvolvimento Visual**: Aos 4 anos, a visão do Miguel ainda está se desenvolvendo. Corrigir o estrabismo agora ajuda a evitar que ele perca profundidade ou desenvolva ambliopia (olho preguiçoso).</li>
+        <li><strong>Saúde Ocular**: A cirurgia pode prevenir problemas futuros, como dor de cabeça ou tensão ocular, além de melhorar a estética e a autoestima.</li>
+        <li><strong>Benefícios para a Vida**: Com os olhos alinhados, Miguel terá uma visão binocular melhor, essencial para atividades como esportes, leitura e aprendizado, impactando positivamente sua infância e futuro.</li>
+    </ul>
+    <p>Fazer a cirurgia agora é ideal porque o cérebro de uma criança pequena é mais adaptável, aumentando as chances de sucesso e recuperação completa.</p>
+</section>
+
+<section id="como-funciona" class="como-funciona-section">
+    <h3>Como Funciona</h3>
+    <p>A rifa oferece 1700 números, cada um custando R$ 10, com um prêmio de R$ 2.000. O sorteio será realizado no dia 24 de dezembro ou assim que 75% dos números (1275) forem vendidos, o que ocorrer primeiro. Os números comprados e pagos ficam indisponíveis para outros participantes. Se um número for selecionado e não pago, ele volta a ficar disponível após 24 horas. Participe e ajude o Miguel!</p>
+</section>
+
 <footer>
-    <p>Contato: rifaparaomiguel@email.com | WhatsApp: (XX) XXXXX-XXXX</p>
-    <p>Compartilhe: [WhatsApp] [Instagram] [Facebook]</p>
+    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Ajude%20o%20Miguel%20na%20rifa%20solidária!%20Compre%20números%20por%20R$10%20e%20concorra%20a%20R$2.000.%20Mais%20info:%20[insira%20link]%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+    <p>© 2025 Rifa Solidária para o Miguel</p>
 </footer>
 
 <script>
     function scrollToNumbers() {
         document.getElementById('numbers').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function checkPassword() {
+        const password = prompt("Digite a senha para acessar a página de sorteio:");
+        if (password === "VAIDACERTO") {
+            window.location.href = "sorteio.html";
+        } else {
+            alert("Senha incorreta!");
+        }
     }
 
     const numberContainer = document.getElementById('numbers');
