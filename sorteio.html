@@ -23,7 +23,7 @@
             margin: 0 15px;
             text-decoration: none;
         }
-        .container {
+        .content {
             max-width: 1000px;
             margin: 20px auto;
             padding: 20px;
@@ -34,7 +34,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin-top: 20px;
         }
         th, td {
             border: 1px solid #ddd;
@@ -45,97 +45,139 @@
             background-color: #007bff;
             color: white;
         }
-        .draw-button {
-            background-color: #28a745;
+        .error {
+            color: red;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .no-data {
+            text-align: center;
+            color: #555;
+            margin: 20px 0;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        .share-button {
+            background-color: #25d366;
             color: white;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.1em;
-            display: block;
-            margin: 20px auto;
-        }
-        #result {
-            text-align: center;
-            font-size: 1.2em;
-            margin: 20px 0;
+            text-decoration: none;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
+    <header>
+        <h1>Rifa Solidária para o Miguel</h1>
+        <nav>
+            <a href="/rifa-miguel/index.html">Início</a>
+            <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
+            <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
+            <a href="#contato">Contato</a>
+            <a href="/rifa-miguel/sorteio.html">Sorteio</a>
+        </nav>
+    </header>
 
-<header>
-    <h1>Sorteio - Rifa Solidária para o Miguel</h1>
-    <nav>
-        <a href="index.html">Início</a>
-        <a href="#sobre">Sobre o Miguel</a>
-        <a href="#como-funciona">Como Funciona</a>
-        <a href="#contato">Contato</a>
-    </nav>
-</header>
+    <section class="content">
+        <h2>Lista de Compras da Rifa</h2>
+        <p>Aqui você pode ver todas as compras registradas para a rifa solidária do Miguel.</p>
+        <div id="error-message" class="error" style="display: none;"></div>
+        <div id="no-data-message" class="no-data" style="display: none;">Nenhuma compra registrada ainda.</div>
+        <table id="purchases-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Números</th>
+                    <th>Data da Compra</th>
+                    <th>ID do Pagamento</th>
+                </tr>
+            </thead>
+            <tbody id="purchases-body"></tbody>
+        </table>
+    </section>
 
-<div class="container">
-    <h2>Realizar Sorteio</h2>
-    <button class="draw-button" onclick="performDraw()">Sortear Vencedor</button>
-    <div id="result"></div>
-    <h3>Lista de Compras</h3>
-    <table id="purchases-table">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Telefone</th>
-                <th>Números Comprados</th>
-                <th>Data da Compra</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
+    <footer id="contato">
+        <p>Contato:</p>
+        <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
+        <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
+        <p>Para dúvidas, entre em contato via WhatsApp!</p>
+        <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Ajude%20o%20Miguel%20na%20rifa%20solidária!%20Compre%20números%20por%20R$10%20e%20concorra%20a%20R$2.000.%20Mais%20info:%20https://ederamorimth.github.io/rifa-miguel/%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+        <p>© 2025 Rifa Solidária para o Miguel</p>
+    </footer>
 
-<script>
-    async function loadPurchases() {
-        try {
-            const response = await fetch('https://mp-api.onrender.com/purchases');
-            const purchases = await response.json();
-            const tbody = document.querySelector('#purchases-table tbody');
+    <script>
+        async function loadPurchases() {
+            const errorMessage = document.getElementById('error-message');
+            const noDataMessage = document.getElementById('no-data-message');
+            const purchasesBody = document.getElementById('purchases-body');
+            const maxRetries = 3;
+            let retries = 0;
 
-            purchases.forEach(purchase => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${purchase.buyerName}</td>
-                    <td>${purchase.buyerPhone}</td>
-                    <td>${purchase.numbers.join(', ')}</td>
-                    <td>${new Date(purchase.purchaseDate).toLocaleString()}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        } catch (error) {
-            console.error(error);
-            alert('Erro ao carregar compras.');
-        }
-    }
+            while (retries < maxRetries) {
+                try {
+                    console.log(`Tentativa ${retries + 1} de carregar compras at ${new Date().toISOString()}...`);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    const response = await fetch('https://rifa-miguel.onrender.com/purchases', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
 
-    async function performDraw() {
-        try {
-            const response = await fetch('https://mp-api.onrender.com/purchases');
-            const purchases = await response.json();
-            const allSoldNumbers = purchases.flatMap(p => p.numbers.map(num => ({ num, buyer: p.buyerName, phone: p.buyerPhone })));
-            if (allSoldNumbers.length === 0) {
-                document.getElementById('result').textContent = 'Nenhum número vendido ainda!';
-                return;
+                    if (!response.ok) {
+                        throw new Error(`HTTP error: ${response.status}`);
+                    }
+
+                    const purchases = await response.json();
+                    console.log('Compras carregadas com sucesso:', purchases);
+
+                    if (purchases.length === 0) {
+                        noDataMessage.style.display = 'block';
+                        errorMessage.style.display = 'none';
+                        purchasesBody.innerHTML = '';
+                        return;
+                    }
+
+                    purchasesBody.innerHTML = '';
+                    purchases.forEach(purchase => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${purchase.buyerName || 'N/A'}</td>
+                            <td>${purchase.buyerPhone || 'N/A'}</td>
+                            <td>${purchase.numbers ? purchase.numbers.join(', ') : 'N/A'}</td>
+                            <td>${purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleString('pt-BR') : 'N/A'}</td>
+                            <td>${purchase.paymentId || 'N/A'}</td>
+                        `;
+                        purchasesBody.appendChild(row);
+                    });
+
+                    noDataMessage.style.display = 'none';
+                    errorMessage.style.display = 'none';
+                    return;
+                } catch (error) {
+                    console.error(`Erro na tentativa ${retries + 1} at ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack);
+                    retries++;
+                    if (retries === maxRetries) {
+                        errorMessage.textContent = 'Erro ao carregar compras. Tente novamente mais tarde.';
+                        errorMessage.style.display = 'block';
+                        noDataMessage.style.display = 'none';
+                    } else {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
             }
-            const randomIndex = Math.floor(Math.random() * allSoldNumbers.length);
-            const winner = allSoldNumbers[randomIndex];
-            document.getElementById('result').textContent = `Vencedor: ${winner.buyer} (Telefone: ${winner.phone}) com o número ${winner.num}!`;
-        } catch (error) {
-            console.error(error);
-            alert('Erro ao realizar sorteio.');
         }
-    }
 
-    loadPurchases();
-</script>
-
+        // Carregar compras ao abrir a página
+        loadPurchases();
+    </script>
 </body>
 </html>
