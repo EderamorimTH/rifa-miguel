@@ -6,44 +6,49 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Configure o Access Token
-const mp = new mercadopago.MercadoPago({
-  accessToken: process.env.ACCESS_TOKEN_MP
+// Configuração da chave do Mercado Pago
+mercadopago.configure({
+  access_token: process.env.ACCESS_TOKEN_MP
 });
 
+// Rota de teste
+app.get('/', (req, res) => {
+  res.send('API da Rifa do Miguel está online!');
+});
+
+// Rota para criar a preferência de pagamento
 app.post('/create_preference', async (req, res) => {
   const { quantity, buyerName, buyerPhone } = req.body;
 
   try {
-    const result = await mp.preferences.create({
-      body: {
-        items: [
-          {
-            title: `Rifa Solidária para o Miguel - ${quantity} número(s)`,
-            quantity: quantity,
-            unit_price: 10
-          }
-        ],
-        payer: {
-          name: buyerName,
-          phone: {
-            number: buyerPhone
-          }
-        },
-        back_urls: {
-          success: "https://seusite.com/sucesso",
-          failure: "https://seusite.com/erro",
-          pending: "https://seusite.com/pendente"
-        },
-        auto_return: "approved"
-      }
-    });
+    const preference = {
+      items: [
+        {
+          title: `Rifa Solidária - ${quantity} número(s)`,
+          quantity: Number(quantity),
+          unit_price: 10
+        }
+      ],
+      payer: {
+        name: buyerName,
+        phone: {
+          number: buyerPhone
+        }
+      },
+      back_urls: {
+        success: "https://seusite.com/sucesso",
+        failure: "https://seusite.com/erro",
+        pending: "https://seusite.com/pendente"
+      },
+      auto_return: "approved"
+    };
 
-    res.json({ init_point: result.body.init_point });
+    const response = await mercadopago.preferences.create(preference);
+    res.json({ init_point: response.body.init_point });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erro ao criar preferência de pagamento.' });
+    res.status(500).json({ error: 'Erro ao criar preferência' });
   }
 });
 
