@@ -110,6 +110,12 @@
         .share-button:hover {
             background-color: #1ebe5a;
         }
+        .button-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -120,8 +126,9 @@
         <a href="/rifa-miguel/index.html">Início</a>
         <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
         <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
-        <a href="#contato">Contato</a>
+        <a href="/rifa-miguel/orcamento.html">Orçamento</a>
         <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
+        <a href="#contato">Contato</a>
     </nav>
 </header>
 
@@ -131,7 +138,10 @@
     <div class="progress-container">
         <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
     </div>
-    <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
+    <div class="button-container">
+        <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
+        <button onclick="selectRandomNumbers()" style="background-color: #28a745; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white;">Escolher 10 Números Aleatórios</button>
+    </div>
 </section>
 
 <section id="numbers" class="number-grid">
@@ -174,8 +184,41 @@
 
     const numberContainer = document.getElementById('numbers');
     let selectedNumbers = [];
-
     const pricePerNumber = 10;
+
+    async function selectRandomNumbers() {
+        try {
+            const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!availableRes.ok) throw new Error(`HTTP error: ${availableRes.status}`);
+            const availableNumbers = await availableRes.json();
+
+            selectedNumbers.forEach(num => {
+                const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
+                if (numDiv) numDiv.classList.remove('selected');
+            });
+            selectedNumbers = [];
+
+            const shuffled = availableNumbers.sort(() => 0.5 - Math.random());
+            const randomNumbers = shuffled.slice(0, Math.min(10, availableNumbers.length));
+
+            randomNumbers.forEach(num => {
+                const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
+                if (numDiv && !numDiv.classList.contains('sold')) {
+                    numDiv.classList.add('selected');
+                    selectedNumbers.push(num);
+                }
+            });
+
+            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+            document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+        } catch (error) {
+            console.error('Erro ao selecionar números aleatórios:', error);
+            alert('Erro ao carregar números disponíveis. Tente novamente.');
+        }
+    }
 
     async function loadData() {
         const maxRetries = 3;
@@ -316,7 +359,7 @@
         const buyerPhone = document.getElementById('buyer-phone').value;
         const quantity = selectedNumbers.length;
 
-        console.log('Selected numbers before submit at:', new Date().toISOString(), selectedNumbers);
+        console.log('Selected numbers before submit at:', new ACNDate().toISOString(), selectedNumbers);
         if (selectedNumbers.length === 0) {
             console.warn('No numbers selected before submit at:', new Date().toISOString());
         }
