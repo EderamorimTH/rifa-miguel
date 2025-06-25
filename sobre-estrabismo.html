@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobre o Estrabismo - Rifa Solidária para o Miguel</title>
+    <title>Rifa Solidária para o Miguel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,22 +23,88 @@
             margin: 0 15px;
             text-decoration: none;
         }
-        .content {
-            max-width: 800px;
+        .hero {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+        }
+        .progress-container {
+            margin: 20px auto;
+            width: 80%;
+            background-color: #ddd;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #28a745;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            transition: width 0.3s;
+        }
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+            gap: 5px;
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+        .number {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        .number.sold {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .number.selected {
+            background-color: #ffc107;
+            color: black;
+        }
+        .form-container {
+            max-width: 400px;
             margin: 20px auto;
             padding: 20px;
             background-color: white;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-container button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
         footer {
             background-color: #333;
             color: white;
             text-align: center;
             padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
+        }
+        .share-button {
+            background-color: #25d366;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
         }
     </style>
 </head>
@@ -47,7 +113,7 @@
 <header>
     <h1>Rifa Solidária para o Miguel</h1>
     <nav>
-        <a href="index.html">Início</a>
+        <a href="#home">Início</a>
         <a href="como-funciona.html">Como Funciona</a>
         <a href="sobre-estrabismo.html">Sobre o Estrabismo</a>
         <a href="#contato">Contato</a>
@@ -55,28 +121,44 @@
     </nav>
 </header>
 
-<section class="content">
-    <h2>O que é Estrabismo?</h2>
-    <p>O estrabismo é uma condição ocular em que os olhos não estão alinhados corretamente e apontam para direções diferentes. Isso pode afetar a visão binocular, causando diplopia (visão dupla) ou dificuldade na percepção de profundidade. No caso do Miguel, essa condição requer uma cirurgia corretiva para melhorar sua qualidade de vida.</p>
+<section class="hero" id="home">
+    <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
+    <p>Compre números por R$ 1 e concorra a R$ 2.000. Todo o valor será usado para a cirurgia de estrabismo do Miguel!</p>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
+    </div>
+    <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
+</section>
 
-    <h3>Causas</h3>
-    <p>O estrabismo pode ser causado por fatores como problemas musculares nos olhos, doenças neurológicas, ou condições genéticas. Em crianças, o diagnóstico precoce é essencial para evitar complicações, como ambliopia (olho preguiçoso).</p>
+<section id="numbers" class="number-grid">
+    <!-- Os números serão gerados via JavaScript -->
+</section>
 
-    <h3>Tratamento</h3>
-    <p>O tratamento pode incluir óculos, exercícios visuais ou, em casos como o de Miguel, cirurgia para alinhar os músculos oculares. A cirurgia é segura e realizada por especialistas, mas tem um custo elevado, que a rifa está ajudando a cobrir.</p>
-
-    <h3>Como Ajudar</h3>
-    <p>Participe da rifa solidária comprando números por R$ 10 e concorra a R$ 2.000, enquanto todo o valor arrecadado será destinado à cirurgia do Miguel. Cada contribuição faz a diferença!</p>
+<section class="form-container">
+    <h3>Finalize sua compra</h3>
+    <form id="payment-form">
+        <input type="text" id="buyer-name" placeholder="Nome Completo" required>
+        <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
+        <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
+        <p>Total: R$ <span id="total-price">0</span></p>
+        <button type="submit">Pagar com Pix/Cartão</button>
+    </form>
 </section>
 
 <footer id="contato">
     <p>Contato:</p>
     <p>Evelyn Mae do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
     <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
+    <p>Para dúvidas, entre em contato via WhatsApp!</p>
+    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Ajude%20o%20Miguel%20na%20rifa%20solidária!%20Compre%20números%20por%20R$1%20e%20concorra%20a%20R$2.000.%20Mais%20info:%20[insira%20link]%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
     <p>© 2025 Rifa Solidária para o Miguel</p>
 </footer>
 
 <script>
+    function scrollToNumbers() {
+        document.getElementById('numbers').scrollIntoView({ behavior: 'smooth' });
+    }
+
     function checkPassword() {
         const password = prompt("Digite a senha para acessar a página de sorteio:");
         if (password === "VAIDACERTO") {
@@ -85,6 +167,179 @@
             alert("Senha incorreta!");
         }
     }
+
+    const numberContainer = document.getElementById('numbers');
+    let selectedNumbers = []; // Reiniciada como array vazio
+    const pricePerNumber = 1; // Alterado de 10 para 1
+
+    // Função para carregar números da API com retry
+    async function loadData() {
+        const maxRetries = 3;
+        let retries = 0;
+
+        while (retries < maxRetries) {
+            try {
+                console.log(`Tentativa ${retries + 1} de carregar números at ${new Date().toISOString()}...`);
+                const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 5000 // Timeout de 5 segundos
+                });
+                if (!availableRes.ok) throw new Error(`HTTP error: ${availableRes.status}`);
+                const availableNumbers = await availableRes.json();
+
+                numberContainer.innerHTML = ''; // Limpa os números existentes
+                for (let i = 1; i <= 1700; i++) {
+                    const num = String(i).padStart(4, '0');
+                    const numDiv = document.createElement('div');
+                    numDiv.classList.add('number');
+                    numDiv.textContent = num;
+
+                    if (!availableNumbers.includes(num)) {
+                        numDiv.classList.add('sold');
+                    } else {
+                        numDiv.addEventListener('click', () => {
+                            if (!numDiv.classList.contains('sold')) {
+                                numDiv.classList.toggle('selected');
+                                if (numDiv.classList.contains('selected')) {
+                                    selectedNumbers.push(num);
+                                } else {
+                                    const index = selectedNumbers.indexOf(num);
+                                    if (index > -1) selectedNumbers.splice(index, 1);
+                                }
+                                console.log('Selected numbers updated at:', new Date().toISOString(), selectedNumbers);
+                                document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                                document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                            }
+                        });
+                    }
+
+                    numberContainer.appendChild(numDiv);
+                }
+
+                const progressRes = await fetch('https://rifa-miguel.onrender.com/progress', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 5000
+                });
+                if (!progressRes.ok) throw new Error(`HTTP error: ${progressRes.status}`);
+                const { progress } = await progressRes.json();
+                const progressBar = document.getElementById('progress-bar');
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${progress}% Arrecadado`;
+
+                console.log('Números carregados com sucesso at:', new Date().toISOString());
+                return; // Sai do loop em caso de sucesso
+            } catch (error) {
+                console.error(`Erro na tentativa ${retries + 1} at ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack);
+                retries++;
+                if (retries === maxRetries) {
+                    console.warn('Máximo de tentativas atingido, usando fallback...');
+                    numberContainer.innerHTML = ''; // Limpa os números existentes
+                    for (let i = 1; i <= 1700; i++) {
+                        const num = String(i).padStart(4, '0');
+                        const numDiv = document.createElement('div');
+                        numDiv.classList.add('number');
+                        numDiv.textContent = num;
+                        numDiv.addEventListener('click', () => {
+                            numDiv.classList.toggle('selected');
+                            if (numDiv.classList.contains('selected')) {
+                                selectedNumbers.push(num);
+                            } else {
+                                const index = selectedNumbers.indexOf(num);
+                                if (index > -1) selectedNumbers.splice(index, 1);
+                            }
+                            console.log('Selected numbers updated (fallback) at:', new Date().toISOString(), selectedNumbers);
+                            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                            document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                        });
+                        numberContainer.appendChild(numDiv);
+                    }
+                    document.getElementById('progress-bar').style.width = `0%`;
+                    document.getElementById('progress-bar').textContent = `0% Arrecadado`;
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Espera 2 segundos antes de retry
+                }
+            }
+        }
+    }
+
+    loadData();
+
+    // Enviar dados para a API com retry
+    async function sendPaymentRequest(data) {
+        const maxRetries = 3;
+        let retries = 0;
+
+        while (retries < maxRetries) {
+            try {
+                console.log(`Tentativa ${retries + 1} de enviar pagamento at ${new Date().toISOString()}...`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout de 10 segundos
+                const response = await fetch('https://rifa-miguel.onrender.com/create_preference', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                console.log(`Response status: ${response.status} at ${new Date().toISOString()}`);
+                const responseData = await response.json();
+                console.log('API response:', responseData);
+
+                if (responseData.init_point) {
+                    window.location.href = responseData.init_point;
+                } else {
+                    alert(responseData.error || 'Erro ao criar o pagamento. Tente novamente.');
+                }
+                return; // Sai do loop em caso de sucesso
+            } catch (error) {
+                console.error(`Erro na tentativa ${retries + 1} at ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack, 'Code:', error.code);
+                retries++;
+                if (retries === maxRetries) {
+                    alert('Erro ao conectar ao servidor após várias tentativas. Detalhes: ' + error.message + '\nCódigo: ' + (error.code || 'unknown') + '\nStatus: ' + (error.status || 'unknown'));
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 3000)); // Espera 3 segundos antes de retry
+                }
+            }
+        }
+    }
+
+    // Enviar dados para a API
+    document.getElementById('payment-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const buyerName = document.getElementById('buyer-name').value;
+        const buyerPhone = document.getElementById('buyer-phone').value;
+        const quantity = selectedNumbers.length;
+
+        console.log('Selected numbers before submit at:', new Date().toISOString(), selectedNumbers);
+        if (selectedNumbers.length === 0) {
+            console.warn('No numbers selected before submit at:', new Date().toISOString());
+        }
+
+        if (quantity === 0) {
+            alert('Por favor, selecione pelo menos um número.');
+            return;
+        }
+        if (!buyerName || !buyerPhone) {
+            alert('Por favor, preencha nome e telefone.');
+            return;
+        }
+
+        const paymentData = {
+            quantity,
+            buyerName,
+            buyerPhone,
+            numbers: selectedNumbers
+        };
+        console.log('Sending payment request with at:', new Date().toISOString(), paymentData);
+
+        await sendPaymentRequest(paymentData);
+    });
 </script>
 
 </body>
