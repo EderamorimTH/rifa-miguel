@@ -261,6 +261,43 @@
 
     loadData();
 
+    // Enviar dados para a API com retry
+    async function sendPaymentRequest(data) {
+        const maxRetries = 3;
+        let retries = 0;
+
+        while (retries < maxRetries) {
+            try {
+                console.log(`Tentativa ${retries + 1} de enviar pagamento...`);
+                const response = await fetch('https://mp-api.onrender.com/create_preference', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const responseData = await response.json();
+                console.log('API response:', responseData);
+
+                if (responseData.init_point) {
+                    window.location.href = responseData.init_point;
+                } else {
+                    alert(responseData.error || 'Erro ao criar o pagamento. Tente novamente.');
+                }
+                return; // Sai do loop em caso de sucesso
+            } catch (error) {
+                console.error(`Erro na tentativa ${retries + 1}:`, error.message);
+                retries++;
+                if (retries === maxRetries) {
+                    alert('Erro ao conectar ao servidor após várias tentativas. Detalhes: ' + error.message);
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Espera 2 segundos antes de retry
+                }
+            }
+        }
+    }
+
     // Enviar dados para a API
     document.getElementById('payment-form').addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -283,33 +320,15 @@
             return;
         }
 
-        try {
-            console.log('Sending request to /create_preference with:', { quantity, buyerName, buyerPhone, numbers: selectedNumbers });
-            const response = await fetch('https://mp-api.onrender.com/create_preference', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    quantity,
-                    buyerName,
-                    buyerPhone,
-                    numbers: selectedNumbers // Certifica que numbers é enviado
-                })
-            });
+        const paymentData = {
+            quantity,
+            buyerName,
+            buyerPhone,
+            numbers: selectedNumbers
+        };
+        console.log('Sending payment request with:', paymentData);
 
-            const data = await response.json();
-            console.log('API response:', data); // Log da resposta da API
-
-            if (data.init_point) {
-                window.location.href = data.init_point;
-            } else {
-                alert(data.error || 'Erro ao criar o pagamento. Tente novamente.');
-            }
-        } catch (error) {
-            console.error('Frontend error:', error.message); // Log detalhado do erro
-            alert('Erro ao conectar ao servidor. Tente novamente mais tarde. Detalhes: ' + error.message);
-        }
+        await sendPaymentRequest(paymentData);
     });
 </script>
 
