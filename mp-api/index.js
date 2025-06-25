@@ -23,7 +23,7 @@ async function connectDB() {
     db = client.db('rifa_miguel');
     console.log('Conectado ao MongoDB!');
   } catch (error) {
-    console.error('Erro ao conectar ao MongoDB:', error);
+    console.error('Erro ao conectar ao MongoDB:', error.message);
   }
 }
 connectDB();
@@ -34,7 +34,7 @@ app.get('/test_mp', async (req, res) => {
     const preference = new Preference(mp);
     res.json({ status: 'Mercado Pago SDK initialized successfully' });
   } catch (error) {
-    console.error('Mercado Pago test error:', error);
+    console.error('Mercado Pago test error:', error.message);
     res.status(500).json({ error: 'Mercado Pago initialization failed', details: error.message });
   }
 });
@@ -45,7 +45,7 @@ app.get('/test_db', async (req, res) => {
     await db.collection('purchases').findOne();
     res.json({ status: 'MongoDB connected successfully' });
   } catch (error) {
-    console.error('MongoDB test error:', error);
+    console.error('MongoDB test error:', error.message);
     res.status(500).json({ error: 'MongoDB connection failed', details: error.message });
   }
 });
@@ -53,12 +53,22 @@ app.get('/test_db', async (req, res) => {
 // Endpoint para verificar números disponíveis
 app.get('/available_numbers', async (req, res) => {
   try {
+    console.log('Iniciando busca de números disponíveis...');
     if (!db) throw new Error('MongoDB não conectado');
+    console.log('Conexão com MongoDB confirmada.');
     const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.flatMap(p => p.numbers || []);
+    console.log(`Encontradas ${purchases.length} compras na coleção purchases.`);
+    const soldNumbers = purchases.flatMap(p => {
+      if (!p.numbers || !Array.isArray(p.numbers)) {
+        console.log(`Compra inválida encontrada: ${JSON.stringify(p)}`);
+        return [];
+      }
+      return p.numbers;
+    });
+    console.log(`Números vendidos: ${soldNumbers.length}`);
     const allNumbers = Array.from({ length: 1700 }, (_, i) => String(i + 1).padStart(4, '0'));
     const availableNumbers = allNumbers.filter(num => !soldNumbers.includes(num));
-    console.log(`Available numbers: ${availableNumbers.length} numbers returned`);
+    console.log(`Números disponíveis: ${availableNumbers.length}`);
     res.json(availableNumbers);
   } catch (error) {
     console.error('Erro ao buscar números disponíveis:', error.message);
@@ -75,7 +85,7 @@ app.get('/progress', async (req, res) => {
     const progress = (soldNumbers / totalNumbers) * 100;
     res.json({ progress: progress.toFixed(2) });
   } catch (error) {
-    console.error('Erro ao calcular progresso:', error);
+    console.error('Erro ao calcular progresso:', error.message);
     res.status(500).json({ error: 'Erro ao calcular progresso' });
   }
 });
@@ -86,7 +96,7 @@ app.get('/purchases', async (req, res) => {
     const purchases = await db.collection('purchases').find().toArray();
     res.json(purchases);
   } catch (error) {
-    console.error('Erro ao buscar compras:', error);
+    console.error('Erro ao buscar compras:', error.message);
     res.status(500).json({ error: 'Erro ao buscar compras' });
   }
 });
@@ -150,12 +160,12 @@ app.post('/create_preference', async (req, res) => {
     const response = await preference.create(preferenceData);
     res.json({ init_point: response.init_point });
   } catch (error) {
-    console.error('Error in /create_preference:', error.message);
+    console.error('Erro in /create_preference:', error.message);
     res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
   }
 });
 
-// Endpoint para salvar compra após aprovação
+// Endpoint para registrar compra após aprovação
 app.post('/webhook', async (req, res) => {
   try {
     const { type, data } = req.body;
@@ -174,7 +184,7 @@ app.post('/webhook', async (req, res) => {
     }
     res.status(200).send('OK');
   } catch (error) {
-    console.error('Erro no webhook:', error);
+    console.error('Erro no webhook:', error.message);
     res.status(500).send('Erro no webhook');
   }
 });
