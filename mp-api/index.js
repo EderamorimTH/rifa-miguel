@@ -301,6 +301,31 @@ async function getPreferenceIdFromPayment(paymentId) {
   }
 }
 
+// Rota para verificar a senha
+app.post('/verify_password', (req, res) => {
+  try {
+    const { password } = req.body;
+    const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO'; // Usa variável de ambiente
+    console.log('Verificando senha às:', new Date().toISOString());
+
+    if (!password) {
+      console.log('Erro: Senha não fornecida');
+      return res.status(400).json({ error: 'Senha não fornecida' });
+    }
+
+    if (password === correctPassword) {
+      console.log('Senha válida');
+      res.json({ valid: true });
+    } else {
+      console.log('Senha inválida');
+      res.json({ valid: false });
+    }
+  } catch (error) {
+    console.error('Erro ao verificar senha:', error.message);
+    res.status(500).json({ error: 'Erro ao verificar senha', details: error.message });
+  }
+});
+
 // Endpoint temporário para testar pagamento
 app.get('/test_payment/:id', async (req, res) => {
   try {
