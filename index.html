@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rifa Solidária para o Miguel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0; padding: 0;
+            margin: 0;
+            padding: 0;
             background-color: #f4f4f4;
             color: #333;
         }
@@ -16,9 +17,6 @@
             color: white;
             padding: 10px 20px;
             text-align: center;
-        }
-        header h1 {
-            margin: 0; font-size: 2em;
         }
         nav a {
             color: white;
@@ -30,6 +28,44 @@
             padding: 20px;
             background-color: white;
         }
+        .progress-container {
+            margin: 20px auto;
+            width: 80%;
+            background-color: #ddd;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            width: 70%;
+            height: 20px;
+            background-color: #28a745;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+        }
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+            gap: 5px;
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+        .number {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        .number.sold {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .number.selected {
+            background-color: #ffc107;
+            color: black;
+        }
         .form-container {
             max-width: 400px;
             margin: 20px auto;
@@ -38,8 +74,7 @@
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .form-container input,
-        .form-container select {
+        .form-container input {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -55,112 +90,90 @@
             cursor: pointer;
             width: 100%;
         }
-        .assigned-numbers {
-            background-color: #e9ecef;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            min-height: 30px;
-        }
         footer {
             background-color: #333;
             color: white;
             text-align: center;
             padding: 10px;
-            margin-top: 40px;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Rifa Solidária para o Miguel</h1>
-        <nav>
-            <a href="#home">Início</a>
-            <a href="#sobre">Sobre o Miguel</a>
-            <a href="#como-funciona">Como Funciona</a>
-            <a href="#contato">Contato</a>
-        </nav>
-    </header>
 
-    <section class="hero">
-        <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
-        <p>Agora é simples: você escolhe apenas a quantidade de números que deseja e o sistema sorteia aleatoriamente para você!</p>
-        <p>Valor por número: R$ 10,00</p>
-    </section>
+<header>
+    <h1>Rifa Solidária para o Miguel</h1>
+    <nav>
+        <a href="#home">Início</a>
+        <a href="#sobre">Sobre o Miguel</a>
+        <a href="#como-funciona">Como Funciona</a>
+        <a href="#contato">Contato</a>
+    </nav>
+</header>
 
-    <section class="form-container">
-        <h3>Escolha a quantidade de números</h3>
-        <form id="raffle-form" onsubmit="event.preventDefault(); alert('Obrigado pela compra! Entraremos em contato.');">
-            <input type="text" placeholder="Nome Completo" required />
-            <input type="tel" placeholder="Telefone (WhatsApp)" required />
-            <select id="quantity" required>
-                <option value="">Quantos números deseja?</option>
-                <option value="1">1 número (R$ 10)</option>
-                <option value="2">2 números (R$ 20)</option>
-                <option value="3">3 números (R$ 30)</option>
-                <option value="4">4 números (R$ 40)</option>
-                <option value="5">5 números (R$ 50)</option>
-                <option value="6">6 números (R$ 60)</option>
-                <option value="7">7 números (R$ 70)</option>
-                <option value="8">8 números (R$ 80)</option>
-                <option value="9">9 números (R$ 90)</option>
-                <option value="10">10 números (R$ 100)</option>
-                <option value="11">11 números (R$ 110)</option>
-                <option value="12">12 números (R$ 120)</option>
-                <option value="13">13 números (R$ 130)</option>
-                <option value="14">14 números (R$ 140)</option>
-                <option value="15">15 números (R$ 150)</option>
-                <option value="16">16 números (R$ 160)</option>
-                <option value="17">17 números (R$ 170)</option>
-                <option value="18">18 números (R$ 180)</option>
-                <option value="19">19 números (R$ 190)</option>
-                <option value="20">20 números (R$ 200)</option>
-            </select>
-            <div class="assigned-numbers" id="assigned-numbers">
-                Números sorteados: Nenhum ainda
-            </div>
-            <button type="button" onclick="generateRandomNumbers()">Sortear Números</button>
-            <button type="submit">Pagar com Pix/Cartão</button>
-        </form>
-    </section>
+<section class="hero">
+    <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
+    <p>Compre números por R$ 10 e concorra a R$ 2.000. Todo o valor será usado para a cirurgia de estrabismo do Miguel!</p>
+    <div class="progress-container">
+        <div class="progress-bar">70% Arrecadado</div>
+    </div>
+    <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
+</section>
 
-    <footer>
-        <p>Contato: rifaparaomiguel@email.com | WhatsApp: (XX) XXXXX-XXXX</p>
-        <p>Compartilhe: [WhatsApp] [Instagram] [Facebook]</p>
-    </footer>
+<section id="numbers" class="number-grid">
+    <!-- Os 1700 números serão gerados via JavaScript -->
+</section>
 
-    <script>
-        const totalNumbers = 1700;
-        const soldNumbers = []; // Pode adicionar números já vendidos aqui, se quiser bloquear
+<section class="form-container">
+    <h3>Finalize sua compra</h3>
+    <form>
+        <input type="text" placeholder="Nome Completo" required>
+        <input type="tel" placeholder="Telefone (WhatsApp)" required>
+        <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
+        <p>Total: R$ <span id="total-price">0</span></p>
+        <button type="submit">Pagar com Pix/Cartão</button>
+    </form>
+</section>
 
-        function generateRandomNumbers() {
-            const quantity = parseInt(document.getElementById('quantity').value);
-            if (!quantity || quantity <= 0) {
-                alert('Por favor, selecione uma quantidade válida de números.');
-                return;
-            }
+<footer>
+    <p>Contato: rifaparaomiguel@email.com | WhatsApp: (XX) XXXXX-XXXX</p>
+    <p>Compartilhe: [WhatsApp] [Instagram] [Facebook]</p>
+</footer>
 
-            const availableNumbers = [];
-            for (let i = 1; i <= totalNumbers; i++) {
-                if (!soldNumbers.includes(i)) {
-                    availableNumbers.push(i);
+<script>
+    function scrollToNumbers() {
+        document.getElementById('numbers').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    const numberContainer = document.getElementById('numbers');
+    const selectedNumbers = [];
+    const pricePerNumber = 10;
+
+    // Gerar números de 1 a 1700
+    for (let i = 1; i <= 1700; i++) {
+        const numDiv = document.createElement('div');
+        numDiv.classList.add('number');
+        numDiv.textContent = String(i).padStart(4, '0');
+
+        numDiv.addEventListener('click', () => {
+            if (!numDiv.classList.contains('sold')) {
+                numDiv.classList.toggle('selected');
+                const numberText = numDiv.textContent;
+
+                if (numDiv.classList.contains('selected')) {
+                    selectedNumbers.push(numberText);
+                } else {
+                    const index = selectedNumbers.indexOf(numberText);
+                    if (index > -1) selectedNumbers.splice(index, 1);
                 }
-            }
 
-            if (quantity > availableNumbers.length) {
-                alert('Quantidade maior que o número de disponíveis.');
-                return;
+                document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
             }
+        });
 
-            const selected = [];
-            while (selected.length < quantity) {
-                const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-                selected.push(availableNumbers.splice(randomIndex, 1)[0]);
-            }
+        numberContainer.appendChild(numDiv);
+    }
+</script>
 
-            const formatted = selected.map(n => String(n).padStart(4, '0'));
-            document.getElementById('assigned-numbers').textContent = 'Números sorteados: ' + formatted.join(', ');
-        }
-    </script>
 </body>
 </html>
