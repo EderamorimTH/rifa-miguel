@@ -154,16 +154,17 @@ app.post('/create_preference', async (req, res) => {
         },
         back_urls: {
           success: "https://ederamorimth.github.io/rifa-miguel/sucesso.html",
-          failure: "https://ederamorimth.github.io/rufa-miguel/erro.html",
+          failure: "https://ederamorimth.github.io/rifa-miguel/erro.html",
           pending: "https://ederamorimth.github.io/rifa-miguel/pendente.html"
         },
         auto_return: "approved",
-        external_reference: JSON.stringify({ buyerName, buyerPhone, numbers })
+        external_reference: JSON.stringify({ buyerName, buyerPhone, numbers }),
+        notification_url: "https://rifa-miguel.onrender.com/webhook" // Adiciona URL de notificação
       }
     };
 
     const response = await preference.create(preferenceData);
-    console.log('Preference created successfully, init_point:', response.init_point);
+    console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id);
     res.json({ init_point: response.init_point });
   } catch (error) {
     console.error('Error in /create_preference at:', new Date().toISOString(), error.message, 'Stack:', error.stack);
@@ -184,12 +185,18 @@ app.all('/webhook', async (req, res) => {
       console.log('Processing POST webhook...', 'Type:', type, 'Data:', data);
       if (type === 'payment') {
         let paymentStatus;
+        let paymentDetails;
         if (data && data.id) {
           try {
             const payment = new Payment(mp);
-            const paymentDetails = await payment.get({ id: data.id });
+            paymentDetails = await payment.get({ id: data.id });
             paymentStatus = paymentDetails.status;
-            console.log('Payment status:', paymentStatus);
+            console.log('Payment status:', paymentStatus, 'Payment details:', {
+              id: paymentDetails.id,
+              status: paymentDetails.status,
+              preference_id: paymentDetails.preference_id || 'Não encontrado',
+              external_reference: paymentDetails.external_reference || 'Não encontrado'
+            });
           } catch (error) {
             console.log('Erro ao buscar pagamento:', error.message);
             return res.status(200).send('OK'); // Ignora erro para testes
@@ -201,28 +208,52 @@ app.all('/webhook', async (req, res) => {
 
         if (paymentStatus === 'approved') {
           console.log('Payment approved, processing webhook...', 'Payment data:', data);
-          const preferenceId = data.preference_id || (data && data.id && await getPreferenceIdFromPayment(data.id));
-          if (!preferenceId) {
-            console.log('Preference ID não encontrado, ignorando');
+          // Tenta usar external_reference diretamente do pagamento
+          let externalReference = paymentDetails.external_reference;
+          let buyerName, buyerPhone, numbers;
+          if (externalReference) {
+            try {
+              const parsed = JSON.parse(externalReference);
+              buyerName = parsed.buyerName;
+              buyerPhone = parsed.buyerPhone;
+              numbers = parsed.numbers;
+              console.log('Parsed external reference from payment:', { buyerName, buyerPhone, numbers });
+            } catch (e) {
+              console.error('Erro ao parsear external_reference do pagamento:', e.message);
+              return res.status(200).send('OK');
+            }
+          } else {
+            // Tenta buscar via preference_id
+            const preferenceId = data.preference_id || (data && data.id && await getPreferenceIdFromPayment(data.id));
+            if (!preferenceId) {
+              console.log('Preference ID não encontrado, ignorando');
+              return res.status(200).send('OK');
+            }
+            let preference;
+            try {
+              preference = await new Preference(mp).get({ id: preferenceId });
+              console.log('Preference retrieved:', preference);
+              try {
+                externalReference = JSON.parse(preference.external_reference);
+                buyerName = externalReference.buyerName;
+                buyerPhone = externalReference.buyerPhone;
+                numbers = externalReference.numbers;
+                console.log('Parsed external reference from preference:', { buyerName, buyerPhone, numbers });
+              } catch (e) {
+                console.error('Erro ao parsear external_reference da preferência:', e.message);
+                return res.status(200).send('OK');
+              }
+            } catch (error) {
+              console.error('Erro ao buscar preferência:', error.message);
+              return res.status(200).send('OK');
+            }
+          }
+
+          // Valida dados antes de salvar
+          if (!buyerName || !buyerPhone || !numbers || !Array.isArray(numbers)) {
+            console.error('Dados inválidos para salvar compra:', { buyerName, buyerPhone, numbers });
             return res.status(200).send('OK');
           }
-          let preference;
-          try {
-            preference = await new Preference(mp).get({ id: preferenceId });
-            console.log('Preference retrieved:', preference);
-          } catch (error) {
-            console.error('Erro ao buscar preferência:', error.message);
-            return res.status(200).send('OK');
-          }
-          let externalReference;
-          try {
-            externalReference = JSON.parse(preference.external_reference);
-          } catch (e) {
-            console.error('Erro ao parsear external_reference:', e.message);
-            return res.status(200).send('OK');
-          }
-          const { buyerName, buyerPhone, numbers } = externalReference;
-          console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
 
           // Salvar no MongoDB
           if (!db) {
@@ -257,13 +288,42 @@ async function getPreferenceIdFromPayment(paymentId) {
   try {
     const payment = new Payment(mp);
     const paymentDetails = await payment.get({ id: paymentId });
-    console.log('Payment details for preference_id:', paymentDetails);
+    console.log('Payment details for preference_id:', {
+      paymentId,
+      preference_id: paymentDetails.preference_id || 'Não encontrado',
+      status: paymentDetails.status,
+      external_reference: paymentDetails.external_reference || 'Não encontrado'
+    });
     return paymentDetails.preference_id || null;
   } catch (error) {
     console.error('Erro ao buscar preference_id:', error.message);
     return null;
   }
 }
+
+// Endpoint temporário para testar pagamento
+app.get('/test_payment/:id', async (req, res) => {
+  try {
+    const paymentId = req.params.id;
+    const payment = new Payment(mp);
+    const paymentDetails = await payment.get({ id: paymentId });
+    res.json({ paymentDetails, preferenceId: paymentDetails.preference_id || 'Não encontrado' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Endpoint temporário para testar preferência
+app.get('/test_preference/:id', async (req, res) => {
+  try {
+    const preferenceId = req.params.id;
+    const preference = new Preference(mp);
+    const preferenceDetails = await preference.get({ id: preferenceId });
+    res.json({ preferenceDetails, externalReference: preferenceDetails.external_reference || 'Não encontrado' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.get('/', (req, res) => {
   res.send('API da Rifa está online!');
