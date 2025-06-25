@@ -146,7 +146,7 @@ app.post('/create_preference', async (req, res) => {
         items: [{
           title: `Rifa - ${quantity} número(s)`,
           quantity: Number(quantity),
-          unit_price: 1,
+          unit_price: 10,
         }],
         payer: {
           name: buyerName,
