@@ -234,7 +234,7 @@
                 progressBar.textContent = `${progress}% Arrecadado`;
 
                 console.log('Números carregados com sucesso!');
-                submitButton.disabled = false; // Habilita o botão de pagamento
+                submitButton.disabled = false;
                 errorMessageDiv.textContent = '';
                 return;
             } catch (error) {
@@ -243,10 +243,10 @@
                 if (retries === maxRetries) {
                     alert('Não foi possível carregar os números disponíveis. Por favor, tente novamente mais tarde.');
                     errorMessageDiv.textContent = 'Erro ao carregar números. Tente recarregar a página.';
-                    submitButton.disabled = true; // Mantém o botão desabilitado
+                    submitButton.disabled = true;
                     return;
                 }
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Espera 2 segundos
+                await new Promise(resolve => setTimeout(resolve, 2000));
             }
         }
     }
