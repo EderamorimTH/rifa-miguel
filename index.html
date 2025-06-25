@@ -90,6 +90,14 @@
             cursor: pointer;
             width: 100%;
         }
+        .info-section {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
         footer {
             background-color: #333;
             color: white;
@@ -98,22 +106,6 @@
         }
         .contact-section {
             max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .estrabismo-section {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .como-funciona-section {
-            max-width: 800px;
             margin: 20px auto;
             padding: 20px;
             background-color: white;
@@ -138,8 +130,8 @@
     <h1>Rifa Solidária para o Miguel</h1>
     <nav>
         <a href="#home">Início</a>
-        <a href="#sobre">Sobre o Miguel</a>
         <a href="#como-funciona">Como Funciona</a>
+        <a href="#estrabismo">Sobre o Estrabismo</a>
         <a href="#contato">Contato</a>
         <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
     </nav>
@@ -152,6 +144,22 @@
         <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
     </div>
     <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
+</section>
+
+<section id="como-funciona" class="info-section">
+    <h3>Como Funciona</h3>
+    <p>A rifa oferece 1700 números, cada um custando R$ 10, com um prêmio de R$ 2.000. O sorteio será realizado no dia 24 de dezembro ou assim que 75% dos números (1275) forem vendidos, o que ocorrer primeiro. Os números comprados e pagos ficam indisponíveis para outros participantes. Se um número for selecionado e não pago, ele volta a ficar disponível após 24 horas. Participe e ajude o Miguel!</p>
+</section>
+
+<section id="estrabismo" class="info-section">
+    <h3>Sobre o Estrabismo e a Importância da Cirurgia aos 4 Anos</h3>
+    <p>O estrabismo é uma condição em que os olhos não estão alinhados corretamente, podendo apontar em direções diferentes. No caso do Miguel, que tem 4 anos, essa cirurgia é crucial porque:</p>
+    <ul>
+        <li><strong>Desenvolvimento Visual**: Aos 4 anos, a visão do Miguel ainda está se desenvolvendo. Corrigir o estrabismo agora ajuda a evitar que ele perca profundidade ou desenvolva ambliopia (olho preguiçoso).</li>
+        <li><strong>Saúde Ocular**: A cirurgia pode prevenir problemas futuros, como dor de cabeça ou tensão ocular, além de melhorar a estética e a autoestima.</li>
+        <li><strong>Benefícios para a Vida**: Com os olhos alinhados, Miguel terá uma visão binocular melhor, essencial para atividades como esportes, leitura e aprendizado, impactando positivamente sua infância e futuro.</li>
+    </ul>
+    <p>Fazer a cirurgia agora é ideal porque o cérebro de uma criança pequena é mais adaptável, aumentando as chances de sucesso e recuperação completa.</p>
 </section>
 
 <section id="numbers" class="number-grid">
@@ -174,22 +182,6 @@
     <p>Evelyn Mae do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
     <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
     <p>Para dúvidas, entre em contato via WhatsApp!</p>
-</section>
-
-<section id="sobre" class="estrabismo-section">
-    <h3>Sobre o Estrabismo e a Importância da Cirurgia aos 4 Anos</h3>
-    <p>O estrabismo é uma condição em que os olhos não estão alinhados corretamente, podendo apontar em direções diferentes. No caso do Miguel, que tem 4 anos, essa cirurgia é crucial porque:</p>
-    <ul>
-        <li><strong>Desenvolvimento Visual**: Aos 4 anos, a visão do Miguel ainda está se desenvolvendo. Corrigir o estrabismo agora ajuda a evitar que ele perca profundidade ou desenvolva ambliopia (olho preguiçoso).</li>
-        <li><strong>Saúde Ocular**: A cirurgia pode prevenir problemas futuros, como dor de cabeça ou tensão ocular, além de melhorar a estética e a autoestima.</li>
-        <li><strong>Benefícios para a Vida**: Com os olhos alinhados, Miguel terá uma visão binocular melhor, essencial para atividades como esportes, leitura e aprendizado, impactando positivamente sua infância e futuro.</li>
-    </ul>
-    <p>Fazer a cirurgia agora é ideal porque o cérebro de uma criança pequena é mais adaptável, aumentando as chances de sucesso e recuperação completa.</p>
-</section>
-
-<section id="como-funciona" class="como-funciona-section">
-    <h3>Como Funciona</h3>
-    <p>A rifa oferece 1700 números, cada um custando R$ 10, com um prêmio de R$ 2.000. O sorteio será realizado no dia 24 de dezembro ou assim que 75% dos números (1275) forem vendidos, o que ocorrer primeiro. Os números comprados e pagos ficam indisponíveis para outros participantes. Se um número for selecionado e não pago, ele volta a ficar disponível após 24 horas. Participe e ajude o Miguel!</p>
 </section>
 
 <footer>
@@ -215,14 +207,39 @@
     const selectedNumbers = [];
     const pricePerNumber = 10;
 
-    // Buscar números disponíveis e progresso
+    // Função para gerar números localmente (temporário até a API funcionar)
+    function generateNumbers() {
+        // Simulação: todos os números estão disponíveis inicialmente
+        for (let i = 1; i <= 1700; i++) {
+            const num = String(i).padStart(4, '0');
+            const numDiv = document.createElement('div');
+            numDiv.classList.add('number');
+            numDiv.textContent = num;
+
+            numDiv.addEventListener('click', () => {
+                if (!numDiv.classList.contains('sold')) {
+                    numDiv.classList.toggle('selected');
+                    if (numDiv.classList.contains('selected')) {
+                        selectedNumbers.push(num);
+                    } else {
+                        const index = selectedNumbers.indexOf(num);
+                        if (index > -1) selectedNumbers.splice(index, 1);
+                    }
+                    document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                    document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                }
+            });
+
+            numberContainer.appendChild(numDiv);
+        }
+    }
+
+    // Função para carregar dados da API (opcional, se a API estiver pronta)
     async function loadData() {
         try {
-            // Buscar números disponíveis
             const availableRes = await fetch('https://mp-api.onrender.com/available_numbers');
             const availableNumbers = await availableRes.json();
 
-            // Gerar números de 1 a 1700
             for (let i = 1; i <= 1700; i++) {
                 const num = String(i).padStart(4, '0');
                 const numDiv = document.createElement('div');
@@ -250,15 +267,16 @@
                 numberContainer.appendChild(numDiv);
             }
 
-            // Buscar progresso
             const progressRes = await fetch('https://mp-api.onrender.com/progress');
             const { progress } = await progressRes.json();
             const progressBar = document.getElementById('progress-bar');
             progressBar.style.width = `${progress}%`;
             progressBar.textContent = `${progress}% Arrecadado`;
         } catch (error) {
-            console.error(error);
-            alert('Erro ao carregar dados. Tente novamente.');
+            console.error('Erro ao carregar dados da API, usando números locais:', error);
+            generateNumbers(); // Fallback para gerar números localmente se a API falhar
+            document.getElementById('progress-bar').style.width = `0%`; // Progresso inicial 0% sem API
+            document.getElementById('progress-bar').textContent = `0% Arrecadado`;
         }
     }
 
