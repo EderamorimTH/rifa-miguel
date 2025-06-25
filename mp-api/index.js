@@ -53,14 +53,16 @@ app.get('/test_db', async (req, res) => {
 // Endpoint para verificar números disponíveis
 app.get('/available_numbers', async (req, res) => {
   try {
+    if (!db) throw new Error('MongoDB não conectado');
     const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.flatMap(p => p.numbers);
+    const soldNumbers = purchases.flatMap(p => p.numbers || []);
     const allNumbers = Array.from({ length: 1700 }, (_, i) => String(i + 1).padStart(4, '0'));
     const availableNumbers = allNumbers.filter(num => !soldNumbers.includes(num));
+    console.log(`Available numbers: ${availableNumbers.length} numbers returned`);
     res.json(availableNumbers);
   } catch (error) {
-    console.error('Erro ao buscar números disponíveis:', error);
-    res.status(500).json({ error: 'Erro ao buscar números disponíveis' });
+    console.error('Erro ao buscar números disponíveis:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar números disponíveis', details: error.message });
   }
 });
 
@@ -69,7 +71,7 @@ app.get('/progress', async (req, res) => {
   try {
     const totalNumbers = 1700;
     const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.flatMap(p => p.numbers).length;
+    const soldNumbers = purchases.flatMap(p => p.numbers || []).length;
     const progress = (soldNumbers / totalNumbers) * 100;
     res.json({ progress: progress.toFixed(2) });
   } catch (error) {
@@ -117,7 +119,7 @@ app.post('/create_preference', async (req, res) => {
 
     // Verify available numbers
     const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.flatMap(p => p.numbers);
+    const soldNumbers = purchases.flatMap(p => p.numbers || []);
     const invalidNumbers = numbers.filter(num => soldNumbers.includes(num));
     if (invalidNumbers.length > 0) {
       return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
