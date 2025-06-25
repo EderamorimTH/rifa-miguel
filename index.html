@@ -179,10 +179,11 @@
 
         while (retries < maxRetries) {
             try {
-                console.log(`Tentativa ${retries + 1} de carregar números...`);
+                console.log(`Tentativa ${retries + 1} de carregar números at ${new Date().toISOString()}...`);
                 const availableRes = await fetch('https://mp-api.onrender.com/available_numbers', {
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 5000 // Timeout de 5 segundos
                 });
                 if (!availableRes.ok) throw new Error(`HTTP error: ${availableRes.status}`);
                 const availableNumbers = await availableRes.json();
@@ -206,7 +207,7 @@
                                     const index = selectedNumbers.indexOf(num);
                                     if (index > -1) selectedNumbers.splice(index, 1);
                                 }
-                                console.log('Selected numbers updated:', selectedNumbers); // Log de depuração
+                                console.log('Selected numbers updated at:', new Date().toISOString(), selectedNumbers);
                                 document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
                                 document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                             }
@@ -216,17 +217,21 @@
                     numberContainer.appendChild(numDiv);
                 }
 
-                const progressRes = await fetch('https://mp-api.onrender.com/progress');
+                const progressRes = await fetch('https://mp-api.onrender.com/progress', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 5000
+                });
                 if (!progressRes.ok) throw new Error(`HTTP error: ${progressRes.status}`);
                 const { progress } = await progressRes.json();
                 const progressBar = document.getElementById('progress-bar');
                 progressBar.style.width = `${progress}%`;
                 progressBar.textContent = `${progress}% Arrecadado`;
 
-                console.log('Números carregados com sucesso!');
+                console.log('Números carregados com sucesso at:', new Date().toISOString());
                 return; // Sai do loop em caso de sucesso
             } catch (error) {
-                console.error(`Erro na tentativa ${retries + 1}:`, error.message);
+                console.error(`Erro na tentativa ${retries + 1} at ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack);
                 retries++;
                 if (retries === maxRetries) {
                     console.warn('Máximo de tentativas atingido, usando fallback...');
@@ -244,7 +249,7 @@
                                 const index = selectedNumbers.indexOf(num);
                                 if (index > -1) selectedNumbers.splice(index, 1);
                             }
-                            console.log('Selected numbers updated (fallback):', selectedNumbers); // Log de depuração
+                            console.log('Selected numbers updated (fallback) at:', new Date().toISOString(), selectedNumbers);
                             document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
                             document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                         });
@@ -268,16 +273,20 @@
 
         while (retries < maxRetries) {
             try {
-                console.log(`Tentativa ${retries + 1} de enviar pagamento...`, new Date().toISOString());
+                console.log(`Tentativa ${retries + 1} de enviar pagamento at ${new Date().toISOString()}...`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // Timeout de 10 segundos
                 const response = await fetch('https://mp-api.onrender.com/create_preference', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
 
-                console.log(`Response status: ${response.status}`);
+                clearTimeout(timeoutId);
+                console.log(`Response status: ${response.status} at ${new Date().toISOString()}`);
                 const responseData = await response.json();
                 console.log('API response:', responseData);
 
@@ -288,12 +297,12 @@
                 }
                 return; // Sai do loop em caso de sucesso
             } catch (error) {
-                console.error(`Erro na tentativa ${retries + 1}:`, error.message, 'Stack:', error.stack);
+                console.error(`Erro na tentativa ${retries + 1} at ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack, 'Code:', error.code);
                 retries++;
                 if (retries === maxRetries) {
-                    alert('Erro ao conectar ao servidor após várias tentativas. Detalhes: ' + error.message + '\nStatus: ' + (error.status || 'unknown'));
+                    alert('Erro ao conectar ao servidor após várias tentativas. Detalhes: ' + error.message + '\nCódigo: ' + (error.code || 'unknown') + '\nStatus: ' + (error.status || 'unknown'));
                 } else {
-                    await new Promise(resolve => setTimeout(resolve, 2000)); // Espera 2 segundos antes de retry
+                    await new Promise(resolve => setTimeout(resolve, 3000)); // Espera 3 segundos antes de retry
                 }
             }
         }
@@ -307,9 +316,9 @@
         const buyerPhone = document.getElementById('buyer-phone').value;
         const quantity = selectedNumbers.length;
 
-        console.log('Selected numbers before submit:', selectedNumbers); // Log de depuração
+        console.log('Selected numbers before submit at:', new Date().toISOString(), selectedNumbers);
         if (selectedNumbers.length === 0) {
-            console.warn('No numbers selected before submit');
+            console.warn('No numbers selected before submit at:', new Date().toISOString());
         }
 
         if (quantity === 0) {
@@ -327,7 +336,7 @@
             buyerPhone,
             numbers: selectedNumbers
         };
-        console.log('Sending payment request with:', paymentData);
+        console.log('Sending payment request with at:', new Date().toISOString(), paymentData);
 
         await sendPaymentRequest(paymentData);
     });
