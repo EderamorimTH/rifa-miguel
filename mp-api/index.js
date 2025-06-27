@@ -204,75 +204,91 @@ app.all('/webhook', async (req, res) => {
       return res.status(200).send('Webhook endpoint is active');
     }
     if (req.method === 'POST') {
-      const { type, id, topic, resource } = req.body;
-      console.log('Processing POST webhook...', 'Type:', type, 'ID:', id, 'Topic:', topic, 'Resource:', resource);
-      if (type === 'payment' && id) {
-        const payment = new Payment(mp);
-        const paymentDetails = await payment.get({ id });
-        console.log('Payment details:', {
-          id: paymentDetails.id,
-          status: paymentDetails.status,
-          preference_id: paymentDetails.preference_id || 'Não encontrado',
-          external_reference: paymentDetails.external_reference || 'Não encontrado',
-          transaction_amount: paymentDetails.transaction_amount || 'Não encontrado',
-          date_approved: paymentDetails.date_approved || 'Não aprovado ainda'
-        });
+      const body = req.body;
+      console.log('Processing POST webhook...', 'Body:', JSON.stringify(body, null, 2));
+      let paymentId = null;
 
-        if (paymentDetails.status === 'approved' || paymentDetails.status === 'pending') {
-          let externalReference = paymentDetails.external_reference;
-          let buyerName, buyerPhone, numbers;
-          if (externalReference) {
-            try {
-              const parsed = JSON.parse(externalReference);
-              buyerName = parsed.buyerName;
-              buyerPhone = parsed.buyerPhone;
-              numbers = parsed.numbers;
-              console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
-            } catch (e) {
-              console.error('Erro ao parsear external_reference:', e.message);
+      // Extrair paymentId de diferentes formatos de notificação
+      if (body.type === 'payment' && body.data && body.data.id) {
+        paymentId = body.data.id;
+      } else if (body.resource && typeof body.resource === 'string' && body.resource.match(/^\d+$/)) {
+        paymentId = body.resource;
+      } else if (body.action === 'payment.updated' && body.data && body.data.id) {
+        paymentId = body.data.id;
+      }
+
+      if (paymentId) {
+        const payment = new Payment(mp);
+        try {
+          const paymentDetails = await payment.get({ id: paymentId });
+          console.log('Payment details:', {
+            id: paymentDetails.id,
+            status: paymentDetails.status,
+            preference_id: paymentDetails.preference_id || 'Não encontrado',
+            external_reference: paymentDetails.external_reference || 'Não encontrado',
+            transaction_amount: paymentDetails.transaction_amount || 'Não encontrado',
+            date_approved: paymentDetails.date_approved || 'Não aprovado ainda'
+          });
+
+          if (paymentDetails.status === 'approved' || paymentDetails.status === 'pending') {
+            let externalReference = paymentDetails.external_reference;
+            let buyerName, buyerPhone, numbers;
+            if (externalReference) {
+              try {
+                const parsed = JSON.parse(externalReference);
+                buyerName = parsed.buyerName;
+                buyerPhone = parsed.buyerPhone;
+                numbers = parsed.numbers;
+                console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
+              } catch (e) {
+                console.error('Erro ao parsear external_reference:', e.message);
+                return res.status(200).send('OK');
+              }
+            } else {
+              console.log('No external_reference in payment, skipping');
               return res.status(200).send('OK');
             }
-          } else {
-            console.log('No external_reference in payment, skipping');
-            return res.status(200).send('OK');
-          }
 
-          if (!buyerName || !buyerPhone || !numbers || !Array.isArray(numbers)) {
-            console.error('Dados inválidos para salvar compra:', { buyerName, buyerPhone, numbers });
-            return res.status(200).send('OK');
-          }
+            if (!buyerName || !buyerPhone || !numbers || !Array.isArray(numbers)) {
+              console.error('Dados inválidos para salvar compra:', { buyerName, buyerPhone, numbers });
+              return res.status(200).send('OK');
+            }
 
-          if (!db) {
-            console.error('MongoDB não conectado');
-            return res.status(500).send('Erro: MongoDB não conectado');
-          }
-          const existingPurchase = await db.collection('purchases').findOne({ paymentId: paymentDetails.id });
-          if (!existingPurchase) {
-            const result = await db.collection('purchases').insertOne({
-              buyerName,
-              buyerPhone,
-              numbers,
-              purchaseDate: new Date(),
-              paymentId: paymentDetails.id,
-              status: paymentDetails.status,
-              date_approved: paymentDetails.date_approved || null
-            });
-            console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers, status: paymentDetails.status });
+            if (!db) {
+              console.error('MongoDB não conectado');
+              return res.status(500).send('Erro: MongoDB não conectado');
+            }
+            const existingPurchase = await db.collection('purchases').findOne({ paymentId: paymentDetails.id });
+            if (!existingPurchase) {
+              const result = await db.collection('purchases').insertOne({
+                buyerName,
+                buyerPhone,
+                numbers,
+                purchaseDate: new Date(),
+                paymentId: paymentDetails.id,
+                status: paymentDetails.status,
+                date_approved: paymentDetails.date_approved || null
+              });
+              console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers, status: paymentDetails.status });
+            } else {
+              console.log('Purchase already exists for paymentId:', paymentDetails.id);
+            }
           } else {
-            console.log('Purchase already exists for paymentId:', paymentDetails.id);
+            console.log('Webhook ignored, status:', paymentDetails.status);
           }
-        } else {
-          console.log('Webhook ignored, status:', paymentDetails.status);
+        } catch (error) {
+          console.error('Erro ao buscar payment details:', error.message);
+          return res.status(200).send('OK'); // Continua respondendo OK para evitar bloqueio pelo Mercado Pago
         }
       } else {
-        console.log('Webhook ignored, unsupported type or missing ID:', { type, id, topic, resource });
+        console.log('Webhook ignored, no valid payment ID found:', { body });
       }
       return res.status(200).send('OK');
     }
     return res.status(405).send('Method Not Allowed');
   } catch (error) {
     console.error('Erro no webhook:', error.message);
-    return res.status(500).send('Erro no webhook');
+    return res.status(200).send('OK'); // Responde OK mesmo em erro para manter a integração ativa
   }
 });
 
