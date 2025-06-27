@@ -101,6 +101,31 @@ app.get('/purchases', async (req, res) => {
   }
 });
 
+// Rota para verificar a senha
+app.post('/verify_password', (req, res) => {
+  try {
+    const { password } = req.body;
+    const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO';
+    console.log('Verificando senha às:', new Date().toISOString());
+
+    if (!password) {
+      console.log('Erro: Senha não fornecida');
+      return res.status(400).json({ error: 'Senha não fornecida' });
+    }
+
+    if (password === correctPassword) {
+      console.log('Senha válida');
+      res.json({ valid: true });
+    } else {
+      console.log('Senha inválida');
+      res.json({ valid: false });
+    }
+  } catch (error) {
+    console.error('Erro ao verificar senha:', error.message);
+    res.status(500).json({ error: 'Erro ao verificar senha', details: error.message });
+  }
+});
+
 // Test endpoint to debug request body
 app.post('/test_create_preference', (req, res) => {
   console.log('Test request body:', req.body);
@@ -112,9 +137,6 @@ app.post('/create_preference', async (req, res) => {
   try {
     const { quantity, buyerName, buyerPhone, numbers } = req.body;
     console.log('Received request body at:', new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers });
-    if (typeof numbers === 'undefined') {
-      console.log('Warning: numbers is undefined in request body');
-    }
 
     // Validate inputs
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
@@ -159,12 +181,13 @@ app.post('/create_preference', async (req, res) => {
         },
         auto_return: "approved",
         external_reference: JSON.stringify({ buyerName, buyerPhone, numbers }),
-        notification_url: "https://rifa-miguel.onrender.com/webhook" // Adiciona URL de notificação
+        notification_url: "https://rifa-miguel.onrender.com/webhook"
       }
     };
 
+    console.log('Preference data being sent:', JSON.stringify(preferenceData, null, 2));
     const response = await preference.create(preferenceData);
-    console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id);
+    console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id, 'Back URLs:', preferenceData.body.back_urls);
     res.json({ init_point: response.init_point });
   } catch (error) {
     console.error('Error in /create_preference at:', new Date().toISOString(), error.message, 'Stack:', error.stack);
@@ -172,10 +195,10 @@ app.post('/create_preference', async (req, res) => {
   }
 });
 
-// Endpoint para webhook (suporta GET e POST)
+// Endpoint para webhook
 app.all('/webhook', async (req, res) => {
   try {
-    console.log('Webhook received:', req.body);
+    console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Body:', req.body);
     if (req.method === 'GET') {
       console.log('GET request received, responding with OK for test');
       return res.status(200).send('Webhook endpoint is active');
@@ -183,32 +206,17 @@ app.all('/webhook', async (req, res) => {
     if (req.method === 'POST') {
       const { type, data } = req.body;
       console.log('Processing POST webhook...', 'Type:', type, 'Data:', data);
-      if (type === 'payment') {
-        let paymentStatus;
-        let paymentDetails;
-        if (data && data.id) {
-          try {
-            const payment = new Payment(mp);
-            paymentDetails = await payment.get({ id: data.id });
-            paymentStatus = paymentDetails.status;
-            console.log('Payment status:', paymentStatus, 'Payment details:', {
-              id: paymentDetails.id,
-              status: paymentDetails.status,
-              preference_id: paymentDetails.preference_id || 'Não encontrado',
-              external_reference: paymentDetails.external_reference || 'Não encontrado'
-            });
-          } catch (error) {
-            console.log('Erro ao buscar pagamento:', error.message);
-            return res.status(200).send('OK'); // Ignora erro para testes
-          }
-        } else {
-          console.log('No payment ID or status found, skipping processing');
-          return res.status(200).send('OK');
-        }
+      if (type === 'payment' && data && data.id) {
+        const payment = new Payment(mp);
+        const paymentDetails = await payment.get({ id: data.id });
+        console.log('Payment details:', {
+          id: paymentDetails.id,
+          status: paymentDetails.status,
+          preference_id: paymentDetails.preference_id || 'Não encontrado',
+          external_reference: paymentDetails.external_reference || 'Não encontrado'
+        });
 
-        if (paymentStatus === 'approved') {
-          console.log('Payment approved, processing webhook...', 'Payment data:', data);
-          // Tenta usar external_reference diretamente do pagamento
+        if (paymentDetails.status === 'approved') {
           let externalReference = paymentDetails.external_reference;
           let buyerName, buyerPhone, numbers;
           if (externalReference) {
@@ -217,45 +225,21 @@ app.all('/webhook', async (req, res) => {
               buyerName = parsed.buyerName;
               buyerPhone = parsed.buyerPhone;
               numbers = parsed.numbers;
-              console.log('Parsed external reference from payment:', { buyerName, buyerPhone, numbers });
+              console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
             } catch (e) {
-              console.error('Erro ao parsear external_reference do pagamento:', e.message);
+              console.error('Erro ao parsear external_reference:', e.message);
               return res.status(200).send('OK');
             }
           } else {
-            // Tenta buscar via preference_id
-            const preferenceId = data.preference_id || (data && data.id && await getPreferenceIdFromPayment(data.id));
-            if (!preferenceId) {
-              console.log('Preference ID não encontrado, ignorando');
-              return res.status(200).send('OK');
-            }
-            let preference;
-            try {
-              preference = await new Preference(mp).get({ id: preferenceId });
-              console.log('Preference retrieved:', preference);
-              try {
-                externalReference = JSON.parse(preference.external_reference);
-                buyerName = externalReference.buyerName;
-                buyerPhone = externalReference.buyerPhone;
-                numbers = externalReference.numbers;
-                console.log('Parsed external reference from preference:', { buyerName, buyerPhone, numbers });
-              } catch (e) {
-                console.error('Erro ao parsear external_reference da preferência:', e.message);
-                return res.status(200).send('OK');
-              }
-            } catch (error) {
-              console.error('Erro ao buscar preferência:', error.message);
-              return res.status(200).send('OK');
-            }
+            console.log('No external_reference in payment, skipping');
+            return res.status(200).send('OK');
           }
 
-          // Valida dados antes de salvar
           if (!buyerName || !buyerPhone || !numbers || !Array.isArray(numbers)) {
             console.error('Dados inválidos para salvar compra:', { buyerName, buyerPhone, numbers });
             return res.status(200).send('OK');
           }
 
-          // Salvar no MongoDB
           if (!db) {
             console.error('MongoDB não conectado');
             return res.status(500).send('Erro: MongoDB não conectado');
@@ -269,7 +253,7 @@ app.all('/webhook', async (req, res) => {
           });
           console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers });
         } else {
-          console.log('Webhook ignored, status:', paymentStatus);
+          console.log('Webhook ignored, status:', paymentDetails.status);
         }
       } else {
         console.log('Webhook ignored, type:', type);
@@ -300,31 +284,6 @@ async function getPreferenceIdFromPayment(paymentId) {
     return null;
   }
 }
-
-// Rota para verificar a senha
-app.post('/verify_password', (req, res) => {
-  try {
-    const { password } = req.body;
-    const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO'; // Usa variável de ambiente
-    console.log('Verificando senha às:', new Date().toISOString());
-
-    if (!password) {
-      console.log('Erro: Senha não fornecida');
-      return res.status(400).json({ error: 'Senha não fornecida' });
-    }
-
-    if (password === correctPassword) {
-      console.log('Senha válida');
-      res.json({ valid: true });
-    } else {
-      console.log('Senha inválida');
-      res.json({ valid: false });
-    }
-  } catch (error) {
-    console.error('Erro ao verificar senha:', error.message);
-    res.status(500).json({ error: 'Erro ao verificar senha', details: error.message });
-  }
-});
 
 // Endpoint temporário para testar pagamento
 app.get('/test_payment/:id', async (req, res) => {
