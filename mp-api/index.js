@@ -168,7 +168,7 @@ app.post('/create_preference', async (req, res) => {
         items: [{
           title: `Rifa - ${quantity} número(s)`,
           quantity: Number(quantity),
-          unit_price: 1, // Alterado para 1 real
+          unit_price: 1, // Garantido como 1 real
         }],
         payer: {
           name: buyerName,
@@ -188,7 +188,7 @@ app.post('/create_preference', async (req, res) => {
     console.log('Preference data being sent:', JSON.stringify(preferenceData, null, 2));
     const response = await preference.create(preferenceData);
     console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id, 'Back URLs:', preferenceData.body.back_urls, 'Auto Return:', preferenceData.body.auto_return);
-    res.json({ init_point: response.init_point });
+    res.json({ init_point: response.init_point, preference_id: response.id }); // Retorna o preference_id
   } catch (error) {
     console.error('Error in /create_preference at:', new Date().toISOString(), error.message, 'Stack:', error.stack);
     res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
@@ -198,26 +198,27 @@ app.post('/create_preference', async (req, res) => {
 // Endpoint para webhook
 app.all('/webhook', async (req, res) => {
   try {
-    console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Body:', JSON.stringify(req.body, null, 2));
+    console.log('Webhook received at:', new Date().toISOString(), 'Raw Body:', JSON.stringify(req.body, null, 2));
     if (req.method === 'GET') {
       console.log('GET request received, responding with OK for test');
       return res.status(200).send('Webhook endpoint is active');
     }
     if (req.method === 'POST') {
-      const { type, data } = req.body;
-      console.log('Processing POST webhook...', 'Type:', type, 'Data:', data);
-      if (type === 'payment' && data && data.id) {
+      const { type, id, topic, resource } = req.body;
+      console.log('Processing POST webhook...', 'Type:', type, 'ID:', id, 'Topic:', topic, 'Resource:', resource);
+      if (type === 'payment' && id) {
         const payment = new Payment(mp);
-        const paymentDetails = await payment.get({ id: data.id });
+        const paymentDetails = await payment.get({ id });
         console.log('Payment details:', {
           id: paymentDetails.id,
           status: paymentDetails.status,
           preference_id: paymentDetails.preference_id || 'Não encontrado',
           external_reference: paymentDetails.external_reference || 'Não encontrado',
-          transaction_amount: paymentDetails.transaction_amount || 'Não encontrado'
+          transaction_amount: paymentDetails.transaction_amount || 'Não encontrado',
+          date_approved: paymentDetails.date_approved || 'Não aprovado ainda'
         });
 
-        if (paymentDetails.status === 'approved') {
+        if (paymentDetails.status === 'approved' || paymentDetails.status === 'pending') {
           let externalReference = paymentDetails.external_reference;
           let buyerName, buyerPhone, numbers;
           if (externalReference) {
@@ -245,19 +246,26 @@ app.all('/webhook', async (req, res) => {
             console.error('MongoDB não conectado');
             return res.status(500).send('Erro: MongoDB não conectado');
           }
-          const result = await db.collection('purchases').insertOne({
-            buyerName,
-            buyerPhone,
-            numbers,
-            purchaseDate: new Date(),
-            paymentId: data.id
-          });
-          console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers });
+          const existingPurchase = await db.collection('purchases').findOne({ paymentId: paymentDetails.id });
+          if (!existingPurchase) {
+            const result = await db.collection('purchases').insertOne({
+              buyerName,
+              buyerPhone,
+              numbers,
+              purchaseDate: new Date(),
+              paymentId: paymentDetails.id,
+              status: paymentDetails.status,
+              date_approved: paymentDetails.date_approved || null
+            });
+            console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers, status: paymentDetails.status });
+          } else {
+            console.log('Purchase already exists for paymentId:', paymentDetails.id);
+          }
         } else {
           console.log('Webhook ignored, status:', paymentDetails.status);
         }
       } else {
-        console.log('Webhook ignored, type:', type);
+        console.log('Webhook ignored, unsupported type or missing ID:', { type, id, topic, resource });
       }
       return res.status(200).send('OK');
     }
