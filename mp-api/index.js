@@ -187,7 +187,7 @@ app.post('/create_preference', async (req, res) => {
 
     console.log('Preference data being sent:', JSON.stringify(preferenceData, null, 2));
     const response = await preference.create(preferenceData);
-    console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id, 'Back URLs:', preferenceData.body.back_urls);
+    console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id, 'Back URLs:', preferenceData.body.back_urls, 'Auto Return:', preferenceData.body.auto_return);
     res.json({ init_point: response.init_point });
   } catch (error) {
     console.error('Error in /create_preference at:', new Date().toISOString(), error.message, 'Stack:', error.stack);
@@ -198,7 +198,7 @@ app.post('/create_preference', async (req, res) => {
 // Endpoint para webhook
 app.all('/webhook', async (req, res) => {
   try {
-    console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Body:', req.body);
+    console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Body:', JSON.stringify(req.body, null, 2));
     if (req.method === 'GET') {
       console.log('GET request received, responding with OK for test');
       return res.status(200).send('Webhook endpoint is active');
@@ -213,7 +213,8 @@ app.all('/webhook', async (req, res) => {
           id: paymentDetails.id,
           status: paymentDetails.status,
           preference_id: paymentDetails.preference_id || 'Não encontrado',
-          external_reference: paymentDetails.external_reference || 'Não encontrado'
+          external_reference: paymentDetails.external_reference || 'Não encontrado',
+          transaction_amount: paymentDetails.transaction_amount || 'Não encontrado'
         });
 
         if (paymentDetails.status === 'approved') {
