@@ -132,6 +132,14 @@
         let purchasesData = [];
         let currentWinner = null;
 
+        // Função para mascarar o telefone mostrando apenas os últimos 4 dígitos
+        function maskPhone(phone) {
+            if (!phone) return 'N/A';
+            const lastFour = phone.slice(-4);
+            const masked = phone.slice(0, -4).replace(/\d/g, '*');
+            return masked + lastFour;
+        }
+
         // Carregar compras
         async function loadPurchases() {
             const maxRetries = 3;
@@ -217,7 +225,7 @@
                         <p><strong>Nome:</strong> ${winner.buyerName || 'N/A'}</p>
                         <p><strong>Número Sorteado:</strong> ${winningNumber}</p>
                         <p><strong>Números Comprados:</strong> ${winner.numbers ? winner.numbers.join(', ') : 'N/A'}</p>
-                        <p><strong>Telefone:</strong> ${winner.buyerPhone || 'N/A'}</p>
+                        <p><strong>Telefone:</strong> ${maskPhone(winner.buyerPhone)}</p>
                         <button class="view-phone-button" onclick="viewWinnerPhone()">Ver Telefone do Ganhador</button>
                     `;
                     winnerMessage.style.display = 'block';
