@@ -61,7 +61,7 @@
 
     <section class="pending-container">
         <h2>Pagamento Pendente</h2>
-        <p>Seu pagamento via PIX está sendo processado. Aguarde um momento...</p>
+        <p>Seu pagamento via PIX está sendo processado. Aguarde...</p>
         <p id="status">Verificando o status...</p>
     </section>
 
@@ -112,12 +112,14 @@
                         document.getElementById('status').textContent = 'Status: ' + data.paymentDetails.status;
                         if (data.paymentDetails.status === 'approved') {
                             window.location.href = 'https://ederamorimth.github.io/rifa-miguel/sucesso.html';
+                        } else if (data.paymentDetails.status === 'rejected' || data.paymentDetails.status === 'failed') {
+                            window.location.href = 'https://ederamorimth.github.io/rifa-miguel/erro.html';
                         }
                     })
                     .catch(error => {
                         document.getElementById('status').textContent = 'Erro ao verificar o status.';
                     });
-            }, 5000); // Verifica a cada 5 segundos
+            }, 3000); // Reduzido para 3 segundos para ser mais rápido
         } else {
             document.getElementById('status').textContent = 'Erro: ID do pagamento não encontrado.';
         }
