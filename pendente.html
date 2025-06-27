@@ -61,8 +61,8 @@
 
     <section class="pending-container">
         <h2>Pagamento Pendente</h2>
-        <p>Seu pagamento está sendo processado. Você será notificado assim que for confirmado. Para dúvidas, entre em contato conosco.</p>
-        <p><a href="/rifa-miguel/index.html">Voltar à página inicial</a></p>
+        <p>Seu pagamento via PIX está sendo processado. Aguarde um momento...</p>
+        <p id="status">Verificando o status...</p>
     </section>
 
     <footer id="contato">
@@ -100,6 +100,26 @@
                 console.error('Erro ao verificar senha:', error);
                 alert('Erro ao conectar ao servidor. Tente novamente.');
             }
+        }
+
+        // Verificação automática do pagamento
+        let paymentId = new URLSearchParams(window.location.search).get('payment_id');
+        if (paymentId) {
+            setInterval(() => {
+                fetch('https://rifa-miguel.onrender.com/test_payment/' + paymentId)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('status').textContent = 'Status: ' + data.paymentDetails.status;
+                        if (data.paymentDetails.status === 'approved') {
+                            window.location.href = 'https://ederamorimth.github.io/rifa-miguel/sucesso.html';
+                        }
+                    })
+                    .catch(error => {
+                        document.getElementById('status').textContent = 'Erro ao verificar o status.';
+                    });
+            }, 5000); // Verifica a cada 5 segundos
+        } else {
+            document.getElementById('status').textContent = 'Erro: ID do pagamento não encontrado.';
         }
     </script>
 </body>
