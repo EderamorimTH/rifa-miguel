@@ -181,14 +181,14 @@ app.post('/create_preference', async (req, res) => {
         },
         auto_return: "approved",
         external_reference: JSON.stringify({ buyerName, buyerPhone, numbers }),
-        notification_url: "https://rifa-miguel.onrender.com/webhook"
+        notification_url: "https://rifa-miguel.onrender.com/webhook" // URL correta
       }
     };
 
     console.log('Preference data being sent:', JSON.stringify(preferenceData, null, 2));
     const response = await preference.create(preferenceData);
-    console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id, 'Back URLs:', preferenceData.body.back_urls, 'Auto Return:', preferenceData.body.auto_return);
-    res.json({ init_point: response.init_point, preference_id: response.id }); // Retorna o preference_id
+    console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id);
+    res.json({ init_point: response.init_point, preference_id: response.id });
   } catch (error) {
     console.error('Error in /create_preference at:', new Date().toISOString(), error.message, 'Stack:', error.stack);
     res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
@@ -196,36 +196,37 @@ app.post('/create_preference', async (req, res) => {
 });
 
 // Endpoint para webhook
-app.all('/webhook', async (req, res) => {
+app.post('/webhook', async (req, res) => {
   try {
-    console.log('Webhook received at:', new Date().toISOString(), 'Raw Body:', JSON.stringify(req.body, null, 2));
-    if (req.method === 'GET') {
-      console.log('GET request received, responding with OK for test');
-      return res.status(200).send('Webhook endpoint is active');
+    console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Raw Body:', JSON.stringify(req.body, null, 2));
+    if (req.method !== 'POST') {
+      console.log('Method not allowed:', req.method);
+      return res.status(405).send('Method Not Allowed');
     }
-    if (req.method === 'POST') {
-      const body = req.body;
-      console.log('Processing POST webhook...', 'Body:', JSON.stringify(body, null, 2));
-      let paymentId = null;
 
-      // Extrair paymentId de diferentes formatos
-      if (body.type === 'payment' && body.data && body.data.id) {
-        paymentId = body.data.id;
-      } else if (body.resource && typeof body.resource === 'string' && body.resource.match(/^\d+$/)) {
-        paymentId = body.resource;
-      } else if (body.action === 'payment.updated' && body.data && body.data.id) {
-        paymentId = body.data.id;
-      } else if (body.topic === 'merchant_order' && body.resource) {
-        const merchantOrderId = body.resource.match(/\/(\d+)$/)[1];
-        const payment = new Payment(mp);
-        const orders = await payment.search({ filters: { merchant_order_id: merchantOrderId } });
-        if (orders.results && orders.results.length > 0) {
-          paymentId = orders.results[0].id;
-        }
+    const body = req.body;
+    console.log('Processing POST webhook...', 'Body:', JSON.stringify(body, null, 2));
+    let paymentId = null;
+
+    // Extrair paymentId de diferentes formatos
+    if (body.type === 'payment' && body.data && body.data.id) {
+      paymentId = body.data.id;
+    } else if (body.resource && typeof body.resource === 'string' && body.resource.match(/^\d+$/)) {
+      paymentId = body.resource;
+    } else if (body.action === 'payment.updated' && body.data && body.data.id) {
+      paymentId = body.data.id;
+    } else if (body.topic === 'merchant_order' && body.resource) {
+      const merchantOrderId = body.resource.match(/\/(\d+)$/)[1];
+      const payment = new Payment(mp);
+      const orders = await payment.search({ filters: { merchant_order_id: merchantOrderId } });
+      if (orders.results && orders.results.length > 0) {
+        paymentId = orders.results[0].id;
       }
+    }
 
-      if (paymentId) {
-        const payment = new Payment(mp);
+    if (paymentId) {
+      const payment = new Payment(mp);
+      try {
         const paymentDetails = await payment.get({ id: paymentId });
         console.log('Payment details:', {
           id: paymentDetails.id,
@@ -266,7 +267,8 @@ app.all('/webhook', async (req, res) => {
                 purchaseDate: new Date(),
                 paymentId: paymentDetails.id,
                 status: paymentDetails.status,
-                date_approved: paymentDetails.date_approved || null
+                date_approved: paymentDetails.date_approved || null,
+                preference_id: paymentDetails.preference_id || 'Não encontrado'
               });
               console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers, status: paymentDetails.status });
             } else {
@@ -274,17 +276,21 @@ app.all('/webhook', async (req, res) => {
             }
           }
         }
+      } catch (error) {
+        console.error('Erro ao buscar payment details:', error.message);
+        return res.status(200).send('OK');
       }
-      return res.status(200).send('OK');
+    } else {
+      console.log('No valid payment ID found:', JSON.stringify(body, null, 2));
     }
-    return res.status(405).send('Method Not Allowed');
+    return res.status(200).send('OK');
   } catch (error) {
     console.error('Erro no webhook:', error.message);
     return res.status(200).send('OK');
   }
 });
 
-// Função auxiliar para buscar preference_id a partir do payment_id
+// Função auxiliar para buscar preference_id
 async function getPreferenceIdFromPayment(paymentId) {
   try {
     const payment = new Payment(mp);
@@ -292,8 +298,7 @@ async function getPreferenceIdFromPayment(paymentId) {
     console.log('Payment details for preference_id:', {
       paymentId,
       preference_id: paymentDetails.preference_id || 'Não encontrado',
-      status: paymentDetails.status,
-      external_reference: paymentDetails.external_reference || 'Não encontrado'
+      status: paymentDetails.status
     });
     return paymentDetails.preference_id || null;
   } catch (error) {
