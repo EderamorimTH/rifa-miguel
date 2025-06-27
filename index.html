@@ -354,9 +354,8 @@
                 console.log('Resposta da API:', responseData);
 
                 if (responseData.init_point) {
-                    // Salva o preference_id como placeholder para o paymentId
-                    localStorage.setItem('lastPaymentId', responseData.preference_id);
-                    window.location.href = responseData.init_point + '?payment_id=' + encodeURIComponent(responseData.preference_id);
+                    // Apenas redireciona para o init_point sem adicionar parâmetros
+                    window.location.href = responseData.init_point;
                 } else {
                     alert(responseData.error || 'Erro ao criar o pagamento. Tente novamente.');
                 }
