@@ -123,6 +123,7 @@
             <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
             <a href="#contato">Contato</a>
             <a href="/rifa-miguel/sorteio.html">Sorteio</a>
+            <a href="/rifa-miguel/sorteio-ao-vivo.html">Sorteio ao Vivo</a>
         </nav>
     </header>
 
@@ -165,14 +166,6 @@
         let purchasesData = [];
         let currentWinner = null;
 
-        // Função para mascarar o telefone
-        function maskPhone(phone) {
-            if (!phone) return 'N/A';
-            const lastFour = phone.slice(-4);
-            const masked = phone.slice(0, -4).replace(/\d/g, '*');
-            return masked + lastFour;
-        }
-
         // Carregar compras
         async function loadPurchases() {
             const errorMessage = document.getElementById('error-message');
@@ -212,7 +205,7 @@
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td>${purchase.buyerName || 'N/A'}</td>
-                            <td>${maskPhone(purchase.buyerPhone)}</td>
+                            <td>${purchase.buyerPhone || 'N/A'}</td>
                             <td>${purchase.numbers ? purchase.numbers.join(', ') : 'N/A'}</td>
                             <td>${purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleString('pt-BR') : 'N/A'}</td>
                             <td>${purchase.paymentId || 'N/A'}</td>
@@ -237,7 +230,7 @@
             }
         }
 
-        // Realizar sorteio
+        // Realizar sorteio simples
         function performDraw() {
             const winnerMessage = document.getElementById('winner-message');
             if (purchasesData.length === 0) {
@@ -246,7 +239,6 @@
                 return;
             }
 
-            // Coletar todos os números comprados
             const allNumbers = purchasesData.flatMap(purchase => purchase.numbers || []);
             if (allNumbers.length === 0) {
                 winnerMessage.textContent = 'Nenhum número comprado encontrado para o sorteio.';
@@ -254,12 +246,10 @@
                 return;
             }
 
-            // Sortear um número aleatoriamente
             const randomIndex = Math.floor(Math.random() * allNumbers.length);
             const winningNumber = allNumbers[randomIndex];
-
-            // Encontrar o comprador do número sorteado
             const winner = purchasesData.find(purchase => purchase.numbers && purchase.numbers.includes(winningNumber));
+
             if (!winner) {
                 winnerMessage.textContent = 'Erro: Comprador não encontrado para o número sorteado.';
                 winnerMessage.style.display = 'block';
@@ -268,13 +258,12 @@
 
             currentWinner = winner;
 
-            // Exibir o ganhador
             winnerMessage.innerHTML = `
                 <h3>Parabéns ao Ganhador!</h3>
                 <p><strong>Nome:</strong> ${winner.buyerName || 'N/A'}</p>
                 <p><strong>Número Sorteado:</strong> ${winningNumber}</p>
                 <p><strong>Números Comprados:</strong> ${winner.numbers ? winner.numbers.join(', ') : 'N/A'}</p>
-                <p><strong>Telefone:</strong> ${maskPhone(winner.buyerPhone)}</p>
+                <p><strong>Telefone:</strong> ${winner.buyerPhone || 'N/A'}</p>
                 <button class="view-phone-button" onclick="viewWinnerPhone()">Ver Telefone do Ganhador</button>
             `;
             winnerMessage.style.display = 'block';
@@ -289,7 +278,7 @@
             }
 
             const password = prompt('Digite a senha para ver o telefone do ganhador:');
-            if (password === 'VAIDACERTO') {
+            if (password === '') {
                 alert(`Telefone do ganhador (${currentWinner.buyerName}): ${currentWinner.buyerPhone}`);
             } else {
                 alert('Senha incorreta!');
