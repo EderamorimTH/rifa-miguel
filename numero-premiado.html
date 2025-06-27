@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Número Premiado - Rifa Solidária para o Miguel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        nav a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: color 0.3s;
+        }
+        nav a:hover {
+            color: #ffc107;
+        }
+        .hero {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+        }
+        .form-container {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-container button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        .share-button {
+            background-color: #25d366;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .share-button:hover {
+            background-color: #1ebe5a;
+        }
+        .check-number-container {
+            margin-bottom: 20px;
+        }
+        .check-number-container input {
+            margin-right: 10px;
+        }
+        .winners-container {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            display: none; /* Inicialmente oculto */
+        }
+        .winner-item {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Rifa Solidária para o Miguel</h1>
+    <nav>
+        <a href="/rifa-miguel/index.html">Início</a>
+        <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
+        <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
+        <a href="/rifa-miguel/orcamento.html">Orçamento</a>
+        <a href="/rifa-miguel/numero-premiado.html">Número Premiado</a>
+        <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
+        <a href="#contato">Contato</a>
+    </nav>
+</header>
+
+<section class="hero">
+    <h2>Verifique seus Números Premiados!</h2>
+    <p>Confira se os números que você comprou estão entre os premiados. Use o formulário abaixo para verificar.</p>
+</section>
+
+<section class="form-container">
+    <div class="check-number-container">
+        <h3>Consultar Número Premiado</h3>
+        <p><strong>Como fazer a consulta:</strong> Insira os números que você comprou (separados por vírgula, ex.: 0123, 0124) e o telefone usado na compra. Só você pode verificar seus próprios números!</p>
+        <input type="text" id="check-numbers" placeholder="Números comprados (ex.: 0123, 0124)" maxlength="50">
+        <input type="tel" id="check-phone" placeholder="Telefone usado na compra (ex.: 65984739520)" maxlength="11">
+        <button onclick="checkNumber()">Consultar Número</button>
+        <p id="check-result"></p>
+        <div class="winners-container" id="winners-container">
+            <h3>Ganhadores</h3>
+            <div class="winner-item" id="winner-1"></div>
+        </div>
+    </div>
+</section>
+
+<footer id="contato">
+    <p>Contato:</p>
+    <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
+    <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
+    <p>Para dúvidas, entre em contato via WhatsApp!</p>
+    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+    <p>© 2025 Rifa Solidária para o Miguel</p>
+</footer>
+
+<script>
+    function checkPassword() {
+        const password = prompt("Digite a senha para acessar a página de sorteio:");
+        if (!password) {
+            alert("Por favor, digite uma senha.");
+            return;
+        }
+
+        try {
+            const response = fetch('https://rifa-miguel.onrender.com/verify_password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+
+            if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+            const result = response.json();
+
+            if (result.valid) {
+                window.location.href = "/rifa-miguel/sorteio.html";
+            } else {
+                alert("Senha incorreta!");
+            }
+        } catch (error) {
+            console.error('Erro ao verificar senha:', error);
+            alert('Erro ao conectar ao servidor. Tente novamente.');
+        }
+    }
+
+    const numberContainer = document.getElementById('numbers');
+    let selectedNumbers = [];
+    const pricePerNumber = 10;
+
+    function maskPhone(phone) {
+        if (phone && phone.length >= 4) {
+            return 'XXX-' + phone.slice(-4);
+        }
+        return phone;
+    }
+
+    async function checkNumber() {
+        const numbersInput = document.getElementById('check-numbers').value.trim();
+        const phoneInput = document.getElementById('check-phone').value.trim();
+        const resultDiv = document.getElementById('check-result');
+        const winnersContainer = document.getElementById('winners-container');
+        const winnerItem = document.getElementById('winner-1');
+        resultDiv.textContent = 'Verificando...';
+        winnersContainer.style.display = 'none'; // Esconde ganhadores inicialmente
+
+        if (!numbersInput || !/^\d+(,\s*\d+)*$/.test(numbersInput) || !phoneInput || !/^\d{10,11}$/.test(phoneInput)) {
+            resultDiv.textContent = 'Por favor, insira os números comprados (ex.: 0123, 0124) e um telefone válido (10 ou 11 dígitos).';
+            return;
+        }
+
+        const numbers = numbersInput.split(',').map(num => String(parseInt(num.trim())).padStart(4, '0'));
+        const phone = phoneInput;
+
+        try {
+            const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!availableRes.ok) throw new Error(`Erro HTTP: ${availableRes.status}`);
+            const availableNumbers = await availableRes.json();
+
+            // Lista de números premiados (para teste: 0123 e 0124 com prêmio "balinha de cereja")
+            const winningNumbers = {
+                '0123': 'balinha de cereja',
+                '0124': 'balinha de cereja'
+            };
+
+            const purchasedNumbers = numbers.filter(num => !availableNumbers.includes(num));
+            if (purchasedNumbers.length === 0) {
+                resultDiv.textContent = 'Nenhum dos números informados foi comprado.';
+                return;
+            }
+
+            // Verificar se o telefone e números correspondem ao comprador (endpoint fictício)
+            const purchaseRes = await fetch('https://rifa-miguel.onrender.com/check_purchase', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ numbers: purchasedNumbers, buyerPhone: phone })
+            });
+            if (!purchaseRes.ok) throw new Error(`Erro HTTP: ${purchaseRes.status}`);
+            const purchaseData = await purchaseRes.json();
+
+            if (purchaseData.owned) {
+                let message = '';
+                let hasWinningNumber = false;
+                purchasedNumbers.forEach(num => {
+                    if (winningNumbers[num]) {
+                        message += `Parabéns! O número ${num} é premiado! Você ganhou uma ${winningNumbers[num]}!<br>`;
+                        hasWinningNumber = true;
+                        // Exibir ganhador atual
+                        winnerItem.textContent = `${localStorage.getItem('buyerName') || 'Anônimo'} - Número: ${num} - Telefone: ${maskPhone(phone)} - Prêmio: ${winningNumbers[num]}`;
+                    } else {
+                        message += `O número ${num} foi comprado por você, mas não é premiado.<br>`;
+                    }
+                });
+                resultDiv.innerHTML = message || 'Nenhum prêmio encontrado para seus números.';
+
+                // Exibir ganhadores apenas se houver um número premiado
+                if (hasWinningNumber) {
+                    winnersContainer.style.display = 'block';
+                }
+            } else {
+                resultDiv.textContent = 'Os números informados não correspondem ao telefone fornecido. Verifique seus dados.';
+                winnersContainer.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Erro ao consultar número:', error);
+            resultDiv.textContent = 'Erro ao verificar os números. Tente novamente ou contate o suporte.';
+            winnersContainer.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
