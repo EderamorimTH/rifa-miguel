@@ -122,6 +122,16 @@
         .check-number-container input {
             margin-right: 10px;
         }
+        .winners-container {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            display: none; /* Inicialmente oculto */
+        }
+        .winner-item {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -157,9 +167,16 @@
 <section class="form-container">
     <div class="check-number-container">
         <h3>Consultar Número Premiado</h3>
-        <input type="text" id="check-number" placeholder="Digite um número (ex.: 0001)" maxlength="4">
+        <p><strong>Como fazer a consulta:</strong> Insira os números que você comprou (separados por vírgula, ex.: 0001, 0002) e o telefone usado na compra. Só você pode verificar seus próprios números!</p>
+        <input type="text" id="check-numbers" placeholder="Números comprados (ex.: 0001, 0002)" maxlength="50">
+        <input type="tel" id="check-phone" placeholder="Telefone usado na compra (ex.: 65984739520)" maxlength="11">
         <button onclick="checkNumber()">Consultar Número</button>
         <p id="check-result"></p>
+    </div>
+    <div class="winners-container" id="winners-container">
+        <h3>Ganhadores</h3>
+        <div class="winner-item" id="winner-1"></div>
+        <div class="winner-item" id="winner-2"></div>
     </div>
     <h3>Finalize sua compra</h3>
     <form id="payment-form">
@@ -428,17 +445,27 @@
         await sendPaymentRequest(paymentData);
     });
 
+    function maskPhone(phone) {
+        if (phone && phone.length >= 4) {
+            return 'XXX-' + phone.slice(-4);
+        }
+        return phone;
+    }
+
     async function checkNumber() {
-        const numberInput = document.getElementById('check-number').value.trim();
+        const numbersInput = document.getElementById('check-numbers').value.trim();
+        const phoneInput = document.getElementById('check-phone').value.trim();
         const resultDiv = document.getElementById('check-result');
+        const winnersContainer = document.getElementById('winners-container');
         resultDiv.textContent = 'Verificando...';
 
-        if (!numberInput || !/^\d{1,4}$/.test(numberInput)) {
-            resultDiv.textContent = 'Por favor, insira um número válido (1 a 1700).';
+        if (!numbersInput || !/^\d+(,\s*\d+)*$/.test(numbersInput) || !phoneInput || !/^\d{10,11}$/.test(phoneInput)) {
+            resultDiv.textContent = 'Por favor, insira os números comprados (ex.: 0001, 0002) e um telefone válido (10 ou 11 dígitos).';
             return;
         }
 
-        const num = String(parseInt(numberInput)).padStart(4, '0');
+        const numbers = numbersInput.split(',').map(num => String(parseInt(num.trim())).padStart(4, '0'));
+        const phone = phoneInput;
 
         try {
             const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
@@ -454,26 +481,48 @@
                 '0002': 'balinha de cereja'
             };
 
-            if (availableNumbers.includes(num)) {
-                // Número não comprado
-                if (confirm(`O número ${num} não foi comprado. Deseja comprá-lo por R$ 10? Vai que você tem sorte com ele!`)) {
-                    selectedNumbers = [num];
-                    document.getElementById('selected-numbers').textContent = num;
-                    document.getElementById('total-price').textContent = 10;
-                } else {
-                    resultDiv.textContent = `O número ${num} ainda está disponível para compra!`;
+            const purchasedNumbers = numbers.filter(num => !availableNumbers.includes(num));
+            if (purchasedNumbers.length === 0) {
+                resultDiv.textContent = 'Nenhum dos números informados foi comprado.';
+                return;
+            }
+
+            // Verificar se o telefone e números correspondem ao comprador (endpoint fictício)
+            const purchaseRes = await fetch('https://rifa-miguel.onrender.com/check_purchase', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ numbers: purchasedNumbers, buyerPhone: phone })
+            });
+            if (!purchaseRes.ok) throw new Error(`Erro HTTP: ${purchaseRes.status}`);
+            const purchaseData = await purchaseRes.json();
+
+            if (purchaseData.owned) {
+                let message = '';
+                let hasWinningNumber = false;
+                purchasedNumbers.forEach(num => {
+                    if (winningNumbers[num]) {
+                        message += `Parabéns! O número ${num} é premiado! Você ganhou uma ${winningNumbers[num]}!<br>`;
+                        hasWinningNumber = true;
+                    } else {
+                        message += `O número ${num} foi comprado por você, mas não é premiado.<br>`;
+                    }
+                });
+                resultDiv.innerHTML = message || 'Nenhum prêmio encontrado para seus números.';
+
+                // Exibir ganhadores apenas se houver um número premiado
+                if (hasWinningNumber) {
+                    winnersContainer.style.display = 'block';
+                    document.getElementById('winner-1').textContent = 'João Silva - Prêmio: Balinha de Cereja - Telefone: ' + maskPhone('65984739520');
+                    document.getElementById('winner-2').textContent = 'Maria Oliveira - Prêmio: Balinha de Cereja - Telefone: ' + maskPhone('65999731992');
                 }
             } else {
-                // Número comprado
-                if (winningNumbers[num]) {
-                    resultDiv.innerHTML = `Parabéns! O número ${num} é premiado! Você ganhou uma ${winningNumbers[num]}!`;
-                } else {
-                    resultDiv.textContent = `O número ${num} foi comprado, mas não é premiado. Tente outro!`;
-                }
+                resultDiv.textContent = 'Os números informados não correspondem ao telefone fornecido. Verifique seus dados.';
+                winnersContainer.style.display = 'none';
             }
         } catch (error) {
             console.error('Erro ao consultar número:', error);
-            resultDiv.textContent = 'Erro ao verificar o número. Tente novamente.';
+            resultDiv.textContent = 'Erro ao verificar os números. Tente novamente ou contate o suporte.';
+            winnersContainer.style.display = 'none';
         }
     }
 </script>
