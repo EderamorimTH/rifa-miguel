@@ -94,10 +94,11 @@
             padding: 10px;
             background-color: #f9f9f9;
             border-radius: 5px;
-            display: none;
         }
         .winner-item {
             margin: 5px 0;
+            color: #e74c3c;
+            font-weight: bold;
         }
         #check-result.loading {
             color: #007bff;
@@ -122,19 +123,19 @@
 
 <section class="hero">
     <h2>Verifique seus Números Premiados!</h2>
-    <p>Confira se os números que você comprou estão entre os premiados. Use o formulário abaixo para verificar.</p>
+    <p>Confira se os números que você comprou têm prêmios instantâneos ou participam do sorteio principal. Insira seus dados abaixo.</p>
 </section>
 
 <section class="form-container">
     <div class="check-number-container">
         <h3>Consultar Número Premiado</h3>
-        <p><strong>Como fazer a consulta:</strong> Insira os números que você comprou (separados por vírgula, ex.: 0123, 0124) e o telefone usado na compra. Só você pode verificar seus próprios números!</p>
+        <p><strong>Como fazer a consulta:</strong> Insira os números que você comprou (separados por vírgula, ex.: 0123, 0124) e o telefone usado na compra.</p>
         <input type="text" id="check-numbers" placeholder="Números comprados (ex.: 0123, 0124)" maxlength="50">
         <input type="tel" id="check-phone" placeholder="Telefone usado na compra (ex.: 65984730000)" maxlength="11">
         <button id="check-button" onclick="checkNumber()">Consultar Número</button>
         <p id="check-result"></p>
         <div class="winners-container" id="winners-container">
-            <h3>Ganhadores</h3>
+            <h3>Ganhadores Instantâneos</h3>
             <div class="winner-item" id="winner-1"></div>
         </div>
     </div>
@@ -219,7 +220,7 @@
 
             const purchasedNumbers = numbers.filter(num => !availableNumbers.includes(num));
             if (purchasedNumbers.length === 0) {
-                resultDiv.textContent = 'Nenhum dos números informados foi comprado.';
+                resultDiv.textContent = `Nenhum dos números informados (${numbers.join(', ')}) foi comprado. Deseja comprá-los por R$ 10 cada? <a href="/rifa-miguel/index.html">Clique aqui para comprar</a>.`;
                 checkButton.disabled = false;
                 resultDiv.classList.remove('loading');
                 return;
@@ -235,21 +236,25 @@
             const purchaseData = await purchaseRes.json();
 
             if (purchaseData.owned) {
-                // Simulação de números premiados (substitua por dados reais do backend)
-                const winningNumbers = await (await fetch('https://rifa-miguel.onrender.com/winning_numbers')).json();
+                // Buscar números premiados instantâneos do backend
+                const winningNumbersRes = await fetch('https://rifa-miguel.onrender.com/winning_numbers');
+                if (!winningNumbersRes.ok) throw new Error(`Erro ao carregar números premiados: ${winningNumbersRes.status}`);
+                const instantWinningNumbers = await winningNumbersRes.json(); // Ex.: ["0001", "0002"]
+
                 let message = '';
                 let hasWinningNumber = false;
 
                 purchasedNumbers.forEach(num => {
-                    if (winningNumbers.includes(num)) {
-                        message += `Parabéns! O número ${num} é premiado! Você ganhou um prêmio! 🎉<br>`;
+                    if (instantWinningNumbers.includes(num)) {
+                        message += `Parabéns! O número ${num} é um prêmio instantâneo! Você ganhou uma Pizza Grande! 🎉<br>`;
                         hasWinningNumber = true;
-                        winnerItem.textContent = `${document.getElementById('check-numbers').value.split(',')[0]} - Número: ${num} - Telefone: ${maskPhone(phone)} - Prêmio: A definir`;
+                        // Exibir ganhador publicamente
+                        winnerItem.textContent = `${purchaseData.buyerName || 'Anônimo'} - Número: ${num} - Telefone: ${maskPhone(phone)} - Prêmio: Pizza Grande`;
                     } else {
-                        message += `O número ${num} foi comprado por você, mas não é premiado.<br>`;
+                        message += `O número ${num} foi comprado por você e participa do sorteio principal, mas não é um prêmio instantâneo.<br>`;
                     }
                 });
-                resultDiv.innerHTML = message || 'Nenhum prêmio encontrado para seus números.';
+                resultDiv.innerHTML = message || 'Nenhum prêmio instantâneo encontrado para seus números. Você ainda participa do sorteio principal!';
 
                 if (hasWinningNumber) {
                     winnersContainer.style.display = 'block';
