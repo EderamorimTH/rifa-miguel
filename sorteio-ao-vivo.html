@@ -6,127 +6,155 @@
     <title>Sorteio ao Vivo - Rifa Solidária para o Miguel</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
+            background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
         }
-        header {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/confetti.png');
+            opacity: 0.1;
+            z-index: 0;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
             text-align: center;
+            width: 90%;
+            max-width: 600px;
+            animation: bounceIn 1s ease-out;
+            position: relative;
+            z-index: 1;
         }
-        nav a {
-            color: white;
-            margin: 0 15px;
-            text-decoration: none;
+        @keyframes bounceIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
         }
-        .content {
-            max-width: 1000px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        h1 {
+            color: #e74c3c;
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(231, 76, 60, 0.3);
+            position: relative;
+        }
+        h1::after {
+            content: '🎉';
+            position: absolute;
+            font-size: 0.6em;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
         .draw-live-section {
             margin: 20px 0;
-            text-align: center;
         }
         .start-draw-button {
-            background-color: #ffc107;
-            color: black;
-            padding: 12px 24px;
+            background: linear-gradient(90deg, #e74c3c, #f1c40f);
+            color: white;
+            padding: 15px 30px;
             border: none;
-            border-radius: 5px;
+            border-radius: 25px;
             cursor: pointer;
+            font-size: 1.3em;
             font-weight: bold;
-            transition: background-color 0.3s;
+            transition: transform 0.3s, background-color 0.3s;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        .start-draw-button::before {
+            content: '🎲';
+            position: absolute;
+            left: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .start-draw-button:hover::before {
+            opacity: 1;
         }
         .start-draw-button:hover {
-            background-color: #e0a800;
+            transform: scale(1.05);
+            background: linear-gradient(90deg, #c0392b, #d4ac0d);
+        }
+        .start-draw-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .timer {
+            font-size: 2.5em;
+            color: #f1c40f;
+            margin: 20px 0;
+            font-weight: bold;
+            animation: pulseGlow 1.2s infinite alternate;
+            text-shadow: 0 0 10px rgba(241, 196, 15, 0.7), 0 0 20px rgba(241, 196, 15, 0.4);
+        }
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.9; }
+            100% { transform: scale(1.2); opacity: 1; text-shadow: 0 0 15px rgba(241, 196, 15, 0.9); }
+        }
+        .live-winner {
+            background: linear-gradient(135deg, #fff0f3, #ffebee);
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 6px solid #e74c3c;
+            margin: 20px 0;
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .live-winner p {
+            margin: 10px 0;
+            font-size: 1.1em;
+            color: #e74c3c;
+            font-weight: 500;
         }
         .view-phone-button {
-            background-color: #007bff;
+            background: linear-gradient(90deg, #e74c3c, #f1c40f);
             color: white;
             padding: 10px 20px;
             border: none;
-            border-radius: 5px;
+            border-radius: 20px;
             cursor: pointer;
-            margin-top: 10px;
-            transition: background-color 0.3s;
+            font-size: 1em;
+            transition: background-color 0.3s, transform 0.3s;
         }
         .view-phone-button:hover {
-            background-color: #0056b3;
-        }
-        .live-winner {
-            background-color: #e7f3ff;
-            padding: 20px;
-            border-left: 4px solid #007bff;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .timer {
-            font-size: 1.5em;
-            color: #007bff;
-            margin: 10px 0;
-        }
-        footer {
-            background-color: #333;
-            color: white;
-            text-align: center;
-            padding: 10px;
-        }
-        .share-button {
-            background-color: #25d366;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-        .share-button:hover {
-            background-color: #1ebe5a;
+            transform: translateY(-2px);
+            background: linear-gradient(90deg, #c0392b, #d4ac0d);
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Rifa Solidária para o Miguel</h1>
-        <nav>
-            <a href="/rifa-miguel/index.html">Início</a>
-            <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
-            <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
-            <a href="#contato">Contato</a>
-            <a href="/rifa-miguel/sorteio.html">Sorteio</a>
-            <a href="/rifa-miguel/sorteio-ao-vivo.html">Sorteio ao Vivo</a>
-        </nav>
-    </header>
-
-    <section class="content">
-        <h2>Sorteio ao Vivo</h2>
+    <div class="container">
+        <h1>Sorteio ao Vivo</h1>
         <div class="draw-live-section">
-            <h3>Sorteio ao Vivo</h3>
-            <p>Clique no botão para iniciar o sorteio ao vivo com contagem regressiva de 10 segundos.</p>
             <button class="start-draw-button" onclick="startLiveDraw()">Iniciar Sorteio</button>
             <div id="timer" class="timer" style="display: none;">10</div>
             <div id="live-winner-message" class="live-winner" style="display: none;"></div>
         </div>
-    </section>
-
-    <footer id="contato">
-        <p>Contato:</p>
-        <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
-        <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
-        <p>Para dúvidas, entre em contato via WhatsApp!</p>
-        <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
-        <p>© 2025 Rifa Solidária para o Miguel</p>
-    </footer>
+    </div>
 
     <script>
         let purchasesData = [];
@@ -221,7 +249,7 @@
                     currentWinner = winner;
 
                     winnerMessage.innerHTML = `
-                        <h3>Parabéns ao Ganhador!</h3>
+                        <h3>Parabéns ao Ganhador! 🎉</h3>
                         <p><strong>Nome:</strong> ${winner.buyerName || 'N/A'}</p>
                         <p><strong>Número Sorteado:</strong> ${winningNumber}</p>
                         <p><strong>Números Comprados:</strong> ${winner.numbers ? winner.numbers.join(', ') : 'N/A'}</p>
