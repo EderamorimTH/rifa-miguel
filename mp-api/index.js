@@ -336,8 +336,8 @@ app.get('/winning_numbers', async (req, res) => {
     if (!db) throw new Error('MongoDB não conectado');
     const winningPrizes = await db.collection('winning_prizes').find().toArray();
     console.log('Números premiados encontrados:', winningPrizes.length);
-    // Converter para o formato "number:prize:instagram"
-    const winningNumbers = winningPrizes.map(p => `${p.number}:${p.prize}:${p.instagram || ''}`);
+    // Converter para o formato "number:prize:instagram" e remover @ do Instagram
+    const winningNumbers = winningPrizes.map(p => `${p.number}:${p.prize}:${p.instagram ? p.instagram.replace('@', '') : ''}`);
     res.json(winningNumbers);
   } catch (error) {
     console.error('Erro ao buscar números premiados:', error.message);
@@ -378,8 +378,8 @@ app.post('/check_purchase', async (req, res) => {
 app.post('/save_winner', async (req, res) => {
   try {
     if (!db) throw new Error('MongoDB não conectado');
-    const { name, number, phone, prize } = req.body;
-    console.log('Salvando ganhador:', { name, number, phone, prize });
+    const { name, number, phone, prize, instagram } = req.body; // Adicionado instagram
+    console.log('Salvando ganhador:', { name, number, phone, prize, instagram });
 
     // Validar entrada
     if (!number || !phone || !prize) {
@@ -400,6 +400,7 @@ app.post('/save_winner', async (req, res) => {
       number,
       phone,
       prize,
+      instagram: instagram || undefined, // Salvar instagram se fornecido
       createdAt: new Date()
     });
     console.log('Ganhador salvo com sucesso:', result.insertedId);
