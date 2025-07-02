@@ -237,16 +237,17 @@
                 // Buscar números premiados do backend
                 const winningNumbersRes = await fetch('https://rifa-miguel.onrender.com/winning_numbers');
                 if (!winningNumbersRes.ok) throw new Error(`Erro ao carregar números premiados: ${winningNumbersRes.status}`);
-                const instantWinningNumbers = await winningNumbersRes.json();
+                const winningPrizes = await winningNumbersRes.json();
 
                 let message = '';
                 let hasWinningNumber = false;
 
                 purchasedNumbers.forEach(num => {
-                    if (instantWinningNumbers.includes(num)) {
-                        message += `Parabéns! O número ${num} é um prêmio instantâneo! Você ganhou uma Pizza Grande! 🎉<br>`;
+                    const winningPrize = winningPrizes.find(prize => prize.number === num);
+                    if (winningPrize) {
+                        message += `Parabéns! O número ${num} é um prêmio instantâneo! Você ganhou ${winningPrize.prize}! 🎉<br>`;
                         hasWinningNumber = true;
-                        winnerItem.textContent = `${purchaseData.buyerName || 'Anônimo'} - Número: ${num} - Telefone: ${maskPhone(phone)} - Prêmio: Pizza Grande`;
+                        winnerItem.textContent = `${purchaseData.buyerName || 'Anônimo'} - Número: ${num} - Telefone: ${maskPhone(phone)} - Prêmio: ${winningPrize.prize}`;
                     } else {
                         message += `O número ${num} foi comprado por você e participa do sorteio principal, mas não é um prêmio instantâneo.<br>`;
                     }
