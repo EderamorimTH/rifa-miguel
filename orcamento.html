@@ -3,12 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orçamento</title>
+    <title>Orçamento - Rifa Solidária para o Miguel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 40px;
             line-height: 1.6;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 0;
+        }
+        .nav-button {
+            background-color: #0056b3;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: background-color 0.3s, color 0.3s;
+            flex: 1 1 auto;
+            text-align: center;
+            min-width: 100px;
+        }
+        .nav-button:hover {
+            background-color: #ffc107;
+            color: black;
         }
         .container {
             max-width: 800px;
@@ -62,9 +93,26 @@
         .signature p {
             margin: 5px 0;
         }
+        @media (max-width: 600px) {
+            nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            .nav-button {
+                width: 80%;
+                padding: 8px;
+                font-size: 0.9em;
+            }
+        }
     </style>
 </head>
 <body>
+    <header>
+        <h1>Rifa Solidária para o Miguel</h1>
+        <nav>
+            <a href="https://ederamorimth.github.io/rifa-miguel/index.html" class="nav-button">Início</a>
+        </nav>
+    </header>
     <div class="container">
         <div class="header">
             <h1>HOC Hospital de Olhos</h1>
