@@ -335,7 +335,7 @@ app.get('/test_preference/:id', async (req, res) => {
 app.get('/winning_numbers', async (req, res) => {
   try {
     if (!db) throw new Error('MongoDB não conectado');
-    const winningPrizes = await db.collection('winning_prizes').find().toArray();
+    const winningPrizes = await db.collection('numeros-instantaneo').find().toArray();
     console.log('Números premiados encontrados:', winningPrizes.length);
     res.json(winningPrizes);
   } catch (error) {
