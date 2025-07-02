@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Número Premiado - Rifa Solidária para o Miguel</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,6 +63,26 @@
             background-color: #ccc;
             cursor: not-allowed;
         }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        .share-button {
+            background-color: #25d366;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .share-button:hover {
+            background-color: #1ebe5a;
+        }
         .check-number-container {
             margin-bottom: 20px;
         }
@@ -92,11 +111,13 @@
 <header>
     <h1>Rifa Solidária para o Miguel</h1>
     <nav>
-        <a href="https://ederamorimth.github.io/rifa-miguel/index.html">Início</a>
-        <a href="https://ederamorimth.github.io/rifa-miguel/como-funciona.html">Como Funciona</a>
-        <a href="https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html">Estrabismo</a>
-        <a href="https://ederamorimth.github.io/rifa-miguel/numero-premiado.html">Número Premiado</a>
+        <a href="/rifa-miguel/index.html">Início</a>
+        <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
+        <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
+        <a href="/rifa-miguel/orcamento.html">Orçamento</a>
+        <a href="/rifa-miguel/numero-premiado.html">Número Premiado</a>
         <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
+        <a href="#contato">Contato</a>
     </nav>
 </header>
 
@@ -113,12 +134,21 @@
         <input type="tel" id="check-phone" placeholder="Telefone usado na compra (ex.: 65984730000)" maxlength="11">
         <button id="check-button" onclick="checkNumber()">Consultar Número</button>
         <p id="check-result"></p>
-        <div class="winners-container" id="winners-container" style="display: none;">
+        <div class="winners-container" id="winners-container">
             <h3>Ganhadores Instantâneos</h3>
-            <div id="winners-list"></div>
+            <div class="winner-item" id="winner-1"></div>
         </div>
     </div>
 </section>
+
+<footer id="contato">
+    <p>Contato:</p>
+    <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
+    <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
+    <p>Para dúvidas, entre em contato via WhatsApp!</p>
+    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sorteio.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+    <p>© 2025 Rifa Solidária para o Miguel</p>
+</footer>
 
 <script>
     async function checkPassword() {
@@ -139,7 +169,7 @@
             const result = await response.json();
 
             if (result.valid) {
-                window.location.href = "https://ederamorimth.github.io/rifa-miguel/sorteio.html";
+                window.location.href = "/rifa-miguel/sorteio.html";
             } else {
                 alert("Senha incorreta!");
             }
@@ -156,76 +186,13 @@
         return phone;
     }
 
-    function launchConfetti() {
-        if (typeof confetti === 'undefined') {
-            console.error('Biblioteca canvas-confetti não carregada. Verifique o CDN ou a conexão de rede.');
-            alert('Não foi possível carregar a animação de confetes. Tente novamente mais tarde.');
-            return;
-        }
-        console.log('Acionando confetes infinitos...');
-        let burstCount = 0;
-        setInterval(() => {
-            confetti({
-                particleCount: 100 + (burstCount % 3) * 20,
-                spread: 70 + (burstCount % 3) * 10,
-                origin: { y: 0.5 + (burstCount % 3) * 0.1 },
-                colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff69b4'],
-                angle: 90,
-                drift: burstCount % 2 === 0 ? 0.5 : -0.5,
-                zIndex: 9999
-            });
-            burstCount++;
-            console.log(`Burst de confetes #${burstCount}`);
-        }, 1000);
-    }
-
-    async function loadWinners() {
-        try {
-            console.log('Carregando ganhadores...');
-            const response = await fetch('https://rifa-miguel.onrender.com/get_winners', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            if (!response.ok) throw new Error(`Erro ao carregar ganhadores: ${response.status}`);
-            const winners = await response.json();
-            const winnersList = document.getElementById('winners-list');
-            winnersList.innerHTML = '';
-            winners.forEach((winner, index) => {
-                const winnerDiv = document.createElement('div');
-                winnerDiv.className = 'winner-item';
-                winnerDiv.id = `winner-${index + 1}`;
-                winnerDiv.textContent = `${winner.name || 'Anônimo'} - Número: ${winner.number} - Telefone: ${winner.phone} - Prêmio: ${winner.prize}`;
-                winnersList.appendChild(winnerDiv);
-            });
-            document.getElementById('winners-container').style.display = winners.length > 0 ? 'block' : 'none';
-            console.log(`Ganhadores carregados: ${winners.length}`);
-        } catch (error) {
-            console.error('Erro ao carregar ganhadores:', error.message);
-        }
-    }
-
-    async function saveWinner(winner) {
-        try {
-            console.log('Salvando ganhador:', winner);
-            const response = await fetch('https://rifa-miguel.onrender.com/save_winner', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(winner)
-            });
-            if (!response.ok) throw new Error(`Erro ao salvar ganhador: ${response.status}`);
-            console.log('Ganhador salvo com sucesso');
-            await loadWinners();
-        } catch (error) {
-            console.error('Erro ao salvar ganhador:', error.message);
-        }
-    }
-
     async function checkNumber() {
         const checkButton = document.getElementById('check-button');
         const numbersInput = document.getElementById('check-numbers').value.trim();
         const phoneInput = document.getElementById('check-phone').value.trim();
         const resultDiv = document.getElementById('check-result');
         const winnersContainer = document.getElementById('winners-container');
+        const winnerItem = document.getElementById('winner-1');
 
         checkButton.disabled = true;
         resultDiv.classList.add('loading');
@@ -252,7 +219,7 @@
 
             const purchasedNumbers = numbers.filter(num => !availableNumbers.includes(num));
             if (purchasedNumbers.length === 0) {
-                resultDiv.innerHTML = `Nenhum dos números informados (Exemplo ${numbers.join(', ')}) foi comprado. Deseja comprá-los por R$ 20 cada? <a href="https://ederamorimth.github.io/rifa-miguel/index.html">Clique aqui para comprar</a>.`;
+                resultDiv.textContent = `Nenhum dos números informados (${numbers.join(', ')}) foi comprado. Deseja comprá-los por R$ 10 cada? <a href="/rifa-miguel/index.html">Clique aqui para comprar</a>.`;
                 checkButton.disabled = false;
                 resultDiv.classList.remove('loading');
                 return;
@@ -269,39 +236,34 @@
             if (purchaseData.owned) {
                 const winningNumbersRes = await fetch('https://rifa-miguel.onrender.com/winning_numbers');
                 if (!winningNumbersRes.ok) throw new Error(`Erro ao carregar números premiados: ${winningNumbersRes.status}`);
-                const winningPrizes = await winningNumbersRes.json();
+                const instantWinningNumbers = await winningNumbersRes.json();
 
                 let message = '';
                 let hasWinningNumber = false;
 
-                for (const num of purchasedNumbers) {
-                    const winningPrize = winningPrizes.find(prize => prize.number === num);
-                    if (winningPrize) {
-                        message += `Parabéns! O número ${num} é um prêmio instantâneo! Você ganhou ${winningPrize.prize}! 🎉<br>Seus números continuam concorrendo ao prêmio principal de R$ 1.500!`;
+                purchasedNumbers.forEach(num => {
+                    const winningEntry = instantWinningNumbers.find(entry => entry.startsWith(num + ':'));
+                    if (winningEntry) {
+                        const [winningNum, winnerName, prize, instagram] = winningEntry.split(':');
+                        const instaLink = instagram ? `<a href="https://instagram.com/${instagram}" target="_blank">@${instagram}</a>` : '';
+                        message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! ${winnerName} ganhou ${prize}! ${instaLink}<br>`;
                         hasWinningNumber = true;
-                        const winner = {
-                            name: purchaseData.buyerName,
-                            number: num,
-                            phone: maskPhone(phone),
-                            prize: winningPrize.prize
-                        };
-                        await saveWinner(winner);
+                        winnerItem.innerHTML = `${winnerName} - Número: ${winningNum} - Telefone: ${maskPhone(phone)} - Prêmio: ${prize} ${instaLink}`;
                     } else {
                         message += `O número ${num} foi comprado por você e participa do sorteio principal, mas não é um prêmio instantâneo.<br>`;
                     }
-                }
+                });
                 resultDiv.innerHTML = message || 'Nenhum prêmio instantâneo encontrado para seus números. Você ainda participa do sorteio principal!';
-                
+
                 if (hasWinningNumber) {
                     winnersContainer.style.display = 'block';
-                    launchConfetti();
                 }
             } else {
                 resultDiv.textContent = 'Os números informados não correspondem ao telefone fornecido. Verifique seus dados.';
                 winnersContainer.style.display = 'none';
             }
         } catch (error) {
-            console.error('Erro ao consultar número:', error.message);
+            console.error('Erro ao consultar número:', error);
             resultDiv.textContent = `Erro ao verificar os números. Tente novamente ou contate o suporte. Detalhe: ${error.message}`;
             winnersContainer.style.display = 'none';
         } finally {
@@ -309,8 +271,7 @@
             resultDiv.classList.remove('loading');
         }
     }
-
-    window.onload = loadWinners;
 </script>
+
 </body>
 </html>
