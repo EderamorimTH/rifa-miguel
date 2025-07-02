@@ -337,6 +337,35 @@ app.get('/winning_numbers', (req, res) => {
     res.json(winningNumbers);
 });
 
+// Endpoint para verificar compra
+app.post('/check_purchase', async (req, res) => {
+    try {
+        const { numbers, buyerPhone } = req.body;
+        if (!numbers || !Array.isArray(numbers) || !buyerPhone) {
+            return res.status(400).json({ error: 'Números e telefone são obrigatórios' });
+        }
+
+        const purchases = await db.collection('purchases').find().toArray();
+        const soldNumbers = purchases.flatMap(p => p.numbers || []);
+        const buyerPurchases = purchases.filter(p => p.buyerPhone === buyerPhone);
+
+        const ownedNumbers = numbers.filter(num => {
+            return buyerPurchases.some(p => p.numbers.includes(num));
+        });
+
+        const response = {
+            owned: ownedNumbers.length > 0,
+            buyerName: buyerPurchases.length > 0 ? buyerPurchases[0].buyerName : null,
+            numbers: ownedNumbers
+        };
+
+        res.json(response);
+    } catch (error) {
+        console.error('Erro ao verificar compra:', error.message);
+        res.status(500).json({ error: 'Erro ao verificar compra', details: error.message });
+    }
+});
+
 app.get('/', (req, res) => {
   res.send('API da Rifa está online!');
 });
