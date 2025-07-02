@@ -338,7 +338,7 @@
                         const winningEntry = instantWinningNumbers.find(entry => entry.split(':')[0] === num);
                         if (winningEntry) {
                             const [winningNum, prize, instagram] = winningEntry.split(':');
-                            const cleanInstagram = instagram && instagram !== '@' && instagram.trim() !== '' ? instagram.replace('@', '') : '';
+                            const cleanInstagram = instagram && instagram.trim() !== '' ? instagram.replace('@', '') : '';
                             console.log('Instagram processado:', { raw: instagram, clean: cleanInstagram });
                             const instaLink = cleanInstagram ? `<a href="https://instagram.com/${cleanInstagram}" target="_blank">@${cleanInstagram}</a>` : '(sem Instagram)';
                             message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! Você ganhou ${prize}! Parceiro: ${instaLink}<br>Seus números continuam concorrendo ao prêmio principal de R$ 1.500!<br>`;
@@ -348,7 +348,7 @@
                                 number: winningNum,
                                 phone: maskPhone(phone),
                                 prize: prize,
-                                instagram: cleanInstagram
+                                instagram: cleanInstagram || undefined // Passa undefined se vazio
                             };
                             console.log('Objeto winner a ser salvo:', winner);
                             const existingWinnerRes = await fetch('https://rifa-miguel.onrender.com/get_winners');
