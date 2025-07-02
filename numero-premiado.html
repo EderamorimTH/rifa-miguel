@@ -346,7 +346,7 @@
                                 number: winningNum,
                                 phone: maskPhone(phone),
                                 prize: prize,
-                                instagram: cleanInstagram
+                                instagram: cleanInstagram || '(sem Instagram)'
                             };
                             const existingWinnerRes = await fetch('https://rifa-miguel.onrender.com/get_winners');
                             const existingWinners = await existingWinnerRes.json();
