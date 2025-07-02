@@ -194,7 +194,6 @@
         const winnersContainer = document.getElementById('winners-container');
         const winnerItem = document.getElementById('winner-1');
 
-        // Desabilitar botão e mostrar "carregando"
         checkButton.disabled = true;
         resultDiv.classList.add('loading');
         resultDiv.textContent = 'Verificando...';
@@ -226,7 +225,6 @@
                 return;
             }
 
-            // Verificar compra com o backend
             const purchaseRes = await fetch('https://rifa-miguel.onrender.com/check_purchase', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -236,10 +234,10 @@
             const purchaseData = await purchaseRes.json();
 
             if (purchaseData.owned) {
-                // Buscar números premiados instantâneos do backend
+                // Buscar números premiados do backend
                 const winningNumbersRes = await fetch('https://rifa-miguel.onrender.com/winning_numbers');
                 if (!winningNumbersRes.ok) throw new Error(`Erro ao carregar números premiados: ${winningNumbersRes.status}`);
-                const instantWinningNumbers = await winningNumbersRes.json(); // Ex.: ["0001", "0002"]
+                const instantWinningNumbers = await winningNumbersRes.json();
 
                 let message = '';
                 let hasWinningNumber = false;
@@ -248,7 +246,6 @@
                     if (instantWinningNumbers.includes(num)) {
                         message += `Parabéns! O número ${num} é um prêmio instantâneo! Você ganhou uma Pizza Grande! 🎉<br>`;
                         hasWinningNumber = true;
-                        // Exibir ganhador publicamente
                         winnerItem.textContent = `${purchaseData.buyerName || 'Anônimo'} - Número: ${num} - Telefone: ${maskPhone(phone)} - Prêmio: Pizza Grande`;
                     } else {
                         message += `O número ${num} foi comprado por você e participa do sorteio principal, mas não é um prêmio instantâneo.<br>`;
@@ -268,7 +265,6 @@
             resultDiv.textContent = `Erro ao verificar os números. Tente novamente ou contate o suporte. Detalhe: ${error.message}`;
             winnersContainer.style.display = 'none';
         } finally {
-            // Reativar botão e remover "carregando"
             checkButton.disabled = false;
             resultDiv.classList.remove('loading');
         }
