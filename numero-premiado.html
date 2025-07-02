@@ -114,11 +114,9 @@
     <nav>
         <a href="https://ederamorimth.github.io/rifa-miguel/index.html">Início</a>
         <a href="https://ederamorimth.github.io/rifa-miguel/como-funciona.html">Como Funciona</a>
-        <a href="https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
-        <a href="https://ederamorimth.github.io/rifa-miguel/orcamento.html">Orçamento</a>
+        <a href="https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html">Estrabismo</a>
         <a href="https://ederamorimth.github.io/rifa-miguel/numero-premiado.html">Número Premiado</a>
         <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
-        <a href="#contato">Contato</a>
     </nav>
 </header>
 
@@ -308,7 +306,7 @@
                 for (const num of purchasedNumbers) {
                     const winningPrize = winningPrizes.find(prize => prize.number === num);
                     if (winningPrize) {
-                        message += `Parabéns! O número ${num} é um prêmio instantâneo! Você ganhou ${winningPrize.prize}! 🎉<br>`;
+                        message += `Parabéns! O número ${num} é um prêmio instantâneo! Você ganhou ${winningPrize.prize}! 🎉<br>Seus números continuam concorrendo ao prêmio principal de R$ 1.500!`;
                         hasWinningNumber = true;
                         const winner = {
                             name: purchaseData.buyerName,
@@ -322,7 +320,7 @@
                     }
                 }
                 resultDiv.innerHTML = message || 'Nenhum prêmio instantâneo encontrado para seus números. Você ainda participa do sorteio principal!';
-
+                
                 if (hasWinningNumber) {
                     winnersContainer.style.display = 'block';
                     launchConfetti();
@@ -344,6 +342,5 @@
     // Carrega os ganhadores ao iniciar a página
     window.onload = loadWinners;
 </script>
-
 </body>
 </html>
