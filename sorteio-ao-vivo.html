@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sorteio ao Vivo - Rifa Solidária para o Miguel</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -168,6 +169,30 @@
             return masked + lastFour;
         }
 
+        // Função para lançar confetes infinitos
+        function launchConfetti() {
+            if (typeof confetti === 'undefined') {
+                console.error('Biblioteca canvas-confetti não carregada. Verifique o CDN ou a conexão de rede.');
+                alert('Não foi possível carregar a animação de confetes. Tente novamente mais tarde.');
+                return;
+            }
+            console.log('Acionando confetes infinitos...');
+            let burstCount = 0;
+            setInterval(() => {
+                confetti({
+                    particleCount: 100 + (burstCount % 3) * 20,
+                    spread: 70 + (burstCount % 3) * 10,
+                    origin: { y: 0.5 + (burstCount % 3) * 0.1 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff69b4'],
+                    angle: 90,
+                    drift: burstCount % 2 === 0 ? 0.5 : -0.5,
+                    zIndex: 9999
+                });
+                burstCount++;
+                console.log(`Burst de confetes #${burstCount}`);
+            }, 1000); // Intervalo de 1 segundo
+        }
+
         // Carregar compras
         async function loadPurchases() {
             const maxRetries = 3;
@@ -259,6 +284,9 @@
                     winnerMessage.style.display = 'block';
                     startButton.disabled = false;
                     console.log(`Sorteio ao vivo realizado at ${new Date().toISOString()}: Número ${winningNumber}, Ganhador: ${winner.buyerName}`);
+                    
+                    // Acionar confetes infinitos
+                    launchConfetti();
                 }
             }, 1000);
         }
