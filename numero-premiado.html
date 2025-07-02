@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Número Premiado - Rifa Solidária para o Miguel</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -111,11 +112,11 @@
 <header>
     <h1>Rifa Solidária para o Miguel</h1>
     <nav>
-        <a href="/rifa-miguel/index.html">Início</a>
-        <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
-        <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
-        <a href="/rifa-miguel/orcamento.html">Orçamento</a>
-        <a href="/rifa-miguel/numero-premiado.html">Número Premiado</a>
+        <a href="https://ederamorimth.github.io/rifa-miguel/index.html">Início</a>
+        <a href="https://ederamorimth.github.io/rifa-miguel/como-funciona.html">Como Funciona</a>
+        <a href="https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
+        <a href="https://ederamorimth.github.io/rifa-miguel/orcamento.html">Orçamento</a>
+        <a href="https://ederamorimth.github.io/rifa-miguel/numero-premiado.html">Número Premiado</a>
         <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
         <a href="#contato">Contato</a>
     </nav>
@@ -169,7 +170,7 @@
             const result = await response.json();
 
             if (result.valid) {
-                window.location.href = "/rifa-miguel/sorteio.html";
+                window.location.href = "https://ederamorimth.github.io/rifa-miguel/sorteio.html";
             } else {
                 alert("Senha incorreta!");
             }
@@ -184,6 +185,15 @@
             return 'XXX-' + phone.slice(-4);
         }
         return phone;
+    }
+
+    function launchConfetti() {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00']
+        });
     }
 
     async function checkNumber() {
@@ -219,7 +229,7 @@
 
             const purchasedNumbers = numbers.filter(num => !availableNumbers.includes(num));
             if (purchasedNumbers.length === 0) {
-                resultDiv.textContent = `Nenhum dos números informados (${numbers.join(', ')}) foi comprado. Deseja comprá-los por R$ 10 cada? <a href="/rifa-miguel/index.html">Clique aqui para comprar</a>.`;
+                resultDiv.innerHTML = `Nenhum dos números informados (${numbers.join(', ')}) foi comprado. Deseja comprá-los por R$ 10 cada? <a href="https://ederamorimth.github.io/rifa-miguel/index.html">Clique aqui para comprar</a>.`;
                 checkButton.disabled = false;
                 resultDiv.classList.remove('loading');
                 return;
@@ -256,6 +266,7 @@
 
                 if (hasWinningNumber) {
                     winnersContainer.style.display = 'block';
+                    launchConfetti(); // Dispara o efeito de confetes
                 }
             } else {
                 resultDiv.textContent = 'Os números informados não correspondem ao telefone fornecido. Verifique seus dados.';
