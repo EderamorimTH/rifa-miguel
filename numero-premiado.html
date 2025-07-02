@@ -64,26 +64,6 @@
             background-color: #ccc;
             cursor: not-allowed;
         }
-        footer {
-            background-color: #333;
-            color: white;
-            text-align: center;
-            padding: 10px;
-        }
-        .share-button {
-            background-color: #25d366;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-        .share-button:hover {
-            background-color: #1ebe5a;
-        }
         .check-number-container {
             margin-bottom: 20px;
         }
@@ -139,15 +119,6 @@
         </div>
     </div>
 </section>
-
-<footer id="contato">
-    <p>Contato:</p>
-    <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
-    <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
-    <p>Para dúvidas, entre em contato via WhatsApp!</p>
-    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sorteio.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
-    <p>© 2025 Rifa Solidária para o Miguel</p>
-</footer>
 
 <script>
     async function checkPassword() {
@@ -205,7 +176,7 @@
             });
             burstCount++;
             console.log(`Burst de confetes #${burstCount}`);
-        }, 1000); // Intervalo de 1 segundo
+        }, 1000);
     }
 
     async function loadWinners() {
@@ -243,7 +214,7 @@
             });
             if (!response.ok) throw new Error(`Erro ao salvar ganhador: ${response.status}`);
             console.log('Ganhador salvo com sucesso');
-            await loadWinners(); // Atualiza a lista após salvar
+            await loadWinners();
         } catch (error) {
             console.error('Erro ao salvar ganhador:', error.message);
         }
@@ -339,7 +310,6 @@
         }
     }
 
-    // Carrega os ganhadores ao iniciar a página
     window.onload = loadWinners;
 </script>
 </body>
