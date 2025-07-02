@@ -1,4 +1,3 @@
-```javascript
 import express from 'express';
 import cors from 'cors';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
@@ -55,32 +54,32 @@ app.get('/test_db', async (req, res) => {
   }
 });
 
-// Endpoint para verificar números disponíveis
+// Endpoint para verificar numeros disponiveis
 app.get('/available_numbers', async (req, res) => {
   try {
-    if (!db) throw new Error('MongoDB não conectado');
-    console.log('Consultando coleção purchases...');
+    if (!db) throw new Error('MongoDB nao conectado');
+    console.log('Consultando colecao purchases...');
     const purchases = await db.collection('purchases').find().toArray();
-    console.log(`Número de documentos na coleção purchases: ${purchases.length}`);
+    console.log(`Numero de documentos na colecao purchases: ${purchases.length}`);
     const soldNumbers = purchases.flatMap(p => p.numbers || []);
-    console.log(`Números vendidos encontrados: ${soldNumbers.length}`);
-    const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0')); // Atualizado para 900 números
+    console.log(`Numeros vendidos encontrados: ${soldNumbers.length}`);
+    const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0'));
     const availableNumbers = allNumbers.filter(num => !soldNumbers.includes(num));
-    console.log(`Números disponíveis retornados: ${availableNumbers.length}`);
+    console.log(`Numeros disponiveis retornados: ${availableNumbers.length}`);
     if (availableNumbers.length === 0) {
-      console.warn('Nenhum número disponível encontrado');
+      console.warn('Nenhum numero disponivel encontrado');
     }
     res.json(availableNumbers);
   } catch (error) {
-    console.error('Erro ao buscar números disponíveis:', error.message);
-    res.status(500).json({ error: 'Erro ao buscar números disponíveis', details: error.message });
+    console.error('Erro ao buscar numeros disponiveis:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar numeros disponiveis', details: error.message });
   }
 });
 
 // Endpoint para calcular progresso
 app.get('/progress', async (req, res) => {
   try {
-    const totalNumbers = 900; // Atualizado para 900 números
+    const totalNumbers = 900;
     const purchases = await db.collection('purchases').find().toArray();
     const soldNumbers = purchases.flatMap(p => p.numbers || []).length;
     const progress = (soldNumbers / totalNumbers) * 100;
@@ -107,18 +106,18 @@ app.post('/verify_password', (req, res) => {
   try {
     const { password } = req.body;
     const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO';
-    console.log('Verificando senha às:', new Date().toISOString());
+    console.log('Verificando senha as:', new Date().toISOString());
 
     if (!password) {
-      console.log('Erro: Senha não fornecida');
-      return res.status(400).json({ error: 'Senha não fornecida' });
+      console.log('Erro: Senha nao fornecida');
+      return res.status(400).json({ error: 'Senha nao fornecida' });
     }
 
     if (password === correctPassword) {
-      console.log('Senha válida');
+      console.log('Senha valida');
       res.json({ valid: true });
     } else {
-      console.log('Senha inválida');
+      console.log('Senha invalida');
       res.json({ valid: false });
     }
   } catch (error) {
@@ -133,7 +132,7 @@ app.post('/test_create_preference', (req, res) => {
   res.json({ received: req.body, status: 'Test endpoint working' });
 });
 
-// Endpoint para criar preferência de pagamento
+// Endpoint para criar preferencia de pagamento
 app.post('/create_preference', async (req, res) => {
   try {
     const { quantity, buyerName, buyerPhone, numbers } = req.body;
@@ -142,15 +141,15 @@ app.post('/create_preference', async (req, res) => {
     // Validate inputs
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
       console.log('Error: Invalid or missing numbers');
-      return res.status(400).json({ error: 'Por favor, selecione pelo menos um número' });
+      return res.status(400).json({ error: 'Por favor, selecione pelo menos um numero' });
     }
     if (!buyerName || !buyerPhone) {
       console.log('Error: Missing name or phone');
-      return res.status(400).json({ error: 'Nome e telefone são obrigatórios' });
+      return res.status(400).json({ error: 'Nome e telefone sao obrigatorios' });
     }
     if (!quantity || quantity !== numbers.length) {
       console.log('Error: Invalid quantity');
-      return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
+      return res.status(400).json({ error: 'Quantidade invalida ou nao corresponde aos numeros selecionados' });
     }
 
     console.log('Verifying available numbers...');
@@ -159,7 +158,7 @@ app.post('/create_preference', async (req, res) => {
     const invalidNumbers = numbers.filter(num => soldNumbers.includes(num));
     if (invalidNumbers.length > 0) {
       console.log('Invalid numbers detected:', invalidNumbers);
-      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
+      return res.status(400).json({ error: `Numeros indisponiveis: ${invalidNumbers.join(', ')}` });
     }
 
     console.log('Creating Mercado Pago preference...');
@@ -167,9 +166,9 @@ app.post('/create_preference', async (req, res) => {
     const preferenceData = {
       body: {
         items: [{
-          title: `Rifa - ${quantity} número(s)`,
+          title: `Rifa - ${quantity} numero(s)`,
           quantity: Number(quantity),
-          unit_price: 20, // Atualizado para 20 reais
+          unit_price: 20,
         }],
         payer: {
           name: buyerName,
@@ -192,7 +191,7 @@ app.post('/create_preference', async (req, res) => {
     res.json({ init_point: response.init_point, preference_id: response.id });
   } catch (error) {
     console.error('Error in /create_preference at:', new Date().toISOString(), error.message, 'Stack:', error.stack);
-    res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
+    res.status(500).json({ error: 'Erro ao criar preferencia', details: error.message });
   }
 });
 
@@ -209,7 +208,6 @@ app.post('/webhook', async (req, res) => {
     console.log('Processing POST webhook...', 'Body:', JSON.stringify(body, null, 2));
     let paymentId = null;
 
-    // Extrair paymentId de diferentes formatos
     if (body.type === 'payment' && body.data && body.data.id) {
       paymentId = body.data.id;
     } else if (body.resource && typeof body.resource === 'string' && body.resource.match(/^\d+$/)) {
@@ -232,10 +230,10 @@ app.post('/webhook', async (req, res) => {
         console.log('Payment details:', {
           id: paymentDetails.id,
           status: paymentDetails.status,
-          preference_id: paymentDetails.preference_id || 'Não encontrado',
-          external_reference: paymentDetails.external_reference || 'Não encontrado',
-          transaction_amount: paymentDetails.transaction_amount || 'Não encontrado',
-          date_approved: paymentDetails.date_approved || 'Não aprovado ainda'
+          preference_id: paymentDetails.preference_id || 'Nao encontrado',
+          external_reference: paymentDetails.external_reference || 'Nao encontrado',
+          transaction_amount: paymentDetails.transaction_amount || 'Nao encontrado',
+          date_approved: paymentDetails.date_approved || 'Nao aprovado ainda'
         });
 
         if (paymentDetails.status === 'approved' || paymentDetails.status === 'pending') {
@@ -256,8 +254,8 @@ app.post('/webhook', async (req, res) => {
 
           if (buyerName && buyerPhone && numbers && Array.isArray(numbers)) {
             if (!db) {
-              console.error('MongoDB não conectado');
-              return res.status(500).send('Erro: MongoDB não conectado');
+              console.error('MongoDB nao conectado');
+              return res.status(500).send('Erro: MongoDB nao conectado');
             }
             const existingPurchase = await db.collection('purchases').findOne({ paymentId: paymentDetails.id });
             if (!existingPurchase) {
@@ -269,7 +267,7 @@ app.post('/webhook', async (req, res) => {
                 paymentId: paymentDetails.id,
                 status: paymentDetails.status,
                 date_approved: paymentDetails.date_approved || null,
-                preference_id: paymentDetails.preference_id || 'Não encontrado'
+                preference_id: paymentDetails.preference_id || 'Nao encontrado'
               });
               console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers, status: paymentDetails.status });
             } else {
@@ -291,14 +289,14 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Função auxiliar para buscar preference_id
+// Funcao auxiliar para buscar preference_id
 async function getPreferenceIdFromPayment(paymentId) {
   try {
     const payment = new Payment(mp);
     const paymentDetails = await payment.get({ id: paymentId });
     console.log('Payment details for preference_id:', {
       paymentId,
-      preference_id: paymentDetails.preference_id || 'Não encontrado',
+      preference_id: paymentDetails.preference_id || 'Nao encontrado',
       status: paymentDetails.status
     });
     return paymentDetails.preference_id || null;
@@ -308,40 +306,40 @@ async function getPreferenceIdFromPayment(paymentId) {
   }
 }
 
-// Endpoint temporário para testar pagamento
+// Endpoint temporario para testar pagamento
 app.get('/test_payment/:id', async (req, res) => {
   try {
     const paymentId = req.params.id;
     const payment = new Payment(mp);
     const paymentDetails = await payment.get({ id: paymentId });
-    res.json({ paymentDetails, preferenceId: paymentDetails.preference_id || 'Não encontrado' });
+    res.json({ paymentDetails, preferenceId: paymentDetails.preference_id || 'Nao encontrado' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Endpoint temporário para testar preferência
+// Endpoint temporario para testar preferencia
 app.get('/test_preference/:id', async (req, res) => {
   try {
     const preferenceId = req.params.id;
     const preference = new Preference(mp);
     const preferenceDetails = await preference.get({ id: preferenceId });
-    res.json({ preferenceDetails, externalReference: preferenceDetails.external_reference || 'Não encontrado' });
+    res.json({ preferenceDetails, externalReference: preferenceDetails.external_reference || 'Nao encontrado' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Endpoint para números premiados
+// Endpoint para numeros premiados
 app.get('/winning_numbers', async (req, res) => {
   try {
-    if (!db) throw new Error('MongoDB não conectado');
+    if (!db) throw new Error('MongoDB nao conectado');
     const winningPrizes = await db.collection('winning_prizes').find().toArray();
-    console.log('Números premiados encontrados:', winningPrizes.length);
+    console.log('Numeros premiados encontrados:', winningPrizes.length);
     res.json(winningPrizes);
   } catch (error) {
-    console.error('Erro ao buscar números premiados:', error.message);
-    res.status(500).json({ error: 'Erro ao buscar números premiados', details: error.message });
+    console.error('Erro ao buscar numeros premiados:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar numeros premiados', details: error.message });
   }
 });
 
@@ -350,7 +348,7 @@ app.post('/check_purchase', async (req, res) => {
   try {
     const { numbers, buyerPhone } = req.body;
     if (!numbers || !Array.isArray(numbers) || !buyerPhone) {
-      return res.status(400).json({ error: 'Números e telefone são obrigatórios' });
+      return res.status(400).json({ error: 'Numeros e telefone sao obrigatorios' });
     }
 
     const purchases = await db.collection('purchases').find().toArray();
@@ -377,7 +375,7 @@ app.post('/check_purchase', async (req, res) => {
 // Endpoint para salvar ganhador
 app.post('/save_winner', async (req, res) => {
   try {
-    if (!db) throw new Error('MongoDB não conectado');
+    if (!db) throw new Error('MongoDB nao conectado');
     const { name, number, phone, prize } = req.body;
     console.log('Salvando ganhador:', { name, number, phone, prize });
 
@@ -390,13 +388,13 @@ app.post('/save_winner', async (req, res) => {
     // Verificar duplicata
     const existingWinner = await db.collection('winners').findOne({ number });
     if (existingWinner) {
-      console.log('Erro: Número já registrado como ganhador:', number);
-      return res.status(400).json({ error: `Número ${number} já registrado como ganhador` });
+      console.log('Erro: Numero ja registrado como ganhador:', number);
+      return res.status(400).json({ error: `Numero ${number} ja registrado como ganhador` });
     }
 
     // Salvar ganhador
     const result = await db.collection('winners').insertOne({
-      name: name || 'Anônimo',
+      name: name || 'Anonimo',
       number,
       phone,
       prize,
@@ -413,7 +411,7 @@ app.post('/save_winner', async (req, res) => {
 // Endpoint para recuperar ganhadores
 app.get('/get_winners', async (req, res) => {
   try {
-    if (!db) throw new Error('MongoDB não conectado');
+    if (!db) throw new Error('MongoDB nao conectado');
     const winners = await db.collection('winners').find().sort({ createdAt: -1 }).toArray();
     console.log('Ganhadores recuperados:', winners.length);
     res.json(winners);
@@ -424,7 +422,7 @@ app.get('/get_winners', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('API da Rifa está online!');
+  res.send('API da Rifa esta online!');
 });
 
 const PORT = process.env.PORT || 10000;
