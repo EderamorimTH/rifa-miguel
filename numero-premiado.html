@@ -162,11 +162,15 @@
             }
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
                 const response = await fetch('https://rifa-miguel.onrender.com/verify_password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
+                    body: JSON.stringify({ password }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
 
                 if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
                 const result = await response.json();
@@ -209,7 +213,7 @@
                 });
                 burstCount++;
                 console.log(`Burst de confetes #${burstCount}`);
-            }, 1000); // Intervalo de 1 segundo
+            }, 1000);
         }
 
         async function loadWinners() {
@@ -217,18 +221,23 @@
             const winnersContainer = document.getElementById('winners-container');
             try {
                 console.log('Carregando ganhadores...');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
                 const response = await fetch('https://rifa-miguel.onrender.com/get_winners', {
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
+
                 if (!response.ok) throw new Error(`Erro ao carregar ganhadores: ${response.status}`);
                 const winners = await response.json();
 
                 if (winners.length > 0) {
                     let html = '';
                     winners.forEach(winner => {
-                        const instaLink = winner.instagram ? `<a href="https://instagram.com/${winner.instagram.replace('@', '')}" target="_blank">@${winner.instagram}</a>` : '';
-                        html += `<div class="winner-item">${winner.name || 'Anônimo'} - Número: ${winner.number} - Telefone: ${maskPhone(winner.phone)} - Prêmio: ${winner.prize} ${instaLink}</div>`;
+                        const instaLink = winner.instagram ? `<a href="https://instagram.com/${winner.instagram.replace('@', '')}" target="_blank">@${winner.instagram}</a>` : '(sem Instagram)';
+                        html += `<div class="winner-item">${winner.name || 'Anônimo'} - Número: ${winner.number} - Telefone: ${maskPhone(winner.phone)} - Prêmio: ${winner.prize} - Parceiro: ${instaLink}</div>`;
                     });
                     winnersList.innerHTML = html;
                     winnersContainer.style.display = 'block';
@@ -246,14 +255,19 @@
         async function saveWinner(winner) {
             try {
                 console.log('Salvando ganhador:', winner);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
                 const response = await fetch('https://rifa-miguel.onrender.com/save_winner', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(winner)
+                    body: JSON.stringify(winner),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
+
                 if (!response.ok) throw new Error(`Erro ao salvar ganhador: ${response.status}`);
                 console.log('Ganhador salvo com sucesso');
-                await loadWinners(); // Atualiza a lista após salvar
+                await loadWinners();
             } catch (error) {
                 console.error('Erro ao salvar ganhador:', error.message);
                 alert('Erro ao salvar ganhador. Tente novamente ou contate o suporte.');
@@ -283,10 +297,15 @@
             const phone = phoneInput;
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
                 const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
+
                 if (!availableRes.ok) throw new Error(`Erro ao carregar números disponíveis: ${availableRes.status}`);
                 const availableNumbers = await availableRes.json();
 
@@ -318,8 +337,8 @@
                         const winningEntry = instantWinningNumbers.find(entry => entry.split(':')[0] === num);
                         if (winningEntry) {
                             const [winningNum, prize, instagram] = winningEntry.split(':');
-                            const instaLink = instagram ? `<a href="https://instagram.com/${instagram.replace('@', '')}" target="_blank">@${instagram}</a>` : '';
-                            message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! Você ganhou ${prize}! ${instaLink}<br>Seus números continuam concorrendo ao prêmio principal de R$ 1.500!<br>`;
+                            const instaLink = instagram ? `<a href="https://instagram.com/${instagram.replace('@', '')}" target="_blank">@${instagram}</a>` : '(sem Instagram)';
+                            message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! Você ganhou ${prize}! Parceiro: ${instaLink}<br>Seus números continuam concorrendo ao prêmio principal de R$ 1.500!<br>`;
                             hasWinningNumber = true;
                             const winner = {
                                 name: purchaseData.buyerName || 'Anônimo',
@@ -328,7 +347,14 @@
                                 prize: prize,
                                 instagram: instagram || ''
                             };
-                            await saveWinner(winner);
+                            const existingWinnerRes = await fetch('https://rifa-miguel.onrender.com/get_winners');
+                            const existingWinners = await existingWinnerRes.json();
+                            const isDuplicate = existingWinners.some(w => w.number === winningNum && w.phone === maskPhone(phone));
+                            if (!isDuplicate) {
+                                await saveWinner(winner);
+                            } else {
+                                console.log(`Ganhador já registrado para o número ${winningNum} e telefone ${maskPhone(phone)}`);
+                            }
                         } else {
                             message += `O número ${num} foi comprado por você e participa do sorteio principal, mas não é um prêmio instantâneo.<br>`;
                         }
@@ -352,7 +378,6 @@
             }
         }
 
-        // Carrega os ganhadores ao iniciar a página
         window.onload = loadWinners;
     </script>
 </body>
