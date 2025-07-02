@@ -244,11 +244,11 @@
                 purchasedNumbers.forEach(num => {
                     const winningEntry = instantWinningNumbers.find(entry => entry.startsWith(num + ':'));
                     if (winningEntry) {
-                        const [winningNum, winnerName, prize, instagram] = winningEntry.split(':');
+                        const [winningNum, prize, instagram] = winningEntry.split(':');
                         const instaLink = instagram ? `<a href="https://instagram.com/${instagram}" target="_blank">@${instagram}</a>` : '';
-                        message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! ${winnerName} ganhou ${prize}! ${instaLink}<br>`;
+                        message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! Você ganhou ${prize}! ${instaLink}<br>`;
                         hasWinningNumber = true;
-                        winnerItem.innerHTML = `${winnerName} - Número: ${winningNum} - Telefone: ${maskPhone(phone)} - Prêmio: ${prize} ${instaLink}`;
+                        winnerItem.innerHTML = `Anônimo - Número: ${winningNum} - Telefone: ${maskPhone(phone)} - Prêmio: ${prize} ${instaLink}`;
                     } else {
                         message += `O número ${num} foi comprado por você e participa do sorteio principal, mas não é um prêmio instantâneo.<br>`;
                     }
