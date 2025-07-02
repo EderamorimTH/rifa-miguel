@@ -236,7 +236,7 @@
                 if (winners.length > 0) {
                     let html = '';
                     winners.forEach(winner => {
-                        const instaLink = winner.instagram ? `<a href="https://instagram.com/${winner.instagram.replace('@', '')}" target="_blank">@${winner.instagram}</a>` : '(sem Instagram)';
+                        const instaLink = winner.instagram ? `<a href="https://instagram.com/${winner.instagram}" target="_blank">@${winner.instagram}</a>` : '(sem Instagram)';
                         html += `<div class="winner-item">${winner.name || 'Anônimo'} - Número: ${winner.number} - Telefone: ${maskPhone(winner.phone)} - Prêmio: ${winner.prize} - Parceiro: ${instaLink}</div>`;
                     });
                     winnersList.innerHTML = html;
@@ -337,7 +337,8 @@
                         const winningEntry = instantWinningNumbers.find(entry => entry.split(':')[0] === num);
                         if (winningEntry) {
                             const [winningNum, prize, instagram] = winningEntry.split(':');
-                            const instaLink = instagram ? `<a href="https://instagram.com/${instagram.replace('@', '')}" target="_blank">@${instagram}</a>` : '(sem Instagram)';
+                            const cleanInstagram = instagram ? instagram.replace('@', '') : '';
+                            const instaLink = cleanInstagram ? `<a href="https://instagram.com/${cleanInstagram}" target="_blank">@${cleanInstagram}</a>` : '(sem Instagram)';
                             message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! Você ganhou ${prize}! Parceiro: ${instaLink}<br>Seus números continuam concorrendo ao prêmio principal de R$ 1.500!<br>`;
                             hasWinningNumber = true;
                             const winner = {
@@ -345,7 +346,7 @@
                                 number: winningNum,
                                 phone: maskPhone(phone),
                                 prize: prize,
-                                instagram: instagram || ''
+                                instagram: cleanInstagram
                             };
                             const existingWinnerRes = await fetch('https://rifa-miguel.onrender.com/get_winners');
                             const existingWinners = await existingWinnerRes.json();
