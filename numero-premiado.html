@@ -147,7 +147,7 @@
     <footer id="contato">
         <p>Contato:</p>
         <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
-        <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
+        <p>Eder Pai do Miguel: <a href="https://wa.me/659 UKA>65999731992">+65 99973-1992</a></p>
         <p>Para dúvidas, entre em contato via WhatsApp!</p>
         <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sorteio.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
         <p>© 2025 Rifa Solidária para o Miguel</p>
@@ -236,7 +236,8 @@
                 if (winners.length > 0) {
                     let html = '';
                     winners.forEach(winner => {
-                        const instaLink = winner.instagram ? `<a href="https://instagram.com/${winner.instagram}" target="_blank">@${winner.instagram}</a>` : '(sem Instagram)';
+                        console.log('Ganhador carregado:', winner); // Log para depuração
+                        const instaLink = winner.instagram && winner.instagram.trim() !== '' ? `<a href="https://instagram.com/${winner.instagram}" target="_blank">@${winner.instagram}</a>` : '(sem Instagram)';
                         html += `<div class="winner-item">${winner.name || 'Anônimo'} - Número: ${winner.number} - Telefone: ${maskPhone(winner.phone)} - Prêmio: ${winner.prize} - Parceiro: ${instaLink}</div>`;
                     });
                     winnersList.innerHTML = html;
@@ -337,7 +338,8 @@
                         const winningEntry = instantWinningNumbers.find(entry => entry.split(':')[0] === num);
                         if (winningEntry) {
                             const [winningNum, prize, instagram] = winningEntry.split(':');
-                            const cleanInstagram = instagram ? instagram.replace('@', '') : '';
+                            const cleanInstagram = instagram && instagram !== '@' && instagram.trim() !== '' ? instagram.replace('@', '') : '';
+                            console.log('Instagram processado:', { raw: instagram, clean: cleanInstagram }); // Log para depuração
                             const instaLink = cleanInstagram ? `<a href="https://instagram.com/${cleanInstagram}" target="_blank">@${cleanInstagram}</a>` : '(sem Instagram)';
                             message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! Você ganhou ${prize}! Parceiro: ${instaLink}<br>Seus números continuam concorrendo ao prêmio principal de R$ 1.500!<br>`;
                             hasWinningNumber = true;
@@ -346,8 +348,9 @@
                                 number: winningNum,
                                 phone: maskPhone(phone),
                                 prize: prize,
-                                instagram: cleanInstagram || '(sem Instagram)'
+                                instagram: cleanInstagram
                             };
+                            console.log('Objeto winner a ser salvo:', winner); // Log para depuração
                             const existingWinnerRes = await fetch('https://rifa-miguel.onrender.com/get_winners');
                             const existingWinners = await existingWinnerRes.json();
                             const isDuplicate = existingWinners.some(w => w.number === winningNum && w.phone === maskPhone(phone));
