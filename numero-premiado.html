@@ -219,7 +219,7 @@
 
             const purchasedNumbers = numbers.filter(num => !availableNumbers.includes(num));
             if (purchasedNumbers.length === 0) {
-                resultDiv.textContent = `Nenhum dos números informados (${numbers.join(', ')}) foi comprado. Deseja comprá-los por R$ 10 cada? <a href="/rifa-miguel/index.html">Clique aqui para comprar</a>.`;
+                resultDiv.textContent = `Nenhum dos números informados (${numbers.join(', ')}) foi comprado. Deseja comprá-los por R$ 20 cada? <a href="/rifa-miguel/index.html">Clique aqui para comprar</a>.`;
                 checkButton.disabled = false;
                 resultDiv.classList.remove('loading');
                 return;
@@ -242,13 +242,13 @@
                 let hasWinningNumber = false;
 
                 purchasedNumbers.forEach(num => {
-                    const winningEntry = instantWinningNumbers.find(entry => entry.startsWith(num + ':'));
+                    const winningEntry = instantWinningNumbers.find(entry => entry.split(':')[0] === num);
                     if (winningEntry) {
                         const [winningNum, prize, instagram] = winningEntry.split(':');
-                        const instaLink = instagram ? `<a href="https://instagram.com/${instagram}" target="_blank">@${instagram}</a>` : '';
+                        const instaLink = instagram ? `<a href="https://instagram.com/${instagram.replace('@', '')}" target="_blank">@${instagram}</a>` : '';
                         message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! Você ganhou ${prize}! ${instaLink}<br>`;
                         hasWinningNumber = true;
-                        winnerItem.innerHTML = `Anônimo - Número: ${winningNum} - Telefone: ${maskPhone(phone)} - Prêmio: ${prize} ${instaLink}`;
+                        winnerItem.innerHTML = `${purchaseData.buyerName || 'Anônimo'} - Número: ${winningNum} - Telefone: ${maskPhone(phone)} - Prêmio: ${prize} ${instaLink}`;
                     } else {
                         message += `O número ${num} foi comprado por você e participa do sorteio principal, mas não é um prêmio instantâneo.<br>`;
                     }
