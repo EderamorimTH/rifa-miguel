@@ -204,6 +204,7 @@
         const savedPhone = localStorage.getItem('buyerPhone');
         if (savedName) document.getElementById('buyer-name').value = savedName;
         if (savedPhone) document.getElementById('buyer-phone').value = savedPhone;
+        loadData(); // Chama loadData ao carregar a página
     };
 
     async function selectRandomNumbers() {
@@ -212,8 +213,9 @@
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });
-            if (!availableRes.ok) throw new Error(`HTTP error: ${availableRes.status}`);
+            if (!availableRes.ok) throw new Error(`Erro HTTP: ${availableRes.status}`);
             const availableNumbers = await availableRes.json();
+            console.log('Números disponíveis recebidos:', availableNumbers);
 
             selectedNumbers.forEach(num => {
                 const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
@@ -253,6 +255,7 @@
                 });
                 if (!availableRes.ok) throw new Error(`Erro HTTP: ${availableRes.status}`);
                 const availableNumbers = await availableRes.json();
+                console.log('Números disponíveis recebidos:', availableNumbers);
 
                 numberContainer.innerHTML = '';
                 for (let i = 1; i <= 900; i++) {
@@ -307,16 +310,18 @@
                         numDiv.classList.add('number');
                         numDiv.textContent = num;
                         numDiv.addEventListener('click', () => {
-                            numDiv.classList.toggle Toggle('selected');
-                            if (numDiv.classList.contains('selected')) {
-                                selectedNumbers.push(num);
-                            } else {
-                                const index = selectedNumbers.indexOf(num);
-                                if (index > -1) selectedNumbers.splice(index, 1);
+                            if (!numDiv.classList.contains('sold')) {
+                                numDiv.classList.toggle('selected');
+                                if (numDiv.classList.contains('selected')) {
+                                    selectedNumbers.push(num);
+                                } else {
+                                    const index = selectedNumbers.indexOf(num);
+                                    if (index > -1) selectedNumbers.splice(index, 1);
+                                }
+                                console.log('Números selecionados atualizados (fallback) em:', new Date().toISOString(), selectedNumbers);
+                                document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                                document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                             }
-                            console.log('Números selecionados atualizados (fallback) em:', new Date().toISOString(), selectedNumbers);
-                            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
-                            document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                         });
                         numberContainer.appendChild(numDiv);
                     }
@@ -328,8 +333,6 @@
             }
         }
     }
-
-    loadData();
 
     async function sendPaymentRequest(data) {
         const maxRetries = 3;
