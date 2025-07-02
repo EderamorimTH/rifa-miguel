@@ -20,17 +20,30 @@
             padding: 10px 20px;
             text-align: center;
         }
-        nav a {
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 0;
+        }
+        .nav-button {
+            background-color: #0056b3;
             color: white;
-            margin: 0 15px;
+            padding: 6px 12px;
+            border-radius: 5px;
             text-decoration: none;
-            font-size: 1.2em;
+            font-size: 1em;
             font-weight: bold;
             letter-spacing: 1px;
-            transition: color 0.3s;
+            transition: background-color 0.3s, color 0.3s;
+            flex: 1 1 auto;
+            text-align: center;
+            min-width: 100px;
         }
-        nav a:hover {
-            color: #ffc107;
+        .nav-button:hover {
+            background-color: #ffc107;
+            color: black;
         }
         .hero {
             text-align: center;
@@ -108,19 +121,30 @@
             color: #007bff;
             font-style: italic;
         }
+        @media (max-width: 600px) {
+            nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            .nav-button {
+                width: 80%;
+                padding: 8px;
+                font-size: 0.9em;
+            }
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>Rifa Solidária para o Miguel</h1>
         <nav>
-            <a href="https://ederamorimth.github.io/rifa-miguel/index.html">Início</a>
-            <a href="https://ederamorimth.github.io/rifa-miguel/como-funciona.html">Como Funciona</a>
-            <a href="https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html">Estrabismo</a>
-            <a href="https://ederamorimth.github.io/rifa-miguel/orcamento.html">Orçamento</a>
-            <a href="https://ederamorimth.github.io/rifa-miguel/numero-premiado.html">Número Premiado</a>
-            <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
-            <a href="#contato">Contato</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/index.html" class="nav-button">Início</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html" class="nav-button">Estrabismo</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/orcamento.html" class="nav-button">Orçamento</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/numero-premiado.html" class="nav-button">Número Premiado</a>
+            <a href="javascript:void(0)" onclick="checkPassword()" class="nav-button">Sorteio</a>
+            <a href="#contato" class="nav-button">Contato</a>
         </nav>
     </header>
 
@@ -348,7 +372,7 @@
                                 number: winningNum,
                                 phone: maskPhone(phone),
                                 prize: prize,
-                                instagram: cleanInstagram || undefined // Passa undefined se vazio
+                                instagram: cleanInstagram || undefined
                             };
                             console.log('Objeto winner a ser salvo:', winner);
                             const existingWinnerRes = await fetch('https://rifa-miguel.onrender.com/get_winners');
