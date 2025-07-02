@@ -332,38 +332,45 @@ app.get('/test_preference/:id', async (req, res) => {
 });
 
 // Endpoint para números premiados
-app.get('/winning_numbers', (req, res) => {
-    const winningNumbers = JSON.parse(process.env.INSTANT_WINNING_NUMBERS || '[]');
-    res.json(winningNumbers);
+app.get('/winning_numbers', async (req, res) => {
+  try {
+    if (!db) throw new Error('MongoDB não conectado');
+    const winningPrizes = await db.collection('winning_prizes').find().toArray();
+    console.log('Números premiados encontrados:', winningPrizes.length);
+    res.json(winningPrizes);
+  } catch (error) {
+    console.error('Erro ao buscar números premiados:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar números premiados', details: error.message });
+  }
 });
 
 // Endpoint para verificar compra
 app.post('/check_purchase', async (req, res) => {
-    try {
-        const { numbers, buyerPhone } = req.body;
-        if (!numbers || !Array.isArray(numbers) || !buyerPhone) {
-            return res.status(400).json({ error: 'Números e telefone são obrigatórios' });
-        }
-
-        const purchases = await db.collection('purchases').find().toArray();
-        const soldNumbers = purchases.flatMap(p => p.numbers || []);
-        const buyerPurchases = purchases.filter(p => p.buyerPhone === buyerPhone);
-
-        const ownedNumbers = numbers.filter(num => {
-            return buyerPurchases.some(p => p.numbers.includes(num));
-        });
-
-        const response = {
-            owned: ownedNumbers.length > 0,
-            buyerName: buyerPurchases.length > 0 ? buyerPurchases[0].buyerName : null,
-            numbers: ownedNumbers
-        };
-
-        res.json(response);
-    } catch (error) {
-        console.error('Erro ao verificar compra:', error.message);
-        res.status(500).json({ error: 'Erro ao verificar compra', details: error.message });
+  try {
+    const { numbers, buyerPhone } = req.body;
+    if (!numbers || !Array.isArray(numbers) || !buyerPhone) {
+      return res.status(400).json({ error: 'Números e telefone são obrigatórios' });
     }
+
+    const purchases = await db.collection('purchases').find().toArray();
+    const soldNumbers = purchases.flatMap(p => p.numbers || []);
+    const buyerPurchases = purchases.filter(p => p.buyerPhone === buyerPhone);
+
+    const ownedNumbers = numbers.filter(num => {
+      return buyerPurchases.some(p => p.numbers.includes(num));
+    });
+
+    const response = {
+      owned: ownedNumbers.length > 0,
+      buyerName: buyerPurchases.length > 0 ? buyerPurchases[0].buyerName : null,
+      numbers: ownedNumbers
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Erro ao verificar compra:', error.message);
+    res.status(500).json({ error: 'Erro ao verificar compra', details: error.message });
+  }
 });
 
 app.get('/', (req, res) => {
