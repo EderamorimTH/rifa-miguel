@@ -341,7 +341,7 @@
                             const cleanInstagram = instagram && instagram.trim() !== '' ? instagram.replace('@', '') : '';
                             console.log('Instagram processado:', { raw: instagram, clean: cleanInstagram });
                             const instaLink = cleanInstagram ? `<a href="https://instagram.com/${cleanInstagram}" target="_blank">@${cleanInstagram}</a>` : '(sem Instagram)';
-                            message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! Você ganhou ${prize}! Parceiro: ${instaLink}<br>Seus números continuam concorrendo ao prêmio principal de R$ 1.500!<br>`;
+                            message += `Parabéns! O número ${winningNum} é um prêmio instantâneo! Você ganhou ${prize}! Parceiro(a): ${instaLink}<br>Seus números continuam concorrendo ao prêmio principal de R$ 1.500!<br>`;
                             hasWinningNumber = true;
                             const winner = {
                                 name: purchaseData.buyerName || 'Anônimo',
