@@ -22,6 +22,13 @@
             color: white;
             margin: 0 15px;
             text-decoration: none;
+            font-size: 1.2em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: color 0.3s;
+        }
+        nav a:hover {
+            color: #ffc107;
         }
         .content {
             max-width: 800px;
@@ -76,30 +83,42 @@
     <header>
         <h1>Rifa Solidária para o Miguel</h1>
         <nav>
-            <a href="/rifa-miguel/index.html">Início</a>
-            <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
-            <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
-            <a href="#contato">Contato</a>
-            <a href="javascript:void(0)" onclick="checkPassword()">Sorteio</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/index.html">Início</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/como-funciona.html">Como Funciona</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html">Estrabismo</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/numero-premiado.html">Número Premiado</a>
         </nav>
     </header>
 
     <section class="content">
-        
+        <h2>Como Funciona a Rifa Solidária</h2>
+        <p>A Rifa Solidária para o Miguel é uma iniciativa para arrecadar fundos para a cirurgia de estrabismo do Miguel, uma criança de 4 anos. Ao participar, você concorre a prêmios e ajuda a transformar a vida dele!</p>
+
+        <h3>Como Participar</h3>
+        <ol>
+            <li><strong>Escolha seus números</strong>: Acesse a página de compra e selecione até 900 números disponíveis, de 0000 a 0899.</li>
+            <li><strong>Pague</strong>: Cada número custa R$ 20, e o pagamento pode ser feito via Mercado Pago. Após a confirmação, os números são reservados permanentemente para você.</li>
+            <li><strong>Verifique prêmios instantâneos</strong>: Após o pagamento, acesse a página <a href="https://ederamorimth.github.io/rifa-miguel/numero-premiado.html">Número Premiado</a> e insira seus números e telefone para verificar se ganhou um prêmio instantâneo.</li>
+            <li><strong>Concorra ao prêmio principal</strong>: Todos os números comprados participam do sorteio principal, que acontece em 24 de dezembro de 2025 ou quando 100% dos números forem vendidos.</li>
+        </ol>
+
+        <h3>Prêmios Instantâneos</h3>
+        <p>Além do prêmio principal, oferecemos <strong>prêmios instantâneos</strong>! Alguns números são premiados imediatamente após a compra, e você pode verificar isso na página <a href="https://ederamorimth.github.io/rifa-miguel/numero-premiado.html">Número Premiado</a>. <strong>Importante</strong>: Mesmo que você ganhe um prêmio instantâneo, seus números continuam concorrendo ao prêmio principal de R$ 1.500!</p>
+
         <h3>Detalhes Importantes</h3>
         <ul>
-            <li><strong>Preço</strong>: Cada número custa R$ 10.</li>
-            <li><strong>Prêmio</strong>: O ganhador levará R$ 1.500.</li>
-            <li><strong>Data do Sorteio</strong>: 24 de dezembro de 2025 ou quando 100% dos números forem vendidos.</li>
-            <li><strong>Condição Mínima</strong>: Se 100% não for atingido até 24 de dezembro, o sorteio ocorrerá com pelo menos 70% (1190 números) vendidos. Caso contrário, será adiado.</li>
+            <li><strong>Preço</strong>: Cada número custa R$ 20.</li>
+            <li><strong>Prêmio Principal</strong>: O ganhador levará R$ 1.500.</li>
+            <li><strong>Data do Sorteio</strong>: 24 de dezembro de 2025 ou quando 100% dos números (900) forem vendidos.</li>
+            <li><strong>Condição Mínima</strong>: Se 100% não for atingido até 24 de dezembro, o sorteio ocorrerá com pelo menos 70% (630 números) vendidos. Caso contrário, será adiado.</li>
             <li><strong>Reserva de Números</strong>: Números pagos são reservados permanentemente. Números selecionados mas não pagos voltam ao sistema após 24 horas.</li>
         </ul>
 
         <div class="highlight">
-            <p><strong>Por que participar?</strong> Além de concorrer a R$ 1.500, você estará ajudando o Miguel, uma criança de 4 anos, a realizar uma cirurgia de estrabismo essencial para sua visão e desenvolvimento!</p>
+            <p><strong>Por que participar?</strong> Além de concorrer a R$ 1.500 e prêmios instantâneos, você estará ajudando o Miguel, uma criança de 4 anos, a realizar uma cirurgia de estrabismo essencial para sua visão e desenvolvimento!</p>
         </div>
 
-        <a href="/rifa-miguel/index.html" class="cta-button">Participe Agora!</a>
+        <a href="https://ederamorimth.github.io/rifa-miguel/index.html" class="cta-button">Participe Agora!</a>
     </section>
 
     <footer id="contato">
@@ -115,7 +134,7 @@
         function checkPassword() {
             const password = prompt("Digite a senha para acessar a página de sorteio:");
             if (password === "VAIDACERTO") {
-                window.location.href = "/rifa-miguel/sorteio.html";
+                window.location.href = "https://ederamorimth.github.io/rifa-miguel/sorteio.html";
             } else {
                 alert("Senha incorreta!");
             }
