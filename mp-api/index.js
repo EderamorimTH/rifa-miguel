@@ -24,7 +24,7 @@ let db;
 async function connectDB() {
   try {
     await client.connect();
-    db = client.db('rifa_miguel');
+    db = client.db('numeros-instantaneo');
     console.log('Conectado ao MongoDB!');
   } catch (error) {
     console.error('Erro ao conectar ao MongoDB:', error.message);
@@ -335,7 +335,7 @@ app.get('/test_preference/:id', async (req, res) => {
 app.get('/winning_numbers', async (req, res) => {
   try {
     if (!db) throw new Error('MongoDB não conectado');
-    const winningPrizes = await db.collection('numeros-instantaneo').find().toArray();
+    const winningPrizes = await db.collection('winning_prizes').find().toArray();
     console.log('Números premiados encontrados:', winningPrizes.length);
     res.json(winningPrizes);
   } catch (error) {
