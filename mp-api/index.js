@@ -331,6 +331,12 @@ app.get('/test_preference/:id', async (req, res) => {
   }
 });
 
+// Endpoint para números premiados
+app.get('/winning_numbers', (req, res) => {
+    const winningNumbers = JSON.parse(process.env.INSTANT_WINNING_NUMBERS || '[]');
+    res.json(winningNumbers);
+});
+
 app.get('/', (req, res) => {
   res.send('API da Rifa está online!');
 });
