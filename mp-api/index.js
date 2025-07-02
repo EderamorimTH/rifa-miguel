@@ -1,81 +1,4 @@
-import express from 'express';
-import cors from 'cors';
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
-import { MongoClient } from 'mongodb';
-
-const app = express();
-app.use(cors({
-  origin: 'https://ederamorimth.github.io',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type']
-}));
-app.use(express.json({ limit: '10mb' }));
-
-// Configura o MercadoPago
-const mp = new MercadoPagoConfig({
-  accessToken: process.env.ACCESS_TOKEN_MP
-});
-
-// Conecta ao MongoDB
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
-let db;
-
-async function connectDB() {
-  try {
-    await client.connect();
-    db = client.db('numeros-instantaneo');
-    console.log('Conectado ao MongoDB!');
-  } catch (error) {
-    console.error('Erro ao conectar ao MongoDB:', error.message);
-  }
-}
-connectDB();
-
-// Test endpoint to check Mercado Pago
-app.get('/test_mp', async (req, res) => {
-  try {
-    const preference = new Preference(mp);
-    res.json({ status: 'Mercado Pago SDK initialized successfully' });
-  } catch (error) {
-    console.error('Mercado Pago test error:', error);
-    res.status(500).json({ error: 'Mercado Pago initialization failed', details: error.message });
-  }
-});
-
-// Test endpoint to check MongoDB
-app.get('/test_db', async (req, res) => {
-  try {
-    await db.collection('purchases').findOne();
-    res.json({ status: 'MongoDB connected successfully' });
-  } catch (error) {
-    console.error('MongoDB test error:', error);
-    res.status(500).json({ error: 'MongoDB connection failed', details: error.message });
-  }
-});
-
-// Endpoint para verificar números disponíveis
-app.get('/available_numbers', async (req, res) => {
-  try {
-    if (!db) throw new Error('MongoDB não conectado');
-    console.log('Consultando coleção purchases...');
-    const purchases = await db.collection('purchases').find().toArray();
-    console.log(`Número de documentos na coleção purchases: ${purchases.length}`);
-    const soldNumbers = purchases
-
-System: I'm sorry, it looks like your message was cut off. You provided the current `index.js` file and asked for it to be updated to include the routes for saving and retrieving winners in MongoDB, and you want to focus on resolving this before addressing the confetti issue. Below, I'll outline the steps to update the `index.js` file and then provide the complete updated code. I'll keep the explanation concise and clear, as you requested, and then we can move on to fixing the confetti issue in the frontend (`numero-premiado.html`) once you're ready.
-
-### Steps to Update `index.js`:
-1. **Add Routes for Winners**:
-   - **`/save_winner` (POST)**: This route will receive winner data (name, number, phone, prize) from the frontend, check for duplicates (to ensure a winning number is only saved once), and save the winner to the `winners` collection in the `numeros-instantaneo` database.
-   - **`/get_winners` (GET)**: This route will retrieve all winners from the `winners` collection, sorted by creation date (newest first), and return them to the frontend for display.
-2. **Prevent Duplicates**: Before saving a winner, check if the `number` already exists in the `winners` collection to avoid duplicate entries.
-3. **Maintain Existing Functionality**: Keep all existing routes (`/available_numbers`, `/check_purchase`, `/winning_numbers`, etc.) unchanged, ensuring compatibility with the current MongoDB connection and database (`numeros-instantaneo`).
-4. **Error Handling**: Add detailed logging and error responses to help debug issues nghiền
-
-System: I apologize for the interruption earlier. Here's the complete updated `index.js` file with the new routes `/save_winner` and `/get_winners` added to manage winners in the MongoDB `winners` collection. The rest of the code remains unchanged, and I've incorporated the necessary logic to prevent duplicate winners and ensure proper integration with the existing functionality.
-
-<xaiArtifact artifact_id="883a9869-675c-4d66-b2c8-0b053dcc23c7" artifact_version_id="2518192d-dd30-4269-b027-a9252667e785" title="index.js" contentType="text/javascript">
+```javascript
 import express from 'express';
 import cors from 'cors';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
@@ -141,7 +64,7 @@ app.get('/available_numbers', async (req, res) => {
     console.log(`Número de documentos na coleção purchases: ${purchases.length}`);
     const soldNumbers = purchases.flatMap(p => p.numbers || []);
     console.log(`Números vendidos encontrados: ${soldNumbers.length}`);
-    const allNumbers = Array.from({ length: 1700 }, (_, i) => String(i + 1).padStart(4, '0'));
+    const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0')); // Atualizado para 900 números
     const availableNumbers = allNumbers.filter(num => !soldNumbers.includes(num));
     console.log(`Números disponíveis retornados: ${availableNumbers.length}`);
     if (availableNumbers.length === 0) {
@@ -157,7 +80,7 @@ app.get('/available_numbers', async (req, res) => {
 // Endpoint para calcular progresso
 app.get('/progress', async (req, res) => {
   try {
-    const totalNumbers = 1700;
+    const totalNumbers = 900; // Atualizado para 900 números
     const purchases = await db.collection('purchases').find().toArray();
     const soldNumbers = purchases.flatMap(p => p.numbers || []).length;
     const progress = (soldNumbers / totalNumbers) * 100;
@@ -246,7 +169,7 @@ app.post('/create_preference', async (req, res) => {
         items: [{
           title: `Rifa - ${quantity} número(s)`,
           quantity: Number(quantity),
-          unit_price: 1, // Garantido como 1 real
+          unit_price: 20, // Atualizado para 20 reais
         }],
         payer: {
           name: buyerName,
