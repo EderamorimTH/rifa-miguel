@@ -20,20 +20,24 @@
         }
         nav {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             padding: 10px 0;
         }
         .nav-button {
             background-color: #0056b3;
             color: white;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 5px;
             text-decoration: none;
-            font-size: 1.2em;
+            font-size: 1em;
             font-weight: bold;
             letter-spacing: 1px;
             transition: background-color 0.3s, color 0.3s;
+            flex: 1 1 auto;
+            text-align: center;
+            min-width: 100px;
         }
         .nav-button:hover {
             background-color: #ffc107;
@@ -41,12 +45,12 @@
         }
         .hero {
             text-align: center;
-            padding: 20px;
+            padding: 15px;
             background-color: white;
         }
         .progress-container {
-            margin: 20px auto;
-            width: 80%;
+            margin: 15px auto;
+            width: 90%;
             background-color: #ddd;
             border-radius: 5px;
         }
@@ -60,19 +64,20 @@
         }
         .number-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
-            gap: 5px;
-            max-width: 1000px;
-            margin: 20px auto;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 4px;
+            max-width: 100%;
+            margin: 15px auto;
+            padding: 0 10px;
         }
         .number {
             background-color: #28a745;
             color: white;
-            padding: 10px;
+            padding: 8px;
             text-align: center;
             cursor: pointer;
             border-radius: 5px;
-            font-size: 0.9em;
+            font-size: 0.8em;
         }
         .number.sold {
             background-color: #ccc;
@@ -83,24 +88,24 @@
             color: black;
         }
         .form-container {
-            max-width: 400px;
-            margin: 20px auto;
-            padding: 20px;
+            max-width: 90%;
+            margin: 15px auto;
+            padding: 15px;
             background-color: white;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .form-container input {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0;
+            padding: 8px;
+            margin: 8px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
         .form-container button {
             background-color: #007bff;
             color: white;
-            padding: 10px;
+            padding: 8px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -109,14 +114,14 @@
         .form-container p.info {
             color: #d32f2f;
             font-weight: bold;
-            margin: 10px 0;
+            margin: 8px 0;
         }
         .form-container a.check-winner {
             display: inline-block;
             color: #007bff;
             font-weight: bold;
             text-decoration: none;
-            margin: 10px 0;
+            margin: 8px 0;
             transition: color 0.3s;
         }
         .form-container a.check-winner:hover {
@@ -131,7 +136,7 @@
         footer a {
             color: #ffc107;
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 1em;
             text-decoration: none;
         }
         footer a:hover {
@@ -140,7 +145,7 @@
         .share-button {
             background-color: #25d366;
             color: white;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
             text-decoration: none;
@@ -153,9 +158,34 @@
         }
         .button-container {
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 15px;
+        }
+        @media (max-width: 600px) {
+            nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            .nav-button {
+                width: 80%;
+                padding: 8px;
+                font-size: 0.9em;
+            }
+            .hero h2 {
+                font-size: 1.5em;
+            }
+            .hero p {
+                font-size: 0.9em;
+            }
+            .number-grid {
+                grid-template-columns: repeat(auto-fit, minmax(35px, 1fr));
+            }
+            .number {
+                font-size: 0.7em;
+                padding: 6px;
+            }
         }
     </style>
 </head>
@@ -219,7 +249,6 @@
     let selectedNumbers = [];
     const pricePerNumber = 20;
 
-    // Carregar dados salvos no localStorage
     window.onload = function() {
         const savedName = localStorage.getItem('buyerName');
         const savedPhone = localStorage.getItem('buyerPhone');
