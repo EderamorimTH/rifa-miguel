@@ -26,11 +26,52 @@ async function connectDB() {
     await client.connect();
     db = client.db('numeros-instantaneo');
     console.log('Conectado ao MongoDB!');
+    await initializeNumbers();
   } catch (error) {
     console.error('Erro ao conectar ao MongoDB:', error.message);
   }
 }
 connectDB();
+
+// Inicializa números (001 a 900)
+async function initializeNumbers() {
+  try {
+    const count = await db.collection('numbers').countDocuments();
+    if (count === 0) {
+      const numbers = Array.from({ length: 900 }, (_, i) => ({
+        number: String(i + 1).padStart(4, '0'),
+        status: 'disponível',
+        userId: null,
+        timestamp: null
+      }));
+      await db.collection('numbers').insertMany(numbers);
+      console.log(`[${new Date().toISOString()}] Números de 0001 a 0900 inicializados na coleção numbers.`);
+    } else {
+      console.log(`[${new Date().toISOString()}] Coleção numbers já contém ${count} documentos.`);
+    }
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] Erro ao inicializar números:`, error.message);
+  }
+}
+
+// Libera reservas expiradas (após 5 minutos)
+async function clearExpiredReservations() {
+  try {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const expired = await db.collection('numbers').find({ status: 'reservado', timestamp: { $lt: fiveMinutesAgo } }).toArray();
+    const result = await db.collection('numbers').updateMany(
+      { status: 'reservado', timestamp: { $lt: fiveMinutesAgo } },
+      { $set: { status: 'disponível', userId: null, timestamp: null } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`[${new Date().toISOString()}] Liberadas ${result.modifiedCount} reservas expiradas. Números afetados: ${expired.map(n => n.number).join(', ')}`);
+    }
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] Erro ao liberar reservas expiradas:`, error.message);
+  }
+}
+setInterval(clearExpiredReservations, 5 * 60 * 1000);
+clearExpiredReservations();
 
 // Test endpoint to check Mercado Pago
 app.get('/test_mp', async (req, res) => {
@@ -58,18 +99,10 @@ app.get('/test_db', async (req, res) => {
 app.get('/available_numbers', async (req, res) => {
   try {
     if (!db) throw new Error('MongoDB não conectado');
-    console.log('Consultando coleção purchases...');
-    const purchases = await db.collection('purchases').find().toArray();
-    console.log(`Número de documentos na coleção purchases: ${purchases.length}`);
-    const soldNumbers = purchases.flatMap(p => p.numbers || []);
-    console.log(`Números vendidos encontrados: ${soldNumbers.length}`);
-    const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0'));
-    const availableNumbers = allNumbers.filter(num => !soldNumbers.includes(num));
-    console.log(`Números disponíveis retornados: ${availableNumbers.length}`);
-    if (availableNumbers.length === 0) {
-      console.warn('Nenhum número disponível encontrado');
-    }
-    res.json(availableNumbers);
+    await clearExpiredReservations();
+    const numbers = await db.collection('numbers').find({ status: 'disponível' }).toArray();
+    console.log(`[${new Date().toISOString()}] Números disponíveis retornados: ${numbers.length}`);
+    res.json(numbers.map(n => n.number));
   } catch (error) {
     console.error('Erro ao buscar números disponíveis:', error.message);
     res.status(500).json({ error: 'Erro ao buscar números disponíveis', details: error.message });
@@ -80,63 +113,66 @@ app.get('/available_numbers', async (req, res) => {
 app.get('/progress', async (req, res) => {
   try {
     const totalNumbers = 900;
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.flatMap(p => p.numbers || []).length;
+    const soldNumbers = await db.collection('numbers').countDocuments({ status: 'vendido' });
     const progress = (soldNumbers / totalNumbers) * 100;
+    console.log(`[${new Date().toISOString()}] Progresso: ${progress.toFixed(2)}% (${soldNumbers}/${totalNumbers})`);
     res.json({ progress: progress.toFixed(2) });
   } catch (error) {
     console.error('Erro ao calcular progresso:', error);
-    res.status(500).json({ error: 'Erro ao calcular progresso' });
+    res.status(500).json({ error: 'Erro ao calcular progresso', details: error.message });
   }
 });
 
-// Endpoint para dados do sorteio
-app.get('/purchases', async (req, res) => {
+// Endpoint para reservar números
+app.post('/reserve_numbers', async (req, res) => {
+  const { numbers, userId } = req.body;
+  console.log(`[${new Date().toISOString()}] Recebendo solicitação para reservar números: ${numbers}, userId: ${userId}`);
   try {
-    const purchases = await db.collection('purchases').find().toArray();
-    res.json(purchases);
+    if (!numbers || !Array.isArray(numbers) || numbers.length === 0 || !userId) {
+      console.error(`[${new Date().toISOString()}] Dados incompletos na solicitação de reserva`);
+      return res.status(400).json({ success: false, message: 'Dados incompletos' });
+    }
+    const availableNumbers = await db.collection('numbers').find({ number: { $in: numbers }, status: 'disponível' }).toArray();
+    if (availableNumbers.length !== numbers.length) {
+      console.error(`[${new Date().toISOString()}] Alguns números não estão disponíveis: ${numbers}`);
+      return res.status(400).json({ success: false, message: 'Alguns números não estão disponíveis' });
+    }
+    const result = await db.collection('numbers').updateMany(
+      { number: { $in: numbers }, status: 'disponível' },
+      { $set: { status: 'reservado', userId, timestamp: new Date() } }
+    );
+    console.log(`[${new Date().toISOString()}] Números ${numbers.join(', ')} reservados com sucesso para userId: ${userId}`);
+    res.json({ success: true });
   } catch (error) {
-    console.error('Erro ao buscar compras:', error);
-    res.status(500).json({ error: 'Erro ao buscar compras' });
+    console.error(`[${new Date().toISOString()}] Erro ao reservar números:`, error.message);
+    res.status(500).json({ success: false, message: 'Erro ao reservar números', details: error.message });
   }
 });
 
-// Rota para verificar a senha
-app.post('/verify_password', (req, res) => {
+// Endpoint para verificar reserva
+app.post('/check_reservation', async (req, res) => {
+  const { numbers, userId } = req.body;
   try {
-    const { password } = req.body;
-    const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO';
-    console.log('Verificando senha às:', new Date().toISOString());
-
-    if (!password) {
-      console.log('Erro: Senha não fornecida');
-      return res.status(400).json({ error: 'Senha não fornecida' });
-    }
-
-    if (password === correctPassword) {
-      console.log('Senha válida');
-      res.json({ valid: true });
-    } else {
-      console.log('Senha inválida');
-      res.json({ valid: false });
-    }
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const validNumbers = await db.collection('numbers').find({
+      number: { $in: numbers },
+      status: 'reservado',
+      userId,
+      timestamp: { $gte: fiveMinutesAgo }
+    }).toArray();
+    console.log(`[${new Date().toISOString()}] Verificação de reserva para números ${numbers.join(', ')}, userId: ${userId}, válida: ${validNumbers.length === numbers.length}`);
+    res.json({ valid: validNumbers.length === numbers.length });
   } catch (error) {
-    console.error('Erro ao verificar senha:', error.message);
-    res.status(500).json({ error: 'Erro ao verificar senha', details: error.message });
+    console.error(`[${new Date().toISOString()}] Erro ao verificar reserva:`, error.message);
+    res.status(500).json({ valid: false, message: 'Erro ao verificar reserva', details: error.message });
   }
-});
-
-// Test endpoint to debug request body
-app.post('/test_create_preference', (req, res) => {
-  console.log('Test request body:', req.body);
-  res.json({ received: req.body, status: 'Test endpoint working' });
 });
 
 // Endpoint para criar preferência de pagamento
 app.post('/create_preference', async (req, res) => {
   try {
-    const { quantity, buyerName, buyerPhone, numbers } = req.body;
-    console.log('Received request body at:', new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers });
+    const { quantity, buyerName, buyerPhone, numbers, userId } = req.body;
+    console.log('Received request body at:', new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers, userId });
 
     // Validate inputs
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
@@ -151,14 +187,22 @@ app.post('/create_preference', async (req, res) => {
       console.log('Error: Invalid quantity');
       return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
     }
+    if (!userId) {
+      console.log('Error: Missing userId');
+      return res.status(400).json({ error: 'UserId é obrigatório' });
+    }
 
-    console.log('Verifying available numbers...');
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.flatMap(p => p.numbers || []);
-    const invalidNumbers = numbers.filter(num => soldNumbers.includes(num));
-    if (invalidNumbers.length > 0) {
-      console.log('Invalid numbers detected:', invalidNumbers);
-      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
+    // Verify reservation
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const validNumbers = await db.collection('numbers').find({
+      number: { $in: numbers },
+      status: 'reservado',
+      userId,
+      timestamp: { $gte: fiveMinutesAgo }
+    }).toArray();
+    if (validNumbers.length !== numbers.length) {
+      console.error(`[${new Date().toISOString()}] Números não estão reservados para userId: ${userId}`);
+      return res.status(400).json({ error: 'Números não estão mais reservados para você' });
     }
 
     console.log('Creating Mercado Pago preference...');
@@ -169,6 +213,7 @@ app.post('/create_preference', async (req, res) => {
           title: `Rifa - ${quantity} número(s)`,
           quantity: Number(quantity),
           unit_price: 20,
+          currency_id: 'BRL'
         }],
         payer: {
           name: buyerName,
@@ -180,7 +225,7 @@ app.post('/create_preference', async (req, res) => {
           pending: "https://ederamorimth.github.io/rifa-miguel/pendente.html"
         },
         auto_return: "approved",
-        external_reference: JSON.stringify({ buyerName, buyerPhone, numbers }),
+        external_reference: JSON.stringify({ buyerName, buyerPhone, numbers, userId }),
         notification_url: "https://rifa-miguel.onrender.com/webhook"
       }
     };
@@ -188,6 +233,20 @@ app.post('/create_preference', async (req, res) => {
     console.log('Preference data being sent:', JSON.stringify(preferenceData, null, 2));
     const response = await preference.create(preferenceData);
     console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id);
+
+    // Save pending purchase
+    await db.collection('purchases').insertOne({
+      buyerName,
+      buyerPhone,
+      numbers,
+      purchaseDate: new Date(),
+      paymentId: null,
+      status: 'pending',
+      date_approved: null,
+      preference_id: response.id,
+      userId
+    });
+
     res.json({ init_point: response.init_point, preference_id: response.id });
   } catch (error) {
     console.error('Error in /create_preference at:', new Date().toISOString(), error.message, 'Stack:', error.stack);
@@ -205,7 +264,6 @@ app.post('/webhook', async (req, res) => {
     }
 
     const body = req.body;
-    console.log('Processing POST webhook...', 'Body:', JSON.stringify(body, null, 2));
     let paymentId = null;
 
     if (body.type === 'payment' && body.data && body.data.id) {
@@ -236,43 +294,74 @@ app.post('/webhook', async (req, res) => {
           date_approved: paymentDetails.date_approved || 'Não aprovado ainda'
         });
 
-        if (paymentDetails.status === 'approved' || paymentDetails.status === 'pending') {
-          let externalReference = paymentDetails.external_reference;
-          let buyerName, buyerPhone, numbers;
-          if (externalReference) {
-            try {
-              const parsed = JSON.parse(externalReference);
-              buyerName = parsed.buyerName;
-              buyerPhone = parsed.buyerPhone;
-              numbers = parsed.numbers;
-              console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
-            } catch (e) {
-              console.error('Erro ao parsear external_reference:', e.message);
-              return res.status(200).send('OK');
-            }
+        if (paymentDetails.status === 'approved') {
+          let externalReference;
+          try {
+            externalReference = JSON.parse(paymentDetails.external_reference || '{}');
+          } catch (e) {
+            console.error('Erro ao parsear external_reference:', e.message);
+            return res.status(200).send('OK');
           }
 
-          if (buyerName && buyerPhone && numbers && Array.isArray(numbers)) {
+          const { buyerName, buyerPhone, numbers, userId } = externalReference;
+          if (buyerName && buyerPhone && numbers && Array.isArray(numbers) && userId) {
             if (!db) {
               console.error('MongoDB não conectado');
               return res.status(500).send('Erro: MongoDB não conectado');
             }
             const existingPurchase = await db.collection('purchases').findOne({ paymentId: paymentDetails.id });
             if (!existingPurchase) {
-              const result = await db.collection('purchases').insertOne({
+              const validNumbers = await db.collection('numbers').find({
+                number: { $in: numbers },
+                status: 'reservado',
+                userId
+              }).toArray();
+              if (validNumbers.length !== numbers.length) {
+                console.error(`[${new Date().toISOString()}] Números não reservados para userId: ${userId}, números: ${numbers.join(', ')}`);
+                return res.status(400).json({ error: 'Números não reservados' });
+              }
+
+              await db.collection('numbers').updateMany(
+                { number: { $in: numbers }, status: 'reservado', userId },
+                { $set: { status: 'vendido', userId: null, timestamp: null } }
+              );
+
+              await db.collection('purchases').insertOne({
                 buyerName,
                 buyerPhone,
                 numbers,
                 purchaseDate: new Date(),
                 paymentId: paymentDetails.id,
-                status: paymentDetails.status,
-                date_approved: paymentDetails.date_approved || null,
-                preference_id: paymentDetails.preference_id || 'Não encontrado'
+                status: 'approved',
+                date_approved: paymentDetails.date_approved || new Date(),
+                preference_id: paymentDetails.preference_id || 'Não encontrado',
+                userId
               });
-              console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers, status: paymentDetails.status });
+              console.log('Purchase saved successfully for paymentId:', paymentDetails.id, { buyerName, buyerPhone, numbers, status: 'approved' });
             } else {
               console.log('Purchase already exists for paymentId:', paymentDetails.id, 'Skipping duplicate');
             }
+          }
+        } else {
+          // Liberar números se o pagamento não for aprovado
+          let externalReference;
+          try {
+            externalReference = JSON.parse(paymentDetails.external_reference || '{}');
+          } catch (e) {
+            console.error('Erro ao parsear external_reference:', e.message);
+            return res.status(200).send('OK');
+          }
+          const { numbers, userId } = externalReference;
+          if (numbers && Array.isArray(numbers) && userId) {
+            await db.collection('numbers').updateMany(
+              { number: { $in: numbers }, status: 'reservado', userId },
+              { $set: { status: 'disponível', userId: null, timestamp: null } }
+            );
+            console.log(`[${new Date().toISOString()}] Números ${numbers.join(', ')} liberados devido a status ${paymentDetails.status}`);
+            await db.collection('purchases').updateOne(
+              { numbers: { $in: numbers }, status: 'pending', userId },
+              { $set: { status: paymentDetails.status, date_approved: null } }
+            );
           }
         }
       } catch (error) {
@@ -336,7 +425,6 @@ app.get('/winning_numbers', async (req, res) => {
     if (!db) throw new Error('MongoDB não conectado');
     const winningPrizes = await db.collection('winning_prizes').find().toArray();
     console.log('Números premiados encontrados:', winningPrizes.length);
-    // Converter para o formato "number:prize:instagram" e remover @ do Instagram
     const winningNumbers = winningPrizes.map(p => `${p.number}:${p.prize}:${p.instagram ? p.instagram.replace('@', '') : ''}`);
     res.json(winningNumbers);
   } catch (error) {
@@ -354,7 +442,6 @@ app.post('/check_purchase', async (req, res) => {
     }
 
     const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.flatMap(p => p.numbers || []);
     const buyerPurchases = purchases.filter(p => p.buyerPhone === buyerPhone);
 
     const ownedNumbers = numbers.filter(num => {
@@ -378,29 +465,26 @@ app.post('/check_purchase', async (req, res) => {
 app.post('/save_winner', async (req, res) => {
   try {
     if (!db) throw new Error('MongoDB não conectado');
-    const { name, number, phone, prize, instagram } = req.body; // Adicionado instagram
+    const { name, number, phone, prize, instagram } = req.body;
     console.log('Salvando ganhador:', { name, number, phone, prize, instagram });
 
-    // Validar entrada
     if (!number || !phone || !prize) {
       console.log('Erro: Dados incompletos do ganhador');
       return res.status(400).json({ error: 'Dados do ganhador incompletos' });
     }
 
-    // Verificar duplicata
     const existingWinner = await db.collection('winners').findOne({ number });
     if (existingWinner) {
       console.log('Erro: Número já registrado como ganhador:', number);
       return res.status(400).json({ error: `Número ${number} já registrado como ganhador` });
     }
 
-    // Salvar ganhador
     const result = await db.collection('winners').insertOne({
       name: name || 'Anônimo',
       number,
       phone,
       prize,
-      instagram: instagram || undefined, // Salvar instagram se fornecido
+      instagram: instagram || undefined,
       createdAt: new Date()
     });
     console.log('Ganhador salvo com sucesso:', result.insertedId);
