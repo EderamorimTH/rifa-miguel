@@ -3,204 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sub-zero Beer</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>Rifa Solidária para o Miguel</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400;700&display=swap');
-
         body {
-            font-family: 'Roboto', sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #FFFFFF;
-            color: #000000;
+            background-color: #f4f4f4;
+            color: #333;
         }
         header {
-            background-color: #000000;
-            color: #FFFFFF;
-            padding: 20px;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
             text-align: center;
-            font-family: 'Playfair Display', serif;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 2.5em;
         }
         nav {
-            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 0;
         }
         .nav-button {
-            background-color: #003366;
-            color: #FFFFFF;
-            padding: 10px 20px;
+            background-color: #0056b3;
+            color: white;
+            padding: 6px 12px;
             border-radius: 5px;
             text-decoration: none;
             font-size: 1em;
-            transition: background-color 0.3s;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: background-color 0.3s, color 0.3s;
+            flex: 1 1 auto;
+            text-align: center;
+            min-width: 100px;
         }
         .nav-button:hover {
-            background-color: #005599;
+            background-color: #ffc107;
+            color: black;
         }
         .hero {
             text-align: center;
-            padding: 50px 20px;
-            background: url('https://example.com/beer-background.jpg') no-repeat center center;
-            background-size: cover;
-            color: #FFFFFF;
-            position: relative;
+            padding: 15px;
+            background-color: white;
         }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-        }
-        .hero-content {
-            position: relative;
-            z-index: 1;
-        }
-        .hero h2 {
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            animation: fadeIn 1s ease-in;
-        }
-        .hero p {
-            font-size: 1.2em;
-            margin-bottom: 30px;
-            animation: fadeIn 1s ease-in 0.5s;
-        }
-        .button-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            animation: fadeIn 1s ease-in 1s;
-        }
-        .button-container button {
-            background-color: #003366;
-            color: #FFFFFF;
-            padding: 15px 30px;
-            border: none;
+        .progress-container {
+            margin: 15px auto;
+            width: 90%;
+            background-color: #ddd;
             border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s;
         }
-        .button-container button:hover {
-            background-color: #005599;
-        }
-        .promo-text {
+        .progress-bar {
+            height: 20px;
+            background-color: #28a745;
+            border-radius: 5px;
             text-align: center;
-            padding: 20px;
-            font-size: 1.2em;
-            font-weight: bold;
-            background-color: #F0F0F0;
+            color: white;
+            transition: width 0.3s;
         }
         .number-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
-            gap: 10px;
-            max-width: 90%;
-            margin: 30px auto;
-            padding: 0 20px;
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            gap: 4px;
+            max-width: 100%;
+            margin: 15px auto;
+            padding: 0 10px;
         }
         .number {
-            background-color: #333333;
-            color: #FFFFFF;
-            padding: 15px;
+            background-color: #28a745;
+            color: white;
+            padding: 8px;
             text-align: center;
             cursor: pointer;
             border-radius: 5px;
-            font-size: 1em;
-            transition: transform 0.2s, background-color 0.3s;
-        }
-        .number:hover {
-            transform: scale(1.1);
-            background-color: #005599;
+            font-size: 0.8em;
         }
         .number.sold {
-            background-color: #CCCCCC;
+            background-color: #ccc;
             cursor: not-allowed;
         }
         .number.selected {
-            background-color: #FFFFFF;
-            color: #000000;
-            border: 2px solid #003366;
+            background-color: #ffc107;
+            color: black;
         }
         .form-container {
-            max-width: 600px;
-            margin: 30px auto;
-            padding: 20px;
-            background-color: #FFFFFF;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            max-width: 90%;
+            margin: 15px auto;
+            padding: 15px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .form-container input {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #999999;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
             border-radius: 5px;
-            font-size: 1em;
         }
         .form-container button {
-            background-color: #003366;
-            color: #FFFFFF;
-            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            padding: 8px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             width: 100%;
-            font-size: 1.2em;
-            transition: background-color 0.3s;
         }
-        .form-container button:hover {
-            background-color: #005599;
+        .form-container p.info {
+            color: #d32f2f;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        .form-container a.check-winner {
+            display: inline-block;
+            color: #007bff;
+            font-weight: bold;
+            text-decoration: none;
+            margin: 8px 0;
+            transition: color 0.3s;
+        }
+        .form-container a.check-winner:hover {
+            color: #0056b3;
         }
         footer {
-            background-color: #000000;
-            color: #FFFFFF;
+            background-color: #333;
+            color: white;
             text-align: center;
-            padding: 20px;
+            padding: 10px;
         }
         footer a {
-            color: #003366;
+            color: #ffc107;
             font-weight: bold;
+            font-size: 1em;
             text-decoration: none;
         }
         footer a:hover {
-            color: #005599;
+            color: #ffca28;
         }
-        .social-icons {
-            margin-top: 10px;
+        .share-button {
+            background-color: #25d366;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            transition: background-color 0.3s;
         }
-        .social-icons a {
-            margin: 0 10px;
-            font-size: 1.5em;
-            color: #FFFFFF;
-            transition: color 0.3s;
+        .share-button:hover {
+            background-color: #1ebe5a;
         }
-        .social-icons a:hover {
-            color: #005599;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 15px;
         }
         @media (max-width: 600px) {
+            nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            .nav-button {
+                width: 80%;
+                padding: 8px;
+                font-size: 0.9em;
+            }
             .hero h2 {
-                font-size: 2em;
+                font-size: 1.5em;
             }
             .hero p {
-                font-size: 1em;
-            }
-            .button-container {
-                flex-direction: column;
+                font-size: 0.9em;
             }
             .number-grid {
-                grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(35px, 1fr));
+            }
+            .number {
+                font-size: 0.7em;
+                padding: 6px;
             }
         }
     </style>
@@ -208,27 +192,26 @@
 <body>
 
 <header>
-    <h1>Sub-zero Beer</h1>
+    <h1>Rifa Solidária para o Miguel</h1>
     <nav>
-        <a href="/sorteio.html" class="nav-button">Sorteio</a>
+        <a href="/rifa-miguel/index.html" class="nav-button">Início</a>
+        <a href="/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
+        <a href="/rifa-miguel/sobre-estrabismo.html" class="nav-button">Estrabismo</a>
+        <a href="/rifa-miguel/orcamento.html" class="nav-button">Orçamento</a>
+        <a href="/rifa-miguel/numero-premiado.html" class="nav-button">Número Premiado</a>
     </nav>
 </header>
 
 <section class="hero" id="home">
-    <div class="hero-content">
-        <h2>Participe do nosso sorteio!</h2>
-        <p>Compre números por R$ 10 e concorra a 1 caixa de litrão e 1 porção de frango a passarinho!</p>
-        <div class="button-container">
-            <button onclick="scrollToNumbers()">Escolha seus números agora</button>
-            <button onclick="selectRandomNumbers()">Escolher 5 Números Aleatórios</button>
-        </div>
+    <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
+    <p>Compre números por R$ 20 e concorra a R$ 1.500. Todo o valor será usado para a cirurgia de estrabismo do Miguel! Alguns números podem ter prêmios instantâneos!</p>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
     </div>
-</section>
-
-<section class="promo-text">
-    <p>O bar mais moderninho de Cuiabá é aqui</p>
-    <p>Aquela cerveja gelada e ambiente agradável é aqui</p>
-    <p>Participe do nosso sorteio e concorra a 1 cx de litrão e 1 porção de frango a passarinho</p>
+    <div class="button-container">
+        <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
+        <button onclick="selectRandomNumbers()" style="background-color: #28a745; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white;">Escolher 5 Números Aleatórios</button>
+    </div>
 </section>
 
 <section id="numbers" class="number-grid">
@@ -240,23 +223,21 @@
     <form id="payment-form">
         <input type="text" id="buyer-name" placeholder="Nome Completo" required>
         <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
-        <input type="email" id="buyer-email" placeholder="E-mail" required>
         <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
         <p>Total: R$ <span id="total-price">0</span></p>
+        <p class="info">Após o pagamento, volte aqui para verificar se seu número é premiado com um prêmio instantâneo!</p>
+        <a href="/rifa-miguel/numero-premiado.html" class="check-winner">Verificar se meu número é premiado</a>
         <button type="submit">Pagar com Pix/Cartão</button>
     </form>
 </section>
 
-<footer>
+<footer id="contato">
     <p>Contato:</p>
-    <p>Siga-nos no Instagram: <a href="https://www.instagram.com/Subzerobeercba">@Subzerobeercba</a></p>
-    <p>Para dúvidas, entre em contato via Instagram!</p>
-    <div class="social-icons">
-        <a href="https://www.instagram.com/Subzerobeercba" target="_blank"><i class="fab fa-instagram"></i></a>
-        <a href="https://wa.me/65984739520" target="_blank"><i class="fab fa-whatsapp"></i></a>
-    </div>
-    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Participe%20do%20sorteio%20do%20Sub-zero%20Beer!%20Concorra%20a%201%20caixa%20de%20litrão%20e%201%20porção%20de%20frango%20a%20passarinho!%20Siga%20no%20Instagram:%20@Subzerobeercba%20-%20https://ederamorimth.github.io/sorteio.html" class="share-button">Compartilhar</a></p>
-    <p>© 2025 Sub-zero Beer</p>
+    <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
+    <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
+    <p>Para dúvidas, entre em contato via WhatsApp!</p>
+    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+    <p>© 2025 Rifa Solidária para o Miguel</p>
 </footer>
 
 <script>
@@ -264,31 +245,220 @@
         document.getElementById('numbers').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function selectRandomNumbers() {
-        alert("Funcionalidade de escolha aleatória será implementada em breve!");
+    const numberContainer = document.getElementById('numbers');
+    let selectedNumbers = [];
+    const pricePerNumber = 20;
+
+    window.onload = function() {
+        const savedName = localStorage.getItem('buyerName');
+        const savedPhone = localStorage.getItem('buyerPhone');
+        if (savedName) document.getElementById('buyer-name').value = savedName;
+        if (savedPhone) document.getElementById('buyer-phone').value = savedPhone;
+        loadData();
+    };
+
+    async function selectRandomNumbers() {
+        try {
+            const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!availableRes.ok) throw new Error(`Erro HTTP: ${availableRes.status}`);
+            const availableNumbers = await availableRes.json();
+            console.log('Números disponíveis recebidos:', availableNumbers);
+
+            selectedNumbers.forEach(num => {
+                const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
+                if (numDiv) numDiv.classList.remove('selected');
+            });
+            selectedNumbers = [];
+
+            const shuffled = availableNumbers.sort(() => 0.5 - Math.random());
+            const randomNumbers = shuffled.slice(0, Math.min(5, availableNumbers.length));
+
+            randomNumbers.forEach(num => {
+                const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
+                if (numDiv && !numDiv.classList.contains('sold')) {
+                    numDiv.classList.add('selected');
+                    selectedNumbers.push(num);
+                }
+            });
+
+            document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+            document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+        } catch (error) {
+            console.error('Erro ao selecionar números aleatórios:', error);
+            alert('Erro ao carregar números disponíveis. Tente novamente.');
+        }
     }
 
-    // Exemplo básico para gerar números (1 a 100)
-    const numberGrid = document.querySelector('.number-grid');
-    for (let i = 1; i <= 100; i++) {
-        const numberDiv = document.createElement('div');
-        numberDiv.classList.add('number');
-        numberDiv.textContent = i;
-        numberDiv.addEventListener('click', function() {
-            if (!this.classList.contains('sold')) {
-                this.classList.toggle('selected');
-                updateSelectedNumbers();
+    async function loadData() {
+        const maxRetries = 3;
+        let retries = 0;
+
+        while (retries < maxRetries) {
+            try {
+                console.log(`Tentativa ${retries + 1} de carregar números em ${new Date().toISOString()}...`);
+                const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (!availableRes.ok) throw new Error(`Erro HTTP: ${availableRes.status}`);
+                const availableNumbers = await availableRes.json();
+                console.log('Números disponíveis recebidos:', availableNumbers);
+
+                numberContainer.innerHTML = '';
+                for (let i = 1; i <= 900; i++) {
+                    const num = String(i).padStart(4, '0');
+                    const numDiv = document.createElement('div');
+                    numDiv.classList.add('number');
+                    numDiv.textContent = num;
+
+                    if (!availableNumbers.includes(num)) {
+                        numDiv.classList.add('sold');
+                    } else {
+                        numDiv.addEventListener('click', () => {
+                            if (!numDiv.classList.contains('sold')) {
+                                numDiv.classList.toggle('selected');
+                                if (numDiv.classList.contains('selected')) {
+                                    selectedNumbers.push(num);
+                                } else {
+                                    const index = selectedNumbers.indexOf(num);
+                                    if (index > -1) selectedNumbers.splice(index, 1);
+                                }
+                                console.log('Números selecionados atualizados em:', new Date().toISOString(), selectedNumbers);
+                                document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                                document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                            }
+                        });
+                    }
+
+                    numberContainer.appendChild(numDiv);
+                }
+
+                const progressRes = await fetch('https://rifa-miguel.onrender.com/progress', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (!progressRes.ok) throw new Error(`Erro HTTP: ${progressRes.status}`);
+                const { progress } = await progressRes.json();
+                const progressBar = document.getElementById('progress-bar');
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${progress}% Arrecadado`;
+
+                console.log('Números carregados com sucesso em:', new Date().toISOString());
+                return;
+            } catch (error) {
+                console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack);
+                retries++;
+                if (retries === maxRetries) {
+                    console.warn('Máximo de tentativas atingido, usando fallback...');
+                    numberContainer.innerHTML = '';
+                    for (let i = 1; i <= 900; i++) {
+                        const num = String(i).padStart(4, '0');
+                        const numDiv = document.createElement('div');
+                        numDiv.classList.add('number');
+                        numDiv.textContent = num;
+                        numDiv.addEventListener('click', () => {
+                            if (!numDiv.classList.contains('sold')) {
+                                numDiv.classList.toggle('selected');
+                                if (numDiv.classList.contains('selected')) {
+                                    selectedNumbers.push(num);
+                                } else {
+                                    const index = selectedNumbers.indexOf(num);
+                                    if (index > -1) selectedNumbers.splice(index, 1);
+                                }
+                                console.log('Números selecionados atualizados (fallback) em:', new Date().toISOString(), selectedNumbers);
+                                document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                                document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                            }
+                        });
+                        numberContainer.appendChild(numDiv);
+                    }
+                    document.getElementById('progress-bar').style.width = '0%';
+                    document.getElementById('progress-bar').textContent = '0% Arrecadado';
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
             }
-        });
-        numberGrid.appendChild(numberDiv);
+        }
     }
 
-    function updateSelectedNumbers() {
-        const selected = document.querySelectorAll('.number.selected');
-        const selectedNumbers = Array.from(selected).map(num => num.textContent).join(', ');
-        document.getElementById('selected-numbers').textContent = selectedNumbers || 'Nenhum';
-        document.getElementById('total-price').textContent = selected.length * 10;
+    async function sendPaymentRequest(data) {
+        const maxRetries = 3;
+        let retries = 0;
+
+        while (retries < maxRetries) {
+            try {
+                console.log(`Tentativa ${retries + 1} de enviar pagamento em ${new Date().toISOString()}...`, data);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const response = await fetch('https://rifa-miguel.onrender.com/create_preference', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                console.log(`Status da resposta: ${response.status} em ${new Date().toISOString()}`);
+                const responseData = await response.json();
+                console.log('Resposta da API:', responseData);
+
+                if (responseData.init_point) {
+                    window.location.href = responseData.init_point;
+                } else {
+                    alert(responseData.error || 'Erro ao criar o pagamento. Tente novamente.');
+                }
+                return;
+            } catch (error) {
+                console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack, 'Code:', error.code);
+                retries++;
+                if (retries === maxRetries) {
+                    alert('Erro ao conectar ao servidor após várias tentativas. Detalhes: ' + error.message + '\nCódigo: ' + (error.code || 'desconhecido') + '\nStatus: ' + (error.status || 'desconhecido'));
+                } else {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                }
+            }
+        }
     }
+
+    document.getElementById('payment-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const buyerName = document.getElementById('buyer-name').value;
+        const buyerPhone = document.getElementById('buyer-phone').value;
+        const quantity = selectedNumbers.length;
+
+        console.log('Números selecionados antes de enviar em:', new Date().toISOString(), selectedNumbers);
+        if (selectedNumbers.length === 0) {
+            console.warn('Nenhum número selecionado antes de enviar em:', new Date().toISOString());
+        }
+
+        if (quantity === 0) {
+            alert('Por favor, selecione pelo menos um número.');
+            return;
+        }
+        if (!buyerName || !buyerPhone) {
+            alert('Por favor, preencha todos os campos.');
+            return;
+        }
+
+        localStorage.setItem('buyerName', buyerName);
+        localStorage.setItem('buyerPhone', buyerPhone);
+
+        const paymentData = {
+            quantity,
+            buyerName,
+            buyerPhone,
+            numbers: selectedNumbers
+        };
+        console.log('Enviando solicitação de pagamento em:', new Date().toISOString(), paymentData);
+
+        await sendPaymentRequest(paymentData);
+    });
 </script>
 
 </body>
