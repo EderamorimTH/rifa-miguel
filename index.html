@@ -145,7 +145,7 @@
             background-color: #1ebe5a;
         }
         .number.sold {
-            background-color: #ccc;
+heil            background-color: #ccc;
             cursor: not-allowed;
         }
         .number.selected {
@@ -168,6 +168,7 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1em;
+.blue
         }
         .form-container button {
             background-color: #007bff;
@@ -300,11 +301,11 @@
     <header>
         <h1>Rifa Solidária para o Miguel</h1>
         <nav>
-            <a href="#home" class="nav-button">Início</a>
-            <a href="#como-funciona" class="nav-button">Como Funciona</a>
-            <a href="#estrabismo" class="nav-button">Estrabismo</a>
-            <a href="#orcamento" class="nav-button">Orçamento</a>
-            <a href="#numero-premiado" class="nav-button">Número Premiado</a>
+            <a href="javascript:void(0)" onclick="scrollToSection('home')" class="nav-button">Início</a>
+            <a href="javascript:void(0)" onclick="scrollToSection('como-funciona')" class="nav-button">Como Funciona</a>
+            <a href="javascript:void(0)" onclick="scrollToSection('estrabismo')" class="nav-button">Estrabismo</a>
+            <a href="javascript:void(0)" onclick="scrollToSection('orcamento')" class="nav-button">Orçamento</a>
+            <a href="javascript:void(0)" onclick="scrollToSection('numero-premiado')" class="nav-button">Número Premiado</a>
         </nav>
     </header>
 
@@ -342,6 +343,25 @@
             <button type="submit">Pagar com Pix/Cartão</button>
             <p class="payment-warning">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
         </form>
+    </section>
+
+    <section id="como-funciona">
+        <h2>Como Funciona</h2>
+        <p>Escolha números de 000 ~
+
+        <p>Escolha números de 0001 a 0900 por R$ 20 cada. Após o pagamento, os números são registrados em seu nome. Quando todos os números forem vendidos, o sorteio será realizado, e o vencedor levará R$ 1.500!</p>
+    </section>
+    <section id="estrabismo">
+        <h2>Sobre o Estrabismo</h2>
+        <p>O estrabismo é uma condição em que os olhos não se alinham corretamente, afetando a visão do Miguel. A cirurgia é essencial para melhorar sua qualidade de vida.</p>
+    </section>
+    <section id="orcamento">
+        <h2>Orçamento</h2>
+        <p>O valor arrecadado com a rifa será usado para custear a cirurgia de estrabismo do Miguel, incluindo consultas, exames e procedimentos.</p>
+    </section>
+    <section id="numero-premiado">
+        <h2>Número Premiado</h2>
+        <p>Verifique se seu número está entre os premiados após o sorteio. Alguns números oferecem prêmios instantâneos!</p>
     </section>
 
     <div id="loading-message" class="loading-message">Aguarde um momento, o número está sendo marcado...</div>
@@ -382,6 +402,15 @@
             localStorage.setItem('userId', userId);
             console.log(`[${new Date().toISOString()}] Novo userId gerado: ${userId}`);
             return userId;
+        }
+
+        function scrollToSection(id) {
+            const section = document.getElementById(id);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                console.warn(`[${new Date().toISOString()}] Seção ${id} não encontrada`);
+            }
         }
 
         async function reserveNumbers(numbers) {
@@ -425,7 +454,7 @@
                     throw new Error(`Erro HTTP ${availableRes.status}: ${errorData.error || 'Erro desconhecido'}`);
                 }
                 const availableNumbers = await availableRes.json();
-                console.log(`[${new Date().toISOString()}] Números disponíveis:`, availableNumbers);
+                console.log(`[${new Date().toISOString()}] Números disponíveis: ${availableNumbers.length} números`, availableNumbers);
 
                 window.selectedNumbers.forEach(num => {
                     const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
@@ -468,10 +497,7 @@
 
             try {
                 console.log(`[${new Date().toISOString()}] Verificando saúde do servidor`);
-                const healthRes = await fetch('https://rifa-miguel.onrender.com/test_db', {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                });
+                const healthRes = await fetch('https://rifa-miguel.onrender.com/test_db');
                 if (!healthRes.ok) {
                     throw new Error(`Erro no health check: ${healthRes.status}`);
                 }
@@ -487,10 +513,7 @@
                 try {
                     console.log(`[${new Date().toISOString()}] Tentativa ${retries + 1} de carregar números`);
 
-                    const progressRes = await fetch('https://rifa-miguel.onrender.com/progress', {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' },
-                    });
+                    const progressRes = await fetch('https://rifa-miguel.onrender.com/progress');
                     if (!progressRes.ok) {
                         const errorData = await progressRes.json();
                         throw new Error(`Erro HTTP ${progressRes.status}: ${errorData.error || 'Erro ao carregar progresso'}`);
@@ -500,21 +523,18 @@
                     progressBar.style.width = `${progress}%`;
                     progressBar.textContent = `${Math.round(progress)}% Arrecadado`;
 
-                    const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' },
-                    });
+                    const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers');
                     if (!availableRes.ok) {
                         const errorData = await availableRes.json();
                         throw new Error(`Erro HTTP ${availableRes.status}: ${errorData.error || 'Erro ao carregar números disponíveis'}`);
                     }
                     const availableNumbers = await availableRes.json();
-                    console.log(`[${new Date().toISOString()}] Números disponíveis recebidos:`, availableNumbers);
+                    console.log(`[${new Date().toISOString()}] Números disponíveis recebidos: ${availableNumbers.length} números`, availableNumbers);
 
                     numberContainer.innerHTML = '';
                     if (availableNumbers.length === 0) {
                         console.warn(`[${new Date().toISOString()}] Nenhum número disponível retornado`);
-                        showError('Nenhum número disponível para compra no momento.');
+                        showError('Nenhum número disponível para compra no momento. Tente resetar a coleção ou contate o suporte.');
                         return;
                     }
 
