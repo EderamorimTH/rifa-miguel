@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sub-zero Beer</title>
+    <title>Rifa Solidária para o Miguel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #FFFFFF; /* Branco */
-            color: #000000; /* Preto */
+            background-color: #f4f4f4;
+            color: #333;
         }
         header {
-            background-color: #000000; /* Preto */
-            color: #FFFFFF; /* Branco */
+            background-color: #007bff;
+            color: white;
             padding: 10px 20px;
             text-align: center;
         }
@@ -26,8 +26,8 @@
             padding: 10px 0;
         }
         .nav-button {
-            background-color: #333333; /* Cinza escuro */
-            color: #FFFFFF; /* Branco */
+            background-color: #0056b3;
+            color: white;
             padding: 6px 12px;
             border-radius: 5px;
             text-decoration: none;
@@ -40,26 +40,26 @@
             min-width: 100px;
         }
         .nav-button:hover {
-            background-color: #999999; /* Cinza claro */
-            color: #000000; /* Preto */
+            background-color: #ffc107;
+            color: black;
         }
         .hero {
             text-align: center;
             padding: 15px;
-            background-color: #FFFFFF; /* Branco */
+            background-color: white;
         }
         .progress-container {
             margin: 15px auto;
             width: 90%;
-            background-color: #DDDDDD; /* Cinza claro */
+            background-color: #ddd;
             border-radius: 5px;
         }
         .progress-bar {
             height: 20px;
-            background-color: #333333; /* Cinza escuro */
+            background-color: #28a745;
             border-radius: 5px;
             text-align: center;
-            color: #FFFFFF; /* Branco */
+            color: white;
             transition: width 0.3s;
         }
         .number-grid {
@@ -71,8 +71,8 @@
             padding: 0 10px;
         }
         .number {
-            background-color: #333333; /* Cinza escuro */
-            color: #FFFFFF; /* Branco */
+            background-color: #28a745;
+            color: white;
             padding: 8px;
             text-align: center;
             cursor: pointer;
@@ -80,18 +80,18 @@
             font-size: 0.8em;
         }
         .number.sold {
-            background-color: #CCCCCC; /* Cinza claro */
+            background-color: #ccc;
             cursor: not-allowed;
         }
         .number.selected {
-            background-color: #FFFFFF; /* Branco */
-            color: #000000; /* Preto */
+            background-color: #ffc107;
+            color: black;
         }
         .form-container {
             max-width: 90%;
             margin: 15px auto;
             padding: 15px;
-            background-color: #FFFFFF; /* Branco */
+            background-color: white;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
@@ -99,36 +99,52 @@
             width: 100%;
             padding: 8px;
             margin: 8px 0;
-            border: 1px solid #999999; /* Cinza */
+            border: 1px solid #ccc;
             border-radius: 5px;
         }
         .form-container button {
-            background-color: #333333; /* Cinza escuro */
-            color: #FFFFFF; /* Branco */
+            background-color: #007bff;
+            color: white;
             padding: 8px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             width: 100%;
         }
+        .form-container p.info {
+            color: #d32f2f;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        .form-container a.check-winner {
+            display: inline-block;
+            color: #007bff;
+            font-weight: bold;
+            text-decoration: none;
+            margin: 8px 0;
+            transition: color 0.3s;
+        }
+        .form-container a.check-winner:hover {
+            color: #0056b3;
+        }
         footer {
-            background-color: #000000; /* Preto */
-            color: #FFFFFF; /* Branco */
+            background-color: #333;
+            color: white;
             text-align: center;
             padding: 10px;
         }
         footer a {
-            color: #999999; /* Cinza claro */
+            color: #ffc107;
             font-weight: bold;
             font-size: 1em;
             text-decoration: none;
         }
         footer a:hover {
-            color: #CCCCCC; /* Cinza mais claro */
+            color: #ffca28;
         }
         .share-button {
-            background-color: #333333; /* Cinza escuro */
-            color: #FFFFFF; /* Branco */
+            background-color: #25d366;
+            color: white;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
@@ -138,7 +154,7 @@
             transition: background-color 0.3s;
         }
         .share-button:hover {
-            background-color: #999999; /* Cinza claro */
+            background-color: #1ebe5a;
         }
         .button-container {
             display: flex;
@@ -146,12 +162,6 @@
             gap: 8px;
             justify-content: center;
             margin-top: 15px;
-        }
-        .promo-text {
-            text-align: center;
-            padding: 10px;
-            font-size: 1.1em;
-            font-weight: bold;
         }
         @media (max-width: 600px) {
             nav {
@@ -182,28 +192,26 @@
 <body>
 
 <header>
-    <h1>Sub-zero Beer</h1>
+    <h1>Rifa Solidária para o Miguel</h1>
     <nav>
-        <a href="/sorteio.html" class="nav-button">Sorteio</a>
+        <a href="/rifa-miguel/index.html" class="nav-button">Início</a>
+        <a href="/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
+        <a href="/rifa-miguel/sobre-estrabismo.html" class="nav-button">Estrabismo</a>
+        <a href="/rifa-miguel/orcamento.html" class="nav-button">Orçamento</a>
+        <a href="/rifa-miguel/numero-premiado.html" class="nav-button">Número Premiado</a>
     </nav>
 </header>
 
 <section class="hero" id="home">
-    <h2>Participe do nosso sorteio!</h2>
-    <p>Compre números por R$ 10 e concorra a 1 caixa de litrão e 1 porção de frango a passarinho!</p>
+    <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
+    <p>Compre números por R$ 20 e concorra a R$ 1.500. Todo o valor será usado para a cirurgia de estrabismo do Miguel! Alguns números podem ter prêmios instantâneos!</p>
     <div class="progress-container">
         <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
     </div>
     <div class="button-container">
-        <button onclick="scrollToNumbers()" style="background-color: #FFFFFF; color: #000000; padding: 10px 20px; border: 1px solid #999999; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
-        <button onclick="selectRandomNumbers()" style="background-color: #333333; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: #FFFFFF;">Escolher 5 Números Aleatórios</button>
+        <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
+        <button onclick="selectRandomNumbers()" style="background-color: #28a745; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white;">Escolher 5 Números Aleatórios</button>
     </div>
-</section>
-
-<section class="promo-text">
-    <p>O bar mais moderninho de Cuiabá é aqui</p>
-    <p>Aquela cerveja gelada e ambiente agradável é aqui</p>
-    <p>Participe do nosso sorteio e concorra a 1 cx de litrão e 1 porção de frango a passarinho</p>
 </section>
 
 <section id="numbers" class="number-grid">
@@ -217,16 +225,19 @@
         <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
         <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
         <p>Total: R$ <span id="total-price">0</span></p>
+        <p class="info">Após o pagamento, volte aqui para verificar se seu número é premiado com um prêmio instantâneo!</p>
+        <a href="/rifa-miguel/numero-premiado.html" class="check-winner">Verificar se meu número é premiado</a>
         <button type="submit">Pagar com Pix/Cartão</button>
     </form>
 </section>
 
 <footer id="contato">
     <p>Contato:</p>
-    <p>Siga-nos no Instagram: <a href="https://www.instagram.com/Subzerobeercba">@Subzerobeercba</a></p>
-    <p>Para dúvidas, entre em contato via Instagram!</p>
-    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Participe%20do%20sorteio%20do%20Sub-zero%20Beer!%20Concorra%20a%201%20caixa%20de%20litrão%20e%201%20porção%20de%20frango%20a%20passarinho!%20Siga%20no%20Instagram:%20@Subzerobeercba%20-%20https://ederamorimth.github.io/sorteio.html" class="share-button">Compartilhar</a></p>
-    <p>© 2025 Sub-zero Beer</p>
+    <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
+    <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
+    <p>Para dúvidas, entre em contato via WhatsApp!</p>
+    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html%20%0AContato:%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+    <p>© 2025 Rifa Solidária para o Miguel</p>
 </footer>
 
 <script>
@@ -236,7 +247,7 @@
 
     const numberContainer = document.getElementById('numbers');
     let selectedNumbers = [];
-    const pricePerNumber = 10;
+    const pricePerNumber = 20;
 
     window.onload = function() {
         const savedName = localStorage.getItem('buyerName');
@@ -297,8 +308,8 @@
                 console.log('Números disponíveis recebidos:', availableNumbers);
 
                 numberContainer.innerHTML = '';
-                for (let i = 1; i <= 100; i++) {
-                    const num = String(i).padStart(3, '0');
+                for (let i = 1; i <= 900; i++) {
+                    const num = String(i).padStart(4, '0');
                     const numDiv = document.createElement('div');
                     numDiv.classList.add('number');
                     numDiv.textContent = num;
@@ -343,8 +354,8 @@
                 if (retries === maxRetries) {
                     console.warn('Máximo de tentativas atingido, usando fallback...');
                     numberContainer.innerHTML = '';
-                    for (let i = 1; i <= 100; i++) {
-                        const num = String(i).padStart(3, '0');
+                    for (let i = 1; i <= 900; i++) {
+                        const num = String(i).padStart(4, '0');
                         const numDiv = document.createElement('div');
                         numDiv.classList.add('number');
                         numDiv.textContent = num;
