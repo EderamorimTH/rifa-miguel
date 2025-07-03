@@ -17,20 +17,40 @@ const mp = new MercadoPagoConfig({
 });
 
 // Conecta ao MongoDB
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGODB_URI; // Assume mongodb+srv://Amorim:<db_password>@cluster0.8vhg4ws.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
 let db;
 
 async function connectDB() {
   try {
     await client.connect();
-    db = client.db('rifa_miguel');
+    db = client.db('numeros-instantaneo'); // Usando o banco 'numeros-instantaneo'
     console.log('Conectado ao MongoDB!');
   } catch (error) {
     console.error('Erro ao conectar ao MongoDB:', error.message);
   }
 }
 connectDB();
+
+// Função para limpar reservas expiradas (5 minutos)
+async function clearExpiredReservations() {
+  try {
+    if (!db) throw new Error('MongoDB não conectado');
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const result = await db.collection('purchases').deleteMany({
+      status: 'reserved',
+      timestamp: { $lt: fiveMinutesAgo }
+    });
+    if (result.deletedCount > 0) {
+      console.log(`[${new Date().toISOString()}] ${result.deletedCount} reservas expiradas removidas de numeros-instantaneo.purchases.`);
+    }
+  } catch (error) {
+    console.error('Erro ao limpar reservas expiradas:', error.message);
+  }
+}
+
+// Executa a limpeza de reservas a cada 5 minutos
+setInterval(clearExpiredReservations, 5 * 60 * 1000);
 
 // Test endpoint to check Mercado Pago
 app.get('/test_mp', async (req, res) => {
@@ -226,12 +246,12 @@ app.post('/create_preference', async (req, res) => {
   }
 });
 
-// Endpoint para webhook (corrigido)
+// Endpoint para webhook
 app.post('/webhook', async (req, res) => {
   try {
     console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Raw Body:', JSON.stringify(req.body, null, 2));
     if (req.method !== 'POST') {
-      console.log('Method not allowed Milky Way:', req.method);
+      console.log('Method not allowed:', req.method);
       return res.status(405).send('Method Not Allowed');
     }
 
@@ -317,8 +337,8 @@ app.post('/webhook', async (req, res) => {
                 paymentId: paymentDetails.id,
                 date_approved: paymentDetails.date_approved || new Date(),
                 preference_id: paymentDetails.preference_id || 'Não encontrado',
-                userId: null, // Remove userId após aprovação
-                timestamp: null // Remove timestamp após aprovação
+                userId: null,
+                timestamp: null
               }
             },
             { session }
@@ -344,7 +364,7 @@ app.post('/webhook', async (req, res) => {
     return res.status(200).send('OK');
   } catch (error) {
     console.error('Erro no webhook:', error.message);
-    return res.status(200).send('OK'); // Sempre retorna 200 para evitar retrys do Mercado Pago
+    return res.status(200).send('OK');
   }
 });
 
