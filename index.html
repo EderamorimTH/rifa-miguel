@@ -210,7 +210,7 @@
     </div>
     <div class="button-container">
         <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
-        <button onclick="selectRandomNumbers()" style="background-color: #28a745; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white;">Escolher 10 Números Aleatórios</button>
+        <button onclick="selectRandomNumbers()" style="background-color: #28a745; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white;">Escolher 5 Números Aleatórios</button>
     </div>
 </section>
 
@@ -274,7 +274,7 @@
             selectedNumbers = [];
 
             const shuffled = availableNumbers.sort(() => 0.5 - Math.random());
-            const randomNumbers = shuffled.slice(0, Math.min(10, availableNumbers.length));
+            const randomNumbers = shuffled.slice(0, Math.min(5, availableNumbers.length));
 
             randomNumbers.forEach(num => {
                 const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
