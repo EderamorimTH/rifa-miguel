@@ -1,19 +1,22 @@
-```json
 {
   "name": "mp-api",
   "version": "1.0.0",
-  "description": "API para Rifa Solidária do Miguel",
+  "description": "API para rifa com Mercado Pago e MongoDB",
   "main": "index.js",
-  "type": "commonjs",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
     "mercadopago": "^2.0.8",
-    "mongoose": "^8.0.0"
-  }
+    "mongoose": "^8.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "author": "",
+  "license": "ISC"
 }
-```
