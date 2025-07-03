@@ -60,7 +60,8 @@
             border-radius: 5px;
             text-align: center;
             color: white;
-            transition: width 0.3s;
+            transition: width 0.3s ease-in-out;
+            width: 0%; /* Inicializa em 0% */
         }
         .number-grid {
             display: grid;
@@ -315,11 +316,11 @@
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(`Erro HTTP ${response.status}: ${errorData.message || 'Erro desconhecido'}`);
+                    throw new Error(`Erro HTTP ${response.status}: ${errorData.error || 'Erro desconhecido'}`);
                 }
                 const result = await response.json();
                 if (!result.success) {
-                    throw new Error(result.message || 'Alguns números já estão reservados.');
+                    throw new Error(result.error || 'Alguns números já estão reservados.');
                 }
                 console.log(`[${new Date().toISOString()}] Números reservados com sucesso: ${numbers}`);
                 return true;
@@ -393,14 +394,27 @@
             while (retries < maxRetries) {
                 try {
                     console.log(`[${new Date().toISOString()}] Tentativa ${retries + 1} de carregar números`);
-                    const healthRes = await fetch('https://rifa-miguel.onrender.com/test_db');
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                    // Verificar conexão com o banco
+                    const healthRes = await fetch('https://rifa-miguel.onrender.com/test_db', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal
+                    });
                     if (!healthRes.ok) {
-                        throw new Error(`Erro no health check: ${healthRes.status}`);
+                        throw new Error(`Erro no health check: ${healthRes.status} ${healthRes.statusText}`);
                     }
                     const healthData = await healthRes.json();
                     console.log(`[${new Date().toISOString()}] Health check:`, healthData);
 
-                    const progressRes = await fetch('https://rifa-miguel.onrender.com/progress');
+                    // Carregar progresso
+                    const progressRes = await fetch('https://rifa-miguel.onrender.com/progress', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal
+                    });
                     if (!progressRes.ok) {
                         const errorData = await progressRes.json();
                         throw new Error(`Erro HTTP ${progressRes.status}: ${errorData.error || 'Erro ao carregar progresso'}`);
@@ -411,7 +425,12 @@
                     progressBar.style.width = `${progress}%`;
                     progressBar.textContent = `${Math.round(progress)}% Arrecadado`;
 
-                    const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers');
+                    // Carregar números disponíveis
+                    const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal
+                    });
                     if (!availableRes.ok) {
                         const errorData = await availableRes.json();
                         throw new Error(`Erro HTTP ${availableRes.status}: ${errorData.error || 'Erro ao carregar números disponíveis'}`);
@@ -422,7 +441,7 @@
                     numberContainer.innerHTML = '';
                     if (availableNumbers.length === 0) {
                         console.warn(`[${new Date().toISOString()}] Nenhum número disponível retornado`);
-                        showError('Nenhum número disponível para compra no momento. Tente resetar a coleção ou contate o suporte.');
+                        showError('Nenhum número disponível para compra no momento. Tente novamente mais tarde ou contate o suporte.');
                         return;
                     }
 
@@ -461,12 +480,13 @@
                     }
 
                     console.log('Números carregados com sucesso em:', new Date().toISOString());
+                    clearTimeout(timeoutId);
                     return;
                 } catch (error) {
                     console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message);
                     retries++;
                     if (retries === maxRetries) {
-                        showError('Erro ao conectar ao servidor. Verifique sua conexão e tente novamente.');
+                        showError(`Erro ao conectar ao servidor: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`);
                     } else {
                         await new Promise(resolve => setTimeout(resolve, 2000));
                     }
@@ -505,7 +525,7 @@
                     console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack, 'Code:', error.code);
                     retries++;
                     if (retries === maxRetries) {
-                        showError('Erro ao conectar ao servidor após várias tentativas. Verifique sua conexão e tente novamente.');
+                        showError(`Erro ao conectar ao servidor após várias tentativas: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`);
                     } else {
                         await new Promise(resolve => setTimeout(resolve, 3000));
                     }
