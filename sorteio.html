@@ -18,10 +18,30 @@
             padding: 10px 20px;
             text-align: center;
         }
-        nav a {
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 0;
+        }
+        .nav-button {
+            background-color: #0056b3;
             color: white;
-            margin: 0 15px;
+            padding: 6px 12px;
+            border-radius: 5px;
             text-decoration: none;
+            font-size: 1em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: background-color 0.3s, color 0.3s;
+            flex: 1 1 auto;
+            text-align: center;
+            min-width: 100px;
+        }
+        .nav-button:hover {
+            background-color: #ffc107;
+            color: black;
         }
         .content {
             max-width: 1000px;
@@ -112,18 +132,30 @@
         .share-button:hover {
             background-color: #1ebe5a;
         }
+        @media (max-width: 600px) {
+            nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            .nav-button {
+                width: 80%;
+                padding: 8px;
+                font-size: 0.9em;
+            }
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>Rifa Solidária para o Miguel</h1>
         <nav>
-            <a href="/rifa-miguel/index.html">Início</a>
-            <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
-            <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
-            <a href="#contato">Contato</a>
-            <a href="/rifa-miguel/sorteio.html">Sorteio</a>
-            <a href="/rifa-miguel/sorteio-ao-vivo.html">Sorteio ao Vivo</a>
+            <a href="/rifa-miguel/index.html" class="nav-button">Início</a>
+            <a href="/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
+            <a href="/rifa-miguel/sobre-estrabismo.html" class="nav-button">Sobre o Estrabismo</a>
+            <a href="/rifa-miguel/numero-premiado.html" class="nav-button">Número Premiado</a>
+            <a href="/rifa-miguel/sorteio.html" class="nav-button">Sorteio</a>
+            <a href="/rifa-miguel/sorteio-ao-vivo.html" class="nav-button">Sorteio ao Vivo</a>
+            <a href="#contato" class="nav-button">Contato</a>
         </nav>
     </header>
 
