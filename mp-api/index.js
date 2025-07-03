@@ -17,14 +17,14 @@ const mp = new MercadoPagoConfig({
 });
 
 // Conecta ao MongoDB
-const uri = process.env.MONGODB_URI; // Assume mongodb+srv://Amorim:<db_password>@cluster0.8vhg4ws.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
 let db;
 
 async function connectDB() {
   try {
     await client.connect();
-    db = client.db('numeros-instantaneo'); // Usando o banco 'numeros-instantaneo'
+    db = client.db('numeros-instantaneo');
     console.log('Conectado ao MongoDB!');
   } catch (error) {
     console.error('Erro ao conectar ao MongoDB:', error.message);
@@ -150,7 +150,7 @@ app.get('/purchases', async (req, res) => {
   }
 });
 
-// Rota para verificar a senha
+// Endpoint para verificar a senha
 app.post('/verify_password', (req, res) => {
   try {
     const { password } = req.body;
@@ -175,6 +175,77 @@ app.post('/verify_password', (req, res) => {
   }
 });
 
+// Endpoint para verificar compra
+app.post('/check_purchase', async (req, res) => {
+  try {
+    const { numbers, buyerPhone } = req.body;
+    if (!numbers || !Array.isArray(numbers) || !buyerPhone) {
+      return res.status(400).json({ error: 'Números ou telefone inválidos' });
+    }
+    if (!db) throw new Error('MongoDB não conectado');
+    
+    const purchase = await db.collection('purchases').findOne({
+      numbers: { $in: numbers },
+      buyerPhone,
+      status: 'approved'
+    });
+    
+    if (purchase) {
+      res.json({ owned: true, buyerName: purchase.buyerName || 'Anônimo' });
+    } else {
+      res.json({ owned: false });
+    }
+  } catch (error) {
+    console.error('Erro ao verificar compra:', error.message);
+    res.status(500).json({ error: 'Erro ao verificar compra', details: error.message });
+  }
+});
+
+// Endpoint para buscar números premiados
+app.get('/winning_numbers', async (req, res) => {
+  try {
+    if (!db) throw new Error('MongoDB não conectado');
+    const winningPrizes = await db.collection('winning_prizes').find().toArray();
+    const formattedWinners = winningPrizes.map(prize => `${prize.number}:${prize.prize}:${prize.instagram || ''}`);
+    res.json(formattedWinners);
+  } catch (error) {
+    console.error('Erro ao buscar números premiados:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar números premiados', details: error.message });
+  }
+});
+
+// Endpoint para buscar ganhadores
+app.get('/get_winners', async (req, res) => {
+  try {
+    if (!db) throw new Error('MongoDB não conectado');
+    const winners = await db.collection('winners').find().toArray();
+    res.json(winners);
+  } catch (error) {
+    console.error('Erro ao buscar ganhadores:', error.message);
+    res.status(500).json({ error: 'Erro ao buscar ganhadores', details: error.message });
+  }
+});
+
+// Endpoint para salvar ganhador
+app.post('/save_winner', async (req, res) => {
+  try {
+    const winner = req.body;
+    if (!winner.number || !winner.prize) {
+      return res.status(400).json({ error: 'Número ou prêmio inválidos' });
+    }
+    if (!db) throw new Error('MongoDB não conectado');
+    
+    const insertResult = await db.collection('winners').insertOne({
+      ...winner,
+      timestamp: new Date()
+    });
+    res.json({ success: true, insertId: insertResult.insertedId });
+  } catch (error) {
+    console.error('Erro ao salvar ganhador:', error.message);
+    res.status(500).json({ error: 'Erro ao salvar ganhador', details: error.message });
+  }
+});
+
 // Test endpoint to debug request body
 app.post('/test_create_preference', (req, res) => {
   console.log('Test request body:', req.body);
@@ -187,7 +258,6 @@ app.post('/create_preference', async (req, res) => {
     const { quantity, buyerName, buyerPhone, numbers, userId } = req.body;
     console.log('Received request body at:', new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers, userId });
 
-    // Validate inputs
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
       console.log('Error: Invalid or missing numbers');
       return res.status(400).json({ error: 'Por favor, selecione pelo menos um número' });
@@ -258,7 +328,6 @@ app.post('/webhook', async (req, res) => {
     const body = req.body;
     let paymentId = null;
 
-    // Extrair paymentId de diferentes formatos
     if (body.type === 'payment' && body.data && body.data.id) {
       paymentId = body.data.id;
     } else if (body.resource && typeof body.resource === 'string' && body.resource.match(/^\d+$/)) {
@@ -310,7 +379,6 @@ app.post('/webhook', async (req, res) => {
         return res.status(500).send('Erro: MongoDB não conectado');
       }
 
-      // Verificar se os números estão reservados para o userId
       const validNumbers = await db.collection('purchases').find({
         numbers: { $in: numbers },
         status: 'reserved',
@@ -322,11 +390,9 @@ app.post('/webhook', async (req, res) => {
         return res.status(400).send('Números não estão reservados para o usuário');
       }
 
-      // Iniciar transação
       const session = client.startSession();
       try {
         await session.withTransaction(async () => {
-          // Atualizar o documento existente para marcar como vendido
           const updateResult = await db.collection('purchases').updateOne(
             { numbers: { $all: numbers }, status: 'reserved', userId },
             {
