@@ -1,4 +1,3 @@
-```javascript
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -13,7 +12,7 @@ app.use(express.json());
 
 const client = new MercadoPagoConfig({ accessToken: process.env.ACCESS_TOKEN_MP });
 
-// Conexão com o MongoDB
+// Conex juda com o MongoDB
 let db;
 async function connectToMongoDB() {
     try {
@@ -295,7 +294,7 @@ app.post('/webhook', async (req, res) => {
             const paymentId = payment.data.id;
             const paymentClient = new Payment(client);
             const paymentDetails = await paymentClient.get({ id: paymentId });
-            console.log('Payment details:', {
+            console.log('Pagamento details:', {
                 id: paymentDetails.id,
                 status: paymentDetails.status,
                 preference_id: paymentDetails.preference_id || 'Não encontrado',
@@ -418,4 +417,3 @@ app.get('/test_db', async (req, res) => {
         res.status(500).json({ error: 'Erro na conexão com o banco de dados' });
     }
 });
-```
