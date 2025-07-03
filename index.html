@@ -190,7 +190,7 @@
 
 <section class="hero" id="home">
     <h2>Participe do nosso sorteio!</h2>
-    <p>Compre números por R$ 20 e concorra a 1 caixa de litrão e 1 porção de frango a passarinho!</p>
+    <p>Compre números por R$ 10 e concorra a 1 caixa de litrão e 1 porção de frango a passarinho!</p>
     <div class="progress-container">
         <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
     </div>
@@ -223,9 +223,9 @@
 
 <footer id="contato">
     <p>Contato:</p>
-    <p>Sub-zero Beer: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
-    <p>Para dúvidas, entre em contato via WhatsApp!</p>
-    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Participe%20do%20sorteio%20do%20Sub-zero%20Beer!%20Concorra%20a%201%20caixa%20de%20litrão%20e%201%20porção%20de%20frango%20a%20passarinho:%20https://ederamorimth.github.io/sorteio.html" class="share-button">Compartilhar</a></p>
+    <p>Siga-nos no Instagram: <a href="https://www.instagram.com/Subzerobeercba">@Subzerobeercba</a></p>
+    <p>Para dúvidas, entre em contato via Instagram!</p>
+    <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Participe%20do%20sorteio%20do%20Sub-zero%20Beer!%20Concorra%20a%201%20caixa%20de%20litrão%20e%201%20porção%20de%20frango%20a%20passarinho!%20Siga%20no%20Instagram:%20@Subzerobeercba%20-%20https://ederamorimth.github.io/sorteio.html" class="share-button">Compartilhar</a></p>
     <p>© 2025 Sub-zero Beer</p>
 </footer>
 
@@ -236,7 +236,7 @@
 
     const numberContainer = document.getElementById('numbers');
     let selectedNumbers = [];
-    const pricePerNumber = 20;
+    const pricePerNumber = 10;
 
     window.onload = function() {
         const savedName = localStorage.getItem('buyerName');
@@ -337,7 +337,7 @@
 
                 console.log('Números carregados com sucesso em:', new Date().toISOString());
                 return;
-            } catch ( Renovated error) {
+            } catch (error) {
                 console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack);
                 retries++;
                 if (retries === maxRetries) {
