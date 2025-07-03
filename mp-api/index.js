@@ -61,10 +61,10 @@ app.get('/available_numbers', async (req, res) => {
     console.log('Consultando coleção purchases...');
     const purchases = await db.collection('purchases').find().toArray();
     console.log(`Número de documentos na coleção purchases: ${purchases.length}`);
-    const soldNumbers = purchases.flatMap(p => p.numbers || []);
-    console.log(`Números vendidos encontrados: ${soldNumbers.length}`);
-    const allNumbers = Array.from({ length: 1700 }, (_, i) => String(i + 1).padStart(4, '0'));
-    const availableNumbers = allNumbers.filter(num => !soldNumbers.includes(num));
+    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
+    console.log(`Números vendidos ou reservados encontrados: ${soldOrReservedNumbers.length}`);
+    const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0'));
+    const availableNumbers = allNumbers.filter(num => !soldOrReservedNumbers.includes(num));
     console.log(`Números disponíveis retornados: ${availableNumbers.length}`);
     if (availableNumbers.length === 0) {
       console.warn('Nenhum número disponível encontrado');
@@ -79,14 +79,43 @@ app.get('/available_numbers', async (req, res) => {
 // Endpoint para calcular progresso
 app.get('/progress', async (req, res) => {
   try {
-    const totalNumbers = 1700;
+    const totalNumbers = 900;
     const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.flatMap(p => p.numbers || []).length;
+    const soldNumbers = purchases.filter(p => p.status === 'sold' || p.status === 'approved').flatMap(p => p.numbers || []).length;
     const progress = (soldNumbers / totalNumbers) * 100;
     res.json({ progress: progress.toFixed(2) });
   } catch (error) {
     console.error('Erro ao calcular progresso:', error);
     res.status(500).json({ error: 'Erro ao calcular progresso' });
+  }
+});
+
+// Endpoint para reservar números
+app.post('/reserve_numbers', async (req, res) => {
+  try {
+    const { numbers, userId } = req.body;
+    if (!numbers || !Array.isArray(numbers) || numbers.length === 0 || !userId) {
+      return res.status(400).json({ error: 'Números ou userId inválidos' });
+    }
+    const purchases = await db.collection('purchases').find().toArray();
+    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
+    const invalidNumbers = numbers.filter(num => soldOrReservedNumbers.includes(num));
+    if (invalidNumbers.length > 0) {
+      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
+    }
+    const insertResult = await db.collection('purchases').insertOne({
+      numbers,
+      userId,
+      status: 'reserved',
+      timestamp: new Date(),
+      buyerName: '',
+      buyerPhone: ''
+    });
+    console.log(`[${new Date().toISOString()}] Números reservados: ${numbers.join(', ')} para userId: ${userId}`);
+    res.json({ success: true, insertId: insertResult.insertedId });
+  } catch (error) {
+    console.error('Erro ao reservar números:', error.message);
+    res.status(500).json({ error: 'Erro ao reservar números', details: error.message });
   }
 });
 
@@ -135,30 +164,32 @@ app.post('/test_create_preference', (req, res) => {
 // Endpoint para criar preferência de pagamento
 app.post('/create_preference', async (req, res) => {
   try {
-    const { quantity, buyerName, buyerPhone, numbers } = req.body;
-    console.log('Received request body at:', new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers });
+    const { quantity, buyerName, buyerPhone, numbers, userId } = req.body;
+    console.log('Received request body at:', new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers, userId });
 
     // Validate inputs
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
       console.log('Error: Invalid or missing numbers');
       return res.status(400).json({ error: 'Por favor, selecione pelo menos um número' });
     }
-    if (!buyerName || !buyerPhone) {
-      console.log('Error: Missing name or phone');
-      return res.status(400).json({ error: 'Nome e telefone são obrigatórios' });
+    if (!buyerName || !buyerPhone || !userId) {
+      console.log('Error: Missing name, phone, or userId');
+      return res.status(400).json({ error: 'Nome, telefone e userId são obrigatórios' });
     }
     if (!quantity || quantity !== numbers.length) {
       console.log('Error: Invalid quantity');
       return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
     }
 
-    console.log('Verifying available numbers...');
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.flatMap(p => p.numbers || []);
-    const invalidNumbers = numbers.filter(num => soldNumbers.includes(num));
-    if (invalidNumbers.length > 0) {
-      console.log('Invalid numbers detected:', invalidNumbers);
-      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
+    console.log('Verifying reserved numbers...');
+    const validNumbers = await db.collection('purchases').find({
+      numbers: { $in: numbers },
+      status: 'reserved',
+      userId
+    }).toArray();
+    if (validNumbers.length !== numbers.length) {
+      console.error(`[${new Date().toISOString()}] Números não estão reservados para o usuário: ${userId}`);
+      return res.status(400).json({ error: 'Números não estão reservados para este usuário' });
     }
 
     console.log('Creating Mercado Pago preference...');
@@ -168,7 +199,7 @@ app.post('/create_preference', async (req, res) => {
         items: [{
           title: `Rifa - ${quantity} número(s)`,
           quantity: Number(quantity),
-          unit_price: 1, // Garantido como 1 real
+          unit_price: 20, // Ajustado para R$ 20 por número
         }],
         payer: {
           name: buyerName,
@@ -180,8 +211,8 @@ app.post('/create_preference', async (req, res) => {
           pending: "https://ederamorimth.github.io/rifa-miguel/pendente.html"
         },
         auto_return: "approved",
-        external_reference: JSON.stringify({ buyerName, buyerPhone, numbers }),
-        notification_url: "https://rifa-miguel.onrender.com/webhook" // URL correta
+        external_reference: JSON.stringify({ buyerName, buyerPhone, numbers, userId }),
+        notification_url: "https://rifa-miguel.onrender.com/webhook"
       }
     };
 
