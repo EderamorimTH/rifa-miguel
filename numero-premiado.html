@@ -331,9 +331,9 @@
                 });
                 clearTimeout(timeoutId);
 
-                if (!availableRes.ok) throw new Error(`Erro ao carregar números disponíveis: ${availableRes.status}`);
-                const availableNumbers = await availableRes.json();
+                if (!availableRes.ok) throw new Error(`Erro ao carregar números disponíveis: ${availableRes.status} ${availableRes.statusText}`);
 
+                const availableNumbers = await availableRes.json();
                 const purchasedNumbers = numbers.filter(num => !availableNumbers.includes(num));
                 if (purchasedNumbers.length === 0) {
                     resultDiv.innerHTML = `Nenhum dos números informados (${numbers.join(', ')}) foi comprado. Deseja comprá-los por R$ 20 cada? <a href="https://ederamorimth.github.io/rifa-miguel/index.html">Clique aqui para comprar</a>.`;
@@ -347,12 +347,20 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ numbers: purchasedNumbers, buyerPhone: phone })
                 });
-                if (!purchaseRes.ok) throw new Error(`Erro ao verificar compra: ${purchaseRes.status}`);
+                if (!purchaseRes.ok) {
+                    throw new Error(`Erro ao verificar compra: ${purchaseRes.status} ${purchaseRes.statusText}`);
+                }
                 const purchaseData = await purchaseRes.json();
 
                 if (purchaseData.owned) {
-                    const winningNumbersRes = await fetch('https://rifa-miguel.onrender.com/winning_numbers');
-                    if (!winningNumbersRes.ok) throw new Error(`Erro ao carregar números premiados: ${winningNumbersRes.status}`);
+                    const winningNumbersRes = await fetch('https://rifa-miguel.onrender.com/winning_numbers', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal
+                    });
+                    if (!winningNumbersRes.ok) {
+                        throw new Error(`Erro ao carregar números premiados: ${winningNumbersRes.status} ${winningNumbersRes.statusText}`);
+                    }
                     const instantWinningNumbers = await winningNumbersRes.json();
 
                     let message = '';
@@ -375,7 +383,11 @@
                                 instagram: cleanInstagram || undefined
                             };
                             console.log('Objeto winner a ser salvo:', winner);
-                            const existingWinnerRes = await fetch('https://rifa-miguel.onrender.com/get_winners');
+                            const existingWinnerRes = await fetch('https://rifa-miguel.onrender.com/get_winners', {
+                                method: 'GET',
+                                headers: { 'Content-Type': 'application/json' },
+                                signal: controller.signal
+                            });
                             const existingWinners = await existingWinnerRes.json();
                             const isDuplicate = existingWinners.some(w => w.number === winningNum && w.phone === maskPhone(phone));
                             if (!isDuplicate) {
@@ -398,7 +410,7 @@
                 }
             } catch (error) {
                 console.error('Erro ao consultar número:', error);
-                resultDiv.textContent = `Erro ao verificar os números. Tente novamente ou contate o suporte. Detalhe: ${error.message}`;
+                resultDiv.innerHTML = `Erro ao verificar os números: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`;
                 winnersContainer.style.display = 'none';
             } finally {
                 checkButton.disabled = false;
