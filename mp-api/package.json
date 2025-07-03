@@ -1,15 +1,19 @@
+```json
 {
   "name": "mp-api",
   "version": "1.0.0",
+  "description": "API para Rifa Solidária do Miguel",
   "main": "index.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
     "cors": "^2.8.5",
-    "mercadopago": "^2.5.17",
-    "mongodb": "^6.3.0"
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "mercadopago": "^2.0.8",
+    "mongoose": "^8.0.0"
   }
 }
+```
