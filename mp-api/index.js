@@ -21,10 +21,10 @@ async function connectToMongoDB() {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
-        console.log(`[${new Date().toISOString()}] Conectado ao MongoDB!`);
-        db = mongoose.connection.db; // Armazena a referência ao banco
+        console.log('[' + new Date().toISOString() + '] Conectado ao MongoDB!');
+        db = mongoose.connection.db;
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao conectar ao MongoDB:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao conectar ao MongoDB:', error);
         process.exit(1);
     }
 }
@@ -62,19 +62,19 @@ async function initializeNumbers() {
                 status: 'disponível',
             }));
             await Comprador.insertMany(numbers);
-            console.log(`[${new Date().toISOString()}] 900 números inicializados.`);
+            console.log('[' + new Date().toISOString() + '] 900 números inicializados.');
         } else {
-            console.log(`[${new Date().toISOString()}] Coleção numbers já contém ${count} documentos.`);
+            console.log('[' + new Date().toISOString() + '] Coleção numbers já contém ' + count + ' documentos.');
         }
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao inicializar números:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao inicializar números:', error);
     }
 }
 
 // Função para liberar reservas expiradas
 async function releaseExpiredReservations() {
     if (!db) {
-        console.error(`[${new Date().toISOString()}] Banco de dados não inicializado para liberar reservas`);
+        console.error('[' + new Date().toISOString() + '] Banco de dados não inicializado para liberar reservas');
         return;
     }
     try {
@@ -84,10 +84,10 @@ async function releaseExpiredReservations() {
             { $set: { status: 'disponível', userId: null, timestamp: null } }
         );
         if (result.modifiedCount > 0) {
-            console.log(`[${new Date().toISOString()}] ${result.modifiedCount} reservas expiradas liberadas.`);
+            console.log('[' + new Date().toISOString() + '] ' + result.modifiedCount + ' reservas expiradas liberadas.');
         }
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao liberar reservas expiradas:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao liberar reservas expiradas:', error);
     }
 }
 
@@ -102,9 +102,9 @@ setInterval(async () => {
 async function startServer() {
     await connectToMongoDB();
     await initializeNumbers();
-    await releaseExpiredReservations(); // Executa imediatamente após inicialização
+    await releaseExpiredReservations();
     app.listen(port, () => {
-        console.log(`[${new Date().toISOString()}] Servidor rodando na porta ${port}`);
+        console.log('[' + new Date().toISOString() + '] Servidor rodando na porta ' + port);
     });
 }
 
@@ -115,9 +115,9 @@ app.get('/available_numbers', async (req, res) => {
     try {
         const numbers = await Comprador.find({ status: 'disponível' }).select('number');
         res.json(numbers.map(n => n.number));
-        console.log(`[${new Date().toISOString()}] Números disponíveis retornados: ${numbers.length}`);
+        console.log('[' + new Date().toISOString() + '] Números disponíveis retornados: ' + numbers.length);
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao obter números disponíveis:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao obter números disponíveis:', error);
         res.status(500).json({ error: 'Erro ao carregar números disponíveis' });
     }
 });
@@ -129,9 +129,9 @@ app.get('/progress', async (req, res) => {
         const sold = await Comprador.countDocuments({ status: 'vendido' });
         const progress = (sold / total) * 100;
         res.json({ progress });
-        console.log(`[${new Date().toISOString()}] Progresso: ${progress.toFixed(2)}% (${sold}/${total})`);
+        console.log('[' + new Date().toISOString() + '] Progresso: ' + progress.toFixed(2) + '% (' + sold + '/' + total + ')');
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao calcular progresso:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao calcular progresso:', error);
         res.status(500).json({ error: 'Erro ao calcular progresso' });
     }
 });
@@ -139,7 +139,7 @@ app.get('/progress', async (req, res) => {
 // Endpoint para reservar números
 app.post('/reserve_numbers', async (req, res) => {
     const { numbers, userId } = req.body;
-    console.log(`[${new Date().toISOString()}] Recebendo solicitação para reservar números: ${numbers}, userId: ${userId}`);
+    console.log('[' + new Date().toISOString() + '] Recebendo solicitação para reservar números: ' + numbers + ', userId: ' + userId);
     try {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -150,7 +150,7 @@ app.post('/reserve_numbers', async (req, res) => {
             }).session(session);
             if (availableNumbers.length !== numbers.length) {
                 await session.abortTransaction();
-                console.log(`[${new Date().toISOString()}] Alguns números não estão disponíveis: ${numbers}`);
+                console.log('[' + new Date().toISOString() + '] Alguns números não estão disponíveis: ' + numbers);
                 return res.status(400).json({ success: false, message: 'Alguns números não estão disponíveis' });
             }
 
@@ -160,7 +160,7 @@ app.post('/reserve_numbers', async (req, res) => {
                 { session }
             );
             await session.commitTransaction();
-            console.log(`[${new Date().toISOString()}] Números ${numbers.join(', ')} reservados com sucesso para userId: ${userId}`);
+            console.log('[' + new Date().toISOString() + '] Números ' + numbers.join(', ') + ' reservados com sucesso para userId: ' + userId);
             res.json({ success: true });
         } catch (error) {
             await session.abortTransaction();
@@ -169,7 +169,7 @@ app.post('/reserve_numbers', async (req, res) => {
             session.endSession();
         }
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao reservar números:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao reservar números:', error);
         res.status(500).json({ success: false, message: 'Erro ao reservar números' });
     }
 });
@@ -177,7 +177,7 @@ app.post('/reserve_numbers', async (req, res) => {
 // Endpoint para verificar reserva
 app.post('/check_reservation', async (req, res) => {
     const { numbers, userId } = req.body;
-    console.log(`[${new Date().toISOString()}] Verificação de reserva para números ${numbers}, userId: ${userId}`);
+    console.log('[' + new Date().toISOString() + '] Verificação de reserva para números ' + numbers + ', userId: ' + userId);
     try {
         const validNumbers = await Comprador.find({
             number: { $in: numbers },
@@ -185,31 +185,31 @@ app.post('/check_reservation', async (req, res) => {
             userId,
         });
         const isValid = validNumbers.length === numbers.length;
-        console.log(`[${new Date().toISOString()}] Verificação de reserva para números ${numbers}, userId: ${userId}, válida: ${isValid}`);
+        console.log('[' + new Date().toISOString() + '] Verificação de reserva para números ' + numbers + ', userId: ' + userId + ', válida: ' + isValid);
         res.json({ valid: isValid });
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao verificar reserva:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao verificar reserva:', error);
         res.status(500).json({ valid: false, message: 'Erro ao verificar reserva' });
     }
 });
 
 // Endpoint para criar preferência de pagamento
 app.post('/create_preference', async (req, res) => {
-    console.log(`Received request body at: ${new Date().toISOString()}`, req.body);
+    console.log('Received request body at: ' + new Date().toISOString(), req.body);
     try {
         const { quantity, buyerName, buyerPhone, numbers, userId } = req.body;
         if (!quantity || !buyerName || !buyerPhone || !numbers || numbers.length === 0) {
-            console.log(`[${new Date().toISOString()}] Dados incompletos recebidos:`, req.body);
+            console.log('[' + new Date().toISOString() + '] Dados incompletos recebidos:', req.body);
             return res.status(400).json({ error: 'Dados incompletos' });
         }
 
         const preference = new Preference(client);
-        console.log(`Creating Mercado Pago preference...`);
+        console.log('Creating Mercado Pago preference...');
         const preferenceData = {
             body: {
                 items: [
                     {
-                        title: `Rifa - ${quantity} número(s)`,
+                        title: 'Rifa - ' + quantity + ' número(s)',
                         quantity: 1,
                         unit_price: quantity * 20,
                         currency_id: 'BRL',
@@ -229,9 +229,9 @@ app.post('/create_preference', async (req, res) => {
                 notification_url: 'https://rifa-miguel.onrender.com/webhook',
             },
         };
-        console.log(`Preference data being sent:`, preferenceData);
+        console.log('Preference data being sent:', preferenceData);
         const response = await preference.create(preferenceData);
-        console.log(`Preference created successfully, init_point: ${response.init_point} Preference ID: ${response.id}`);
+        console.log('Preference created successfully, init_point: ' + response.init_point + ' Preference ID: ' + response.id);
 
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -250,10 +250,10 @@ app.post('/create_preference', async (req, res) => {
                 { session }
             );
             await session.commitTransaction();
-            console.log(`[${new Date().toISOString()}] Compra salva como pendente para números: ${numbers.join(', ')}`);
+            console.log('[' + new Date().toISOString() + '] Compra salva como pendente para números: ' + numbers.join(', '));
         } catch (error) {
             await session.abortTransaction();
-            console.error(`[${new Date().toISOString()}] Erro ao salvar compra pendente:`, error);
+            console.error('[' + new Date().toISOString() + '] Erro ao salvar compra pendente:', error);
             return res.status(500).json({ error: 'Erro ao salvar compra pendente' });
         } finally {
             session.endSession();
@@ -261,7 +261,7 @@ app.post('/create_preference', async (req, res) => {
 
         res.json({ init_point: response.init_point });
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao criar preferência:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao criar preferência:', error);
         res.status(500).json({ error: 'Erro ao criar o pagamento' });
     }
 });
@@ -281,7 +281,7 @@ app.post('/check_purchase', async (req, res) => {
             res.json({ owned: false });
         }
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao verificar compra:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao verificar compra:', error);
         res.status(500).json({ error: 'Erro ao verificar compra' });
     }
 });
@@ -289,13 +289,13 @@ app.post('/check_purchase', async (req, res) => {
 // Webhook para notificações do Mercado Pago
 app.post('/webhook', async (req, res) => {
     const payment = req.body;
-    console.log(`Webhook received at: ${new Date().toISOString()} Method: ${req.method} Raw Body:`, JSON.stringify(payment, null, 2));
+    console.log('Webhook received at: ' + new Date().toISOString() + ' Method: ' + req.method + ' Raw Body:', JSON.stringify(payment, null, 2));
     try {
         if (payment.type === 'payment' && payment.data && payment.data.id) {
             const paymentId = payment.data.id;
             const paymentClient = new Payment(client);
             const paymentDetails = await paymentClient.get({ id: paymentId });
-            console.log(`Payment details:`, {
+            console.log('Payment details:', {
                 id: paymentDetails.id,
                 status: paymentDetails.status,
                 preference_id: paymentDetails.preference_id || 'Não encontrado',
@@ -308,13 +308,13 @@ app.post('/webhook', async (req, res) => {
             try {
                 externalReference = JSON.parse(paymentDetails.external_reference || '{}');
             } catch (e) {
-                console.error(`[${new Date().toISOString()}] Erro ao parsear external_reference:`, e);
+                console.error('[' + new Date().toISOString() + '] Erro ao parsear external_reference:', e);
                 return res.sendStatus(400);
             }
             const { numbers, userId, buyerName, buyerPhone } = externalReference;
 
             if (!numbers || !userId) {
-                console.error(`[${new Date().toISOString()}] Dados inválidos no external_reference:`, externalReference);
+                console.error('[' + new Date().toISOString() + '] Dados inválidos no external_reference:', externalReference);
                 return res.sendStatus(400);
             }
 
@@ -322,7 +322,6 @@ app.post('/webhook', async (req, res) => {
             session.startTransaction();
             try {
                 if (paymentDetails.status === 'approved') {
-                    // Verificar se a compra existe no banco
                     const purchase = await Purchase.findOne({
                         numbers: { $in: numbers },
                         userId,
@@ -330,64 +329,60 @@ app.post('/webhook', async (req, res) => {
                     }).session(session);
 
                     if (!purchase) {
-                        console.error(`[${new Date().toISOString()}] Compra não encontrada para números: ${numbers.join(', ')}, userId: ${userId}`);
+                        console.error('[' + new Date().toISOString() + '] Compra não encontrada para números: ' + numbers.join(', ') + ', userId: ' + userId);
                         await session.abortTransaction();
                         return res.sendStatus(400);
                     }
 
-                    // Atualizar números para 'vendido'
                     const compradorResult = await Comprador.updateMany(
-                        { number: { $in: numbers }, userId },
+                        { number: { $in: numbers } },
                         { $set: { status: 'vendido', userId: null, timestamp: null } },
                         { session }
                     );
-                    console.log(`[${new Date().toISOString()}] Compradores atualizados: ${compradorResult.modifiedCount}`);
+                    console.log('[' + new Date().toISOString() + '] Compradores atualizados: ' + compradorResult.modifiedCount);
 
-                    // Atualizar compra para 'approved'
                     const purchaseResult = await Purchase.updateMany(
                         { numbers: { $in: numbers }, userId, status: 'pending' },
                         { $set: { status: 'approved', paymentId, date_approved: new Date(paymentDetails.date_approved) } },
                         { session }
                     );
-                    console.log(`[${new Date().toISOString()}] Compras atualizadas: ${purchaseResult.modifiedCount}`);
+                    console.log('[' + new Date().toISOString() + '] Compras atualizadas: ' + purchaseResult.modifiedCount);
 
                     await session.commitTransaction();
-                    console.log(`[${new Date().toISOString()}] Pagamento ${paymentId} aprovado. Números ${numbers.join(', ')} marcados como vendido.`);
+                    console.log('[' + new Date().toISOString() + '] Pagamento ' + paymentId + ' aprovado. Números ' + numbers.join(', ') + ' marcados como vendido.');
                 } else if (paymentDetails.status === 'pending') {
-                    // Não liberar números imediatamente; esperar 5 minutos via releaseExpiredReservations
-                    console.log(`[${new Date().toISOString()}] Pagamento ${paymentId} pendente. Aguardando liberação automática após 5 minutos.`);
+                    console.log('[' + new Date().toISOString() + '] Pagamento ' + paymentId + ' pendente. Aguardando liberação automática após 5 minutos.');
                 } else {
-                    // Liberar números para outros status (rejected, cancelled, etc.)
                     const compradorResult = await Comprador.updateMany(
                         { number: { $in: numbers }, status: 'reservado', userId },
                         { $set: { status: 'disponível', userId: null, timestamp: null } },
                         { session }
                     );
-                    console.log(`[${new Date().toISOString()}] Números ${numbers.join(', ')} liberados devido a status ${paymentDetails.status}`);
+                    console.log('[' + new Date().toISOString() + '] Números ' + numbers.join(', ') + ' liberados devido a status ' + paymentDetails.status);
                     await session.commitTransaction();
                 }
             } catch (error) {
                 await session.abortTransaction();
-                console.error(`[${new Date().toISOString()}] Erro no processamento do webhook:`, error);
+                console.error('[' + new Date().toISOString() + '] Erro no processamento do webhook:', error);
                 return res.sendStatus(500);
             } finally {
                 session.endSession();
             }
         } else {
-            console.log(`[${new Date().toISOString()}] Webhook ignorado: tipo ${payment.type || 'desconhecido'}`);
+            console.log('[' + new Date().toISOString() + '] Webhook ignorado: tipo ' + (payment.type || 'desconhecido'));
         }
         res.sendStatus(200);
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro no webhook:`, error);
-        res.sendStatus(500);
+        console.error('[' + new Date().toISOString() + '] Erro no webhook:', error);
+        res.status(500).send('Erro interno');
     }
 });
 
-// Endpoint para resetar números (protegido por senha)
+// Endpoint para resetar números
 app.post('/reset_numbers', async (req, res) => {
     const { password } = req.body;
     if (password !== process.env.SORTEIO_PASSWORD) {
-        console.log(`[${new Date().toISOString()}] Tentativa de reset com senha inválida`);
+        console.log('[' + new Date().toISOString() + '] Tentativa de reset com senha inválida');
         return res.status(403).json({ error: 'Senha inválida' });
     }
     try {
@@ -398,7 +393,7 @@ app.post('/reset_numbers', async (req, res) => {
             await Purchase.deleteMany({}).session(session);
             await initializeNumbers();
             await session.commitTransaction();
-            console.log(`[${new Date().toISOString()}] Números resetados com sucesso`);
+            console.log('[' + new Date().toISOString() + '] Números resetados com sucesso');
             res.json({ success: true });
         } catch (error) {
             await session.abortTransaction();
@@ -407,7 +402,7 @@ app.post('/reset_numbers', async (req, res) => {
             session.endSession();
         }
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao resetar números:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro ao resetar números:', error);
         res.status(500).json({ error: 'Erro ao resetar números' });
     }
 });
@@ -417,9 +412,9 @@ app.get('/test_db', async (req, res) => {
     try {
         await mongoose.connection.db.admin().ping();
         res.json({ status: 'Conexão com o banco de dados OK' });
-        console.log(`[${new Date().toISOString()}] Teste de conexão com o banco bem-sucedido`);
+        console.log('[' + new Date().toISOString() + '] Teste de conexão com o banco bem-sucedido');
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro no teste de conexão com o banco:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro no teste de conexão com o banco:', error);
         res.status(500).json({ error: 'Erro na conexão com o banco de dados' });
     }
 });
