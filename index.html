@@ -48,6 +48,21 @@
             padding: 15px;
             background-color: white;
         }
+        .progress-container {
+            margin: 15px auto;
+            width: 90%;
+            background-color: #ddd;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #28a745;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            transition: width 0.3s ease-in-out;
+            width: 0%; /* Inicializa em 0% */
+        }
         .number-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
@@ -170,7 +185,7 @@
             margin: 10px auto;
             display: none;
         }
-        transparência. reload-button:hover {
+        .reload-button:hover {
             background-color: #0056b3;
         }
         .loading-message {
@@ -184,16 +199,6 @@
             border-radius: 5px;
             z-index: 1000;
             display: none;
-        }
-        .initial-loading {
-            max-width: 90%;
-            margin: 15px auto;
-            padding: 15px;
-            border-radius: 5px;
-            background-color: #e0f7fa;
-            color: #007bff;
-            text-align: center;
-            display: block;
         }
         @media (max-width: 600px) {
             nav {
@@ -236,7 +241,9 @@
     <section class="hero" id="home">
         <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
         <p>Compre números por R$ 20 e concorra a R$ 1.500. Todo o valor será usado para a cirurgia de estrabismo do Miguel! Alguns números podem ter prêmios instantâneos!</p>
-        <div class="initial-loading" id="initial-loading">Carregando números disponíveis, por favor aguarde...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
+        </div>
         <div class="button-container">
             <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
             <button onclick="selectRandomNumbers()" style="background-color: #28a745; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white;">Escolher 5 Números Aleatórios</button>
@@ -275,7 +282,6 @@
         const loadingMessage = document.getElementById('loading-message');
         const errorMessage = document.getElementById('error-message');
         const reloadButton = document.getElementById('reload-button');
-        const initialLoading = document.getElementById('initial-loading');
         let selectedNumbers = [];
         const pricePerNumber = 20;
         const totalNumbers = 900;
@@ -284,14 +290,12 @@
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
             reloadButton.style.display = 'block';
-            initialLoading.style.display = 'none';
             console.error(`[${new Date().toISOString()}] Erro exibido: ${message}`);
         }
 
         function hideError() {
             errorMessage.style.display = 'none';
             reloadButton.style.display = 'none';
-            initialLoading.style.display = 'none';
         }
 
         function generateUserId() {
@@ -391,7 +395,7 @@
                 try {
                     console.log(`[${new Date().toISOString()}] Tentativa ${retries + 1} de carregar números`);
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000); // Aumentado para 10 segundos
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
                     // Verificar conexão com o banco
                     const healthRes = await fetch('https://rifa-miguel.onrender.com/test_db', {
@@ -400,11 +404,26 @@
                         signal: controller.signal
                     });
                     if (!healthRes.ok) {
-                        const errorData = await healthRes.json();
-                        throw new Error(`Erro no health check: ${healthRes.status} ${errorData.error || healthRes.statusText}`);
+                        throw new Error(`Erro no health check: ${healthRes.status} ${healthRes.statusText}`);
                     }
                     const healthData = await healthRes.json();
                     console.log(`[${new Date().toISOString()}] Health check:`, healthData);
+
+                    // Carregar progresso
+                    const progressRes = await fetch('https://rifa-miguel.onrender.com/progress', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal
+                    });
+                    if (!progressRes.ok) {
+                        const errorData = await progressRes.json();
+                        throw new Error(`Erro HTTP ${progressRes.status}: ${errorData.error || 'Erro ao carregar progresso'}`);
+                    }
+                    const { progress } = await progressRes.json();
+                    console.log(`[${new Date().toISOString()}] Progresso recebido: ${progress}%`);
+                    const progressBar = document.getElementById('progress-bar');
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.textContent = `${Math.round(progress)}% Arrecadado`;
 
                     // Carregar números disponíveis
                     const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
@@ -418,10 +437,6 @@
                     }
                     const availableNumbers = await availableRes.json();
                     console.log(`[${new Date().toISOString()}] Números disponíveis recebidos: ${availableNumbers.length} números`, availableNumbers);
-
-                    // Armazenar números disponíveis no localStorage como fallback
-                    localStorage.setItem('availableNumbers', JSON.stringify(availableNumbers));
-                    localStorage.setItem('lastUpdate', new Date().toISOString());
 
                     numberContainer.innerHTML = '';
                     if (availableNumbers.length === 0) {
@@ -455,7 +470,7 @@
                                         const index = selectedNumbers.indexOf(num);
                                         if (index > -1) selectedNumbers.splice(index, 1);
                                     }
-                                    document.getElementById('selected-numbers'). ellipticaNenhum');
+                                    document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
                                     document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
                                 }
                             });
@@ -471,64 +486,9 @@
                     console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message);
                     retries++;
                     if (retries === maxRetries) {
-                        let errorMsg = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).';
-                        if (error.name === 'AbortError') {
-                            errorMsg = 'O servidor está demorando para responder. Tente novamente em alguns segundos ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).';
-                        } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                            // Tentar usar dados do cache como fallback
-                            const cachedNumbers = localStorage.getItem('availableNumbers');
-                            const lastUpdate = localStorage.getItem('lastUpdate');
-                            if (cachedNumbers && lastUpdate && (new Date() - new Date(lastUpdate)) < 3600000) { // Cache válido por 1 hora
-                                console.log(`[${new Date().toISOString()}] Usando números disponíveis do cache`);
-                                const availableNumbers = JSON.parse(cachedNumbers);
-                                numberContainer.innerHTML = '';
-                                if (availableNumbers.length === 0) {
-                                    showError('Nenhum número disponível no cache. Tente novamente mais tarde ou contate o suporte.');
-                                    return;
-                                }
-
-                                hideError();
-                                for (let i = 1; i <= totalNumbers; i++) {
-                                    const num = String(i).padStart(4, '0');
-                                    const numDiv = document.createElement('div');
-                                    numDiv.classList.add('number');
-                                    numDiv.textContent = num;
-
-                                    if (!availableNumbers.includes(num)) {
-                                        numDiv.classList.add('sold');
-                                    } else {
-                                        numDiv.addEventListener('click', async () => {
-                                            if (!numDiv.classList.contains('sold')) {
-                                                const isSelected = numDiv.classList.contains('selected');
-                                                if (!isSelected) {
-                                                    if (await reserveNumbers([num])) {
-                                                        numDiv.classList.add('selected');
-                                                        selectedNumbers.push(num);
-                                                    } else {
-                                                        return;
-                                                    }
-                                                } else {
-                                                    numDiv.classList.remove('selected');
-                                                    const index = selectedNumbers.indexOf(num);
-                                                    if (index > -1) selectedNumbers.splice(index, 1);
-                                                }
-                                                document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
-                                                document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
-                                            }
-                                        });
-                                    }
-
-                                    numberContainer.appendChild(numDiv);
-                                }
-                                console.log('Números carregados do cache em:', new Date().toISOString());
-                                return;
-                            } else {
-                                errorMsg = 'Falha na conexão com o servidor. Verifique sua internet ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).';
-                            }
-                        }
-                        showError(errorMsg);
+                        showError(`Erro ao conectar ao servidor: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`);
                     } else {
-                        await new Promise(resolve => setTimeout(resolve, 5000)); // Aumentado para 5 segundos
+                        await new Promise(resolve => setTimeout(resolve, 2000));
                     }
                 }
             }
@@ -565,13 +525,9 @@
                     console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack, 'Code:', error.code);
                     retries++;
                     if (retries === maxRetries) {
-                        let errorMsg = `Erro ao conectar ao servidor após várias tentativas: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`;
-                        if (error.name === 'AbortError') {
-                            errorMsg = 'O servidor está demorando para responder ao processar o pagamento. Tente novamente em alguns segundos ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).';
-                        }
-                        showError(errorMsg);
+                        showError(`Erro ao conectar ao servidor após várias tentativas: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`);
                     } else {
-                        await new Promise(resolve => setTimeout(resolve, 5000));
+                        await new Promise(resolve => setTimeout(resolve, 3000));
                     }
                 }
             }
