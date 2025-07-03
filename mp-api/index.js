@@ -237,44 +237,78 @@ app.post('/webhook', async (req, res) => {
           date_approved: paymentDetails.date_approved || 'Não aprovado ainda'
         });
 
-        if (paymentDetails.status === 'approved' || paymentDetails.status === 'pending') {
-          let externalReference = paymentDetails.external_reference;
-          let buyerName, buyerPhone, numbers;
-          if (externalReference) {
-            try {
-              const parsed = JSON.parse(externalReference);
-              buyerName = parsed.buyerName;
-              buyerPhone = parsed.buyerPhone;
-              numbers = parsed.numbers;
-              console.log('Parsed external reference:', { buyerName, buyerPhone, numbers });
-            } catch (e) {
-              console.error('Erro ao parsear external_reference:', e.message);
-              return res.status(200).send('OK');
-            }
+        if (paymentDetails.status === 'approved') {
+          let externalReference;
+          try {
+            externalReference = JSON.parse(paymentDetails.external_reference || '{}');
+          } catch (e) {
+            console.error(`[${new Date().toISOString()}] Erro ao parsear external_reference:`, e);
+            return res.sendStatus(400);
+          }
+          const { numbers, userId, buyerName, buyerPhone } = externalReference;
+
+          if (!db) {
+            console.error('MongoDB não conectado');
+            return res.status(500).send('Erro: MongoDB não conectado');
           }
 
-          if (buyerName && buyerPhone && numbers && Array.isArray(numbers)) {
-            if (!db) {
-              console.error('MongoDB não conectado');
-              return res.status(500).send('Erro: MongoDB não conectado');
-            }
-            const existingPurchase = await db.collection('purchases').findOne({ paymentId: paymentDetails.id });
-            if (!existingPurchase) {
-              const result = await db.collection('purchases').insertOne({
-                buyerName,
-                buyerPhone,
-                numbers,
-                purchaseDate: new Date(),
-                paymentId: paymentDetails.id,
-                status: paymentDetails.status,
-                date_approved: paymentDetails.date_approved || null,
-                preference_id: paymentDetails.preference_id || 'Não encontrado'
-              });
-              console.log('Purchase saved successfully:', result.insertedId, { buyerName, buyerPhone, numbers, status: paymentDetails.status });
-            } else {
-              console.log('Purchase already exists for paymentId:', paymentDetails.id, 'Skipping duplicate');
-            }
+          // Verificar se os números estão reservados para o userId
+          const validNumbers = await db.collection('purchases').find({
+            numbers: { $in: numbers },
+            status: 'reserved',
+            userId
+          }).toArray();
+
+          if (validNumbers.length !== numbers.length) {
+            console.error(`[${new Date().toISOString()}] Números não estão reservados para o usuário: ${userId}`);
+            return res.status(400).send('Números não estão reservados para o usuário');
           }
+
+          // Iniciar transação
+          const session = client.startSession();
+          try {
+            await session.withTransaction(async () => {
+              // Atualizar números para "vendido" e limpar userId e timestamp
+              const compradorResult = await db.collection('purchases').updateMany(
+                { numbers: { $in: numbers }, status: 'reserved', userId },
+                { $set: { status: 'sold', userId: null, timestamp: null } },
+                { session }
+              );
+              console.log(`[${new Date().toISOString()}] Compradores atualizados: ${compradorResult.modifiedCount}`);
+
+              // Atualizar ou inserir compra como aprovada
+              const purchaseResult = await db.collection('purchases').updateMany(
+                { numbers: { $in: numbers }, status: 'reserved' },
+                { $set: { status: 'approved', paymentId, date_approved: new Date() } },
+                { session }
+              );
+              console.log(`[${new Date().toISOString()}] Compras atualizadas: ${purchaseResult.modifiedCount}`);
+
+              // Se nenhuma compra foi atualizada, inserir uma nova
+              if (purchaseResult.modifiedCount === 0) {
+                const insertResult = await db.collection('purchases').insertOne({
+                  buyerName,
+                  buyerPhone,
+                  numbers,
+                  purchaseDate: new Date(),
+                  paymentId: paymentDetails.id,
+                  status: 'approved',
+                  date_approved: paymentDetails.date_approved || new Date(),
+                  preference_id: paymentDetails.preference_id || 'Não encontrado'
+                }, { session });
+                console.log('Nova compra inserida:', insertResult.insertedId, { buyerName, buyerPhone, numbers });
+              }
+
+              console.log(`[${new Date().toISOString()}] Pagamento ${paymentId} aprovado. Números ${numbers.join(', ')} marcados como vendido.`);
+            });
+          } catch (error) {
+            console.error(`[${new Date().toISOString()}] Erro na transação:`, error);
+            throw error;
+          } finally {
+            session.endSession();
+          }
+        } else {
+          console.log(`[${new Date().toISOString()}] Pagamento ${paymentId} não está aprovado. Status: ${paymentDetails.status}`);
         }
       } catch (error) {
         console.error('Erro ao buscar payment details:', error.message);
