@@ -19,7 +19,7 @@
             text-align: center;
             position: relative;
             overflow: hidden;
-            height: 200px; /* Altura ajustada para a imagem */
+            height: 200px; /* Altura padrão para desktop */
         }
         header img {
             width: 100%;
@@ -234,7 +234,14 @@
                 font-size: 0.9em;
             }
             header {
-                height: 150px; /* Altura reduzida para telas menores */
+                height: 120px; /* Altura reduzida para celular */
+            }
+            header img {
+                object-fit: cover; /* Mantém a proporção */
+                min-height: 120px; /* Altura mínima para celular */
+            }
+            header h1 {
+                font-size: 1.5em; /* Tamanho do texto reduzido */
             }
             .hero h2 {
                 font-size: 1.5em;
