@@ -15,29 +15,23 @@
         header {
             background-color: #007bff;
             color: white;
-            padding: 0;
+            padding: 10px 20px;
             text-align: center;
             position: relative;
             overflow: hidden;
-            height: 250px; /* Aumentado para não cortar a cabeça */
         }
         header img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Garante que a imagem ocupe todo o espaço */
-            filter: brightness(0.7); /* Escurece um pouco para melhorar a legibilidade do texto */
-            position: relative;
-            top: -50px; /* Ajuste para baixo para não cortar a cabeça */
+            max-width: 250px; /* Aumentado o tamanho da foto */
+            height: auto;
+            border-radius: 50%;
+            border: 5px solid #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            margin: 10px 0;
+            transform: scale(1);
+            transition: transform 0.3s ease;
         }
-        header h1 {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            margin: 0;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Sombra no texto para destacar */
-            z-index: 1;
+        header img:hover {
+            transform: scale(1.1);
         }
         nav {
             display: flex;
@@ -45,25 +39,24 @@
             justify-content: center;
             gap: 8px;
             padding: 10px 0;
-            background: none; /* Removido o fundo */
         }
         .nav-button {
-            background: none; /* Sem fundo */
-            color: white; /* Cor do texto igual ao h1 */
+            background-color: #0056b3;
+            color: white;
             padding: 6px 12px;
             border-radius: 5px;
             text-decoration: none;
-            font-size: 1.2em; /* Ajustado para ser proporcional ao h1 */
+            font-size: 1em;
             font-weight: bold;
             letter-spacing: 1px;
-            transition: color 0.3s;
+            transition: background-color 0.3s, color 0.3s;
             flex: 1 1 auto;
             text-align: center;
             min-width: 100px;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* Sombra igual ao h1 */
         }
         .nav-button:hover {
-            color: #ffc107; /* Mudança de cor no hover */
+            background-color: #ffc107;
+            color: black;
         }
         .hero {
             text-align: center;
@@ -234,22 +227,9 @@
                 width: 80%;
                 padding: 8px;
                 font-size: 0.9em;
-                background: none; /* Sem fundo no celular */
-                color: white;
-                text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* Sombra no celular */
-            }
-            .nav-button:hover {
-                color: #ffc107;
-            }
-            header {
-                height: 150px; /* Ajuste para celular */
             }
             header img {
-                min-height: 150px;
-                top: -30px; /* Ajuste para baixo no celular */
-            }
-            header h1 {
-                font-size: 1.5em; /* Tamanho do texto reduzido */
+                max-width: 120px;
             }
             .hero h2 {
                 font-size: 1.5em;
@@ -271,14 +251,14 @@
     <header>
         <img src="/rifa-miguel/imagens/miguel.jpg" alt="Foto do Miguel">
         <h1>Rifa Solidária para o Miguel</h1>
+        <nav>
+            <a href="/rifa-miguel/index.html" class="nav-button">Início</a>
+            <a href="/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
+            <a href="/rifa-miguel/sobre-estrabismo.html" class="nav-button">Estrabismo</a>
+            <a href="/rifa-miguel/orcamento.html" class="nav-button">Orçamento</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/sorteio.html" class="nav-button">Sorteio</a>
+        </nav>
     </header>
-    <nav>
-        <a href="/rifa-miguel/index.html" class="nav-button">Início</a>
-        <a href="/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
-        <a href="/rifa-miguel/sobre-estrabismo.html" class="nav-button">Estrabismo</a>
-        <a href="/rifa-miguel/orcamento.html" class="nav-button">Orçamento</a>
-        <a href="https://ederamorimth.github.io/rifa-miguel/sorteio.html" class="nav-button">Sorteio</a>
-    </nav>
 
     <section class="hero" id="home">
         <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
