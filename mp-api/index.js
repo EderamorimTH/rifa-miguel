@@ -1,13 +1,8 @@
-```javascript
-import express from 'express';
-import cors from 'cors';
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
-import { MongoClient } from 'mongodb';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require('express');
+const cors = require('cors');
+const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+const { MongoClient } = require('mongodb');
+const path = require('path');
 
 const app = express();
 app.use(cors({
@@ -46,7 +41,7 @@ async function clearExpiredReservations() {
       timestamp: { $lt: fiveMinutesAgo }
     });
     if (result.deletedCount > 0) {
-      console.log(`[${new Date().toISOString()}] ${result.deletedCount} reservas expiradas removidas.`);
+      console.log('[' + new Date().toISOString() + '] ' + result.deletedCount + ' reservas expiradas removidas.');
     }
   } catch (error) {
     console.error('Erro ao limpar reservas expiradas:', error.message);
@@ -111,7 +106,7 @@ app.post('/reserve_numbers', async (req, res) => {
     const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
     const invalidNumbers = numbers.filter(num => soldOrReservedNumbers.includes(num));
     if (invalidNumbers.length > 0) {
-      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
+      return res.status(400).json({ error: 'Números indisponíveis: ' + invalidNumbers.join(', ') });
     }
     const insertResult = await db.collection('purchases').insertOne({
       numbers,
@@ -121,7 +116,7 @@ app.post('/reserve_numbers', async (req, res) => {
       buyerName: '',
       buyerPhone: ''
     });
-    console.log(`[${new Date().toISOString()}] Números reservados: ${numbers.join(', ')} para userId: ${userId}`);
+    console.log('[' + new Date().toISOString() + '] Números reservados: ' + numbers.join(', ') + ' para userId: ' + userId);
     res.json({ success: true, insertId: insertResult.insertedId });
   } catch (error) {
     console.error('Erro ao reservar números:', error.message);
@@ -143,7 +138,7 @@ app.post('/verify_password', (req, res) => {
   try {
     const { password } = req.body;
     const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO';
-    console.log('Verificando senha às:', new Date().toISOString());
+    console.log('Verificando senha às: ' + new Date().toISOString());
 
     if (!password) {
       console.log('Erro: Senha não fornecida');
@@ -202,7 +197,7 @@ app.get('/winning_numbers', async (req, res) => {
   try {
     if (!db) throw new Error('MongoDB não conectado');
     const winningPrizes = await db.collection('winning_prizes').find().toArray();
-    const formattedWinners = winningPrizes.map(prize => `${prize.number}:${prize.prize}:${prize.instagram || ''}`);
+    const formattedWinners = winningPrizes.map(prize => prize.number + ':' + prize.prize + ':' + (prize.instagram || ''));
     res.json(formattedWinners);
   } catch (error) {
     console.error('Erro ao buscar números premiados:', error.message);
@@ -248,7 +243,7 @@ app.post('/test_create_preference', (req, res) => {
 app.post('/create_preference', async (req, res) => {
   try {
     const { quantity, buyerName, buyerPhone, numbers, userId } = req.body;
-    console.log('Received request body at:', new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers, userId });
+    console.log('Received request body at: ' + new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers, userId });
 
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
       console.log('Error: Invalid or missing numbers');
@@ -269,7 +264,7 @@ app.post('/create_preference', async (req, res) => {
       userId
     }).toArray();
     if (validNumbers.length !== numbers.length) {
-      console.error(`[${new Date().toISOString()}] Números não estão reservados para o usuário: ${userId}`);
+      console.error('[' + new Date().toISOString() + '] Números não estão reservados para o usuário: ' + userId);
       return res.status(400).json({ error: 'Números não estão reservados para este usuário' });
     }
 
@@ -277,7 +272,7 @@ app.post('/create_preference', async (req, res) => {
     const preferenceData = {
       body: {
         items: [{
-          title: `Rifa - ${quantity} número(s)`,
+          title: 'Rifa - ' + quantity + ' número(s)',
           quantity: Number(quantity),
           unit_price: 20,
         }],
@@ -300,14 +295,14 @@ app.post('/create_preference', async (req, res) => {
     console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id);
     res.json({ init_point: response.init_point, preference_id: response.id });
   } catch (error) {
-    console.error('Error in /create_preference at:', new Date().toISOString(), error.message, 'Stack:', error.stack);
+    console.error('Error in /create_preference at: ' + new Date().toISOString(), error.message, 'Stack:', error.stack);
     res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
   }
 });
 
 app.post('/webhook', async (req, res) => {
   try {
-    console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Raw Body:', JSON.stringify(req.body, null, 2));
+    console.log('Webhook received at: ' + new Date().toISOString(), 'Method:', req.method, 'Raw Body:', JSON.stringify(req.body, null, 2));
     if (req.method !== 'POST') {
       console.log('Method not allowed:', req.method);
       return res.status(405).send('Method Not Allowed');
@@ -352,13 +347,13 @@ app.post('/webhook', async (req, res) => {
       try {
         externalReference = JSON.parse(paymentDetails.external_reference || '{}');
       } catch (e) {
-        console.error(`[${new Date().toISOString()}] Erro ao parsear external_reference:`, e);
+        console.error('[' + new Date().toISOString() + '] Erro ao parsear external_reference:', e);
         return res.status(400).send('Invalid external reference');
       }
       const { numbers, userId, buyerName, buyerPhone } = externalReference;
 
       if (!numbers || !userId || !buyerName || !buyerPhone) {
-        console.error(`[${new Date().toISOString()}] Dados incompletos no external_reference:`, externalReference);
+        console.error('[' + new Date().toISOString() + '] Dados incompletos no external_reference:', externalReference);
         return res.status(400).send('Dados incompletos no external_reference');
       }
 
@@ -374,7 +369,7 @@ app.post('/webhook', async (req, res) => {
       }).toArray();
 
       if (validNumbers.length !== numbers.length) {
-        console.error(`[${new Date().toISOString()}] Números não estão reservados para o usuário: ${userId}, encontrados: ${validNumbers.length}, esperados: ${numbers.length}`);
+        console.error('[' + new Date().toISOString() + '] Números não estão reservados para o usuário: ' + userId + ', encontrados: ' + validNumbers.length + ', esperados: ' + numbers.length);
         return res.status(400).send('Números não estão reservados para o usuário');
       }
 
@@ -399,20 +394,20 @@ app.post('/webhook', async (req, res) => {
           );
 
           if (updateResult.modifiedCount === 0) {
-            console.error(`[${new Date().toISOString()}] Nenhum documento atualizado para números: ${numbers.join(', ')}, userId: ${userId}`);
+            console.error('[' + new Date().toISOString() + '] Nenhum documento atualizado para números: ' + numbers.join(', ') + ', userId: ' + userId);
             throw new Error('Nenhum documento correspondente encontrado para atualização');
           }
 
-          console.log(`[${new Date().toISOString()}] Pagamento ${paymentId} aprovado. Números ${numbers.join(', ')} marcados como aprovados para ${buyerName}.`);
+          console.log('[' + new Date().toISOString() + '] Pagamento ' + paymentId + ' aprovado. Números ' + numbers.join(', ') + ' marcados como aprovados para ' + buyerName + '.');
         });
       } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro na transação:`, error);
+        console.error('[' + new Date().toISOString() + '] Erro na transação:', error);
         throw error;
       } finally {
         session.endSession();
       }
     } else {
-      console.log(`[${new Date().toISOString()}] Pagamento ${paymentId} não está aprovado. Status: ${paymentDetails.status}`);
+      console.log('[' + new Date().toISOString() + '] Pagamento ' + paymentId + ' não está aprovado. Status: ' + paymentDetails.status);
     }
 
     return res.status(200).send('OK');
@@ -450,6 +445,5 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT} at ${new Date().toISOString()}`);
+  console.log('Servidor rodando na porta ' + PORT + ' at ' + new Date().toISOString());
 });
-```
