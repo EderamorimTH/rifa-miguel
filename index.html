@@ -17,6 +17,21 @@
             color: white;
             padding: 10px 20px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        header img {
+            max-width: 150px;
+            height: auto;
+            border-radius: 50%;
+            border: 5px solid #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            margin: 10px 0;
+            transform: scale(1);
+            transition: transform 0.3s ease;
+        }
+        header img:hover {
+            transform: scale(1.1);
         }
         nav {
             display: flex;
@@ -213,6 +228,9 @@
                 padding: 8px;
                 font-size: 0.9em;
             }
+            header img {
+                max-width: 120px;
+            }
             .hero h2 {
                 font-size: 1.5em;
             }
@@ -231,6 +249,7 @@
 </head>
 <body>
     <header>
+        <img src="/rifa-miguel/imagens/miguel.jpg" alt="Foto do Miguel">
         <h1>Rifa Solidária para o Miguel</h1>
         <nav>
             <a href="/rifa-miguel/index.html" class="nav-button">Início</a>
