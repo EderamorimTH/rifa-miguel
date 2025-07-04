@@ -30,6 +30,39 @@
             background-color: white;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: none; /* Escondido até a senha ser validada */
+        }
+        .password-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .password-container input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 80%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .password-container button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .password-container button:hover {
+            background-color: #0056b3;
+        }
+        .password-error {
+            color: red;
+            margin-top: 10px;
+            display: none;
         }
         table {
             width: 100%;
@@ -115,6 +148,14 @@
     </style>
 </head>
 <body>
+    <div class="password-container" id="password-container">
+        <h2>Acesso Restrito</h2>
+        <p>Digite a senha para acessar a página de sorteio:</p>
+        <input type="password" id="password-input" placeholder="Senha">
+        <button onclick="validatePassword()">Entrar</button>
+        <p id="password-error" class="password-error">Senha incorreta. Tente novamente.</p>
+    </div>
+
     <header>
         <h1>Rifa Solidária para o Miguel</h1>
         <nav>
@@ -127,7 +168,7 @@
         </nav>
     </header>
 
-    <section class="content">
+    <section class="content" id="content">
         <h2>Lista de Compras da Rifa</h2>
         <p>Aqui você pode ver todas as compras registradas para a rifa solidária do Miguel.</p>
         <div id="error-message" class="error" style="display: none;"></div>
@@ -165,6 +206,47 @@
     <script>
         let purchasesData = [];
         let currentWinner = null;
+
+        // Função para gerar hash SHA-256 no lado do cliente
+        async function sha256(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Validar senha
+        async function validatePassword() {
+            const passwordInput = document.getElementById('password-input').value;
+            const passwordError = document.getElementById('password-error');
+            const passwordContainer = document.getElementById('password-container');
+            const content = document.getElementById('content');
+
+            try {
+                const response = await fetch('https://rifa-miguel.onrender.com/get-page-password', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                const serverHash = data.passwordHash;
+
+                const inputHash = await sha256(passwordInput);
+                if (inputHash === serverHash) {
+                    passwordContainer.style.display = 'none';
+                    content.style.display = 'block';
+                    loadPurchases(); // Carrega as compras após validar a senha
+                } else {
+                    passwordError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error(`Erro ao validar senha em ${new Date().toISOString()}:`, error.message);
+                passwordError.textContent = 'Erro ao conectar ao servidor. Tente novamente.';
+                passwordError.style.display = 'block';
+            }
+        }
 
         async function loadPurchases() {
             const errorMessage = document.getElementById('error-message');
@@ -231,22 +313,23 @@
 
         function performDraw() {
             const winnerMessage = document.getElementById('winner-message');
-            if (purchasesData.length === 0) {
-                winnerMessage.textContent = 'Nenhuma compra registrada para realizar o sorteio.';
+            const approvedPurchases = purchasesData.filter(purchase => purchase.status === 'approved');
+            if (approvedPurchases.length === 0) {
+                winnerMessage.textContent = 'Nenhuma compra aprovada para realizar o sorteio.';
                 winnerMessage.style.display = 'block';
                 return;
             }
 
-            const allNumbers = purchasesData.flatMap(purchase => purchase.numbers || []);
+            const allNumbers = approvedPurchases.flatMap(purchase => purchase.numbers || []);
             if (allNumbers.length === 0) {
-                winnerMessage.textContent = 'Nenhum número comprado encontrado para o sorteio.';
+                winnerMessage.textContent = 'Nenhum número aprovado encontrado para o sorteio.';
                 winnerMessage.style.display = 'block';
                 return;
             }
 
             const randomIndex = Math.floor(Math.random() * allNumbers.length);
             const winningNumber = allNumbers[randomIndex];
-            const winner = purchasesData.find(purchase => purchase.numbers && purchase.numbers.includes(winningNumber));
+            const winner = approvedPurchases.find(purchase => purchase.numbers && purchase.numbers.includes(winningNumber));
 
             if (!winner) {
                 winnerMessage.textContent = 'Erro: Comprador não encontrado para o número sorteado.';
@@ -275,8 +358,6 @@
             }
             alert(`Telefone do ganhador (${currentWinner.buyerName}): ${currentWinner.buyerPhone}`);
         }
-
-        loadPurchases();
     </script>
 </body>
 </html>
