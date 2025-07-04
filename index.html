@@ -19,13 +19,15 @@
             text-align: center;
             position: relative;
             overflow: hidden;
-            height: 200px; /* Altura padrão para desktop */
+            height: 250px; /* Aumentado para não cortar a cabeça */
         }
         header img {
             width: 100%;
             height: 100%;
             object-fit: cover; /* Garante que a imagem ocupe todo o espaço */
             filter: brightness(0.7); /* Escurece um pouco para melhorar a legibilidade do texto */
+            position: relative;
+            top: -50px; /* Ajuste para baixo para não cortar a cabeça */
         }
         header h1 {
             position: absolute;
@@ -43,25 +45,25 @@
             justify-content: center;
             gap: 8px;
             padding: 10px 0;
-            background-color: #0056b3; /* Fundo diferente para a navegação */
+            background: none; /* Removido o fundo */
         }
         .nav-button {
-            background-color: #0056b3;
-            color: white;
+            background: none; /* Sem fundo */
+            color: white; /* Cor do texto igual ao h1 */
             padding: 6px 12px;
             border-radius: 5px;
             text-decoration: none;
-            font-size: 1em;
+            font-size: 1.2em; /* Ajustado para ser proporcional ao h1 */
             font-weight: bold;
             letter-spacing: 1px;
-            transition: background-color 0.3s, color 0.3s;
+            transition: color 0.3s;
             flex: 1 1 auto;
             text-align: center;
             min-width: 100px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* Sombra igual ao h1 */
         }
         .nav-button:hover {
-            background-color: #ffc107;
-            color: black;
+            color: #ffc107; /* Mudança de cor no hover */
         }
         .hero {
             text-align: center;
@@ -232,13 +234,19 @@
                 width: 80%;
                 padding: 8px;
                 font-size: 0.9em;
+                background: none; /* Sem fundo no celular */
+                color: white;
+                text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* Sombra no celular */
+            }
+            .nav-button:hover {
+                color: #ffc107;
             }
             header {
-                height: 120px; /* Altura reduzida para celular */
+                height: 150px; /* Ajuste para celular */
             }
             header img {
-                object-fit: cover; /* Mantém a proporção */
-                min-height: 120px; /* Altura mínima para celular */
+                min-height: 150px;
+                top: -30px; /* Ajuste para baixo no celular */
             }
             header h1 {
                 font-size: 1.5em; /* Tamanho do texto reduzido */
