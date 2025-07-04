@@ -237,7 +237,7 @@
             <a href="/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
             <a href="/rifa-miguel/sobre-estrabismo.html" class="nav-button">Estrabismo</a>
             <a href="/rifa-miguel/orcamento.html" class="nav-button">Orçamento</a>
-            <a href="#" class="nav-button" onclick="checkPassword()">Sorteio</a>
+            <a href="https://rifa-miguel.onrender.com/sorteio" class="nav-button">Sorteio</a>
         </nav>
     </header>
 
@@ -298,15 +298,6 @@
         function hideError() {
             errorMessage.style.display = 'none';
             reloadButton.style.display = 'none';
-        }
-
-        function checkPassword() {
-            const password = prompt("Digite a senha para acessar a página de sorteio:");
-            if (password) {
-                window.location.href = `https://rifa-miguel.onrender.com/sorteio?password=${encodeURIComponent(password)}`;
-            } else {
-                alert("Por favor, digite uma senha.");
-            }
         }
 
         function generateUserId() {
