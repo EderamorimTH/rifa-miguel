@@ -158,13 +158,33 @@ app.post('/verify_password', (req, res) => {
   }
 });
 
-app.get('/sorteio', (req, res) => {
-  const password = req.query.password;
-  const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO';
-  if (password === correctPassword) {
-    res.sendFile(path.join(__dirname, 'public', 'sorteio.html'));
-  } else {
-    res.status(401).send('Acesso não autorizado. Senha incorreta.');
+app.get('/sorteio', async (req, res) => {
+  try {
+    const password = req.query.password;
+    const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO';
+    console.log(`[${new Date().toISOString()}] Verificando acesso à página de sorteio com senha fornecida`);
+
+    if (!password) {
+      console.log(`[${new Date().toISOString()}] Senha não fornecida`);
+      return res.status(400).json({ error: 'Senha não fornecida' });
+    }
+
+    if (password === correctPassword) {
+      console.log(`[${new Date().toISOString()}] Senha válida, servindo sorteio.html`);
+      const filePath = path.join(__dirname, 'public', 'sorteio.html');
+      res.sendFile(filePath, (err) => {
+        if (err) {
+          console.error(`[${new Date().toISOString()}] Erro ao servir sorteio.html:`, err.message);
+          return res.status(500).json({ error: 'Erro ao carregar a página de sorteio', details: err.message });
+        }
+      });
+    } else {
+      console.log(`[${new Date().toISOString()}] Senha inválida`);
+      return res.status(401).json({ error: 'Acesso não autorizado. Senha incorreta.' });
+    }
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] Erro ao processar a rota /sorteio:`, error.message);
+    return res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 
@@ -229,221 +249,38 @@ app.post('/save_winner', async (req, res) => {
       timestamp: new Date()
     });
     res.json({ success: true, insertId: insertResult.insertedId });
-  } catch (error) {
-    console.error('Erro ao salvar ganhador:', error.message);
-    res.status(500).json({ error: 'Erro ao salvar ganhador', details: error.message });
-  }
-});
+  } Milano
 
-app.post('/test_create_preference', (req, res) => {
-  console.log('Test request body:', req.body);
-  res.json({ received: req.body, status: 'Test endpoint working' });
-});
+System: ### Instruções para Implementar a Correção
 
-app.post('/create_preference', async (req, res) => {
-  try {
-    const { quantity, buyerName, buyerPhone, numbers, userId } = req.body;
-    console.log('Received request body at: ' + new Date().toISOString(), { quantity, buyerName, buyerPhone, numbers, userId });
+1. **Atualizar o Backend (`index.js`)**:
+   - Substitua o arquivo `index.js` no seu projeto no Render pelo código fornecido no artefato acima (ID: `8c1a3252-da81-481a-ab4a-5473368cc59f`).
+   - Certifique-se de que o arquivo `sorteio.html` está no diretório `public` do seu projeto no Render.
+   - No painel do Render, vá para **Environment Variables** e adicione ou verifique se a variável `SORTEIO_PASSWORD` está definida como `VAIDACERTO`.
 
-    if (!numbers || !Array.isArray(numbers) || numbers.length === 0) {
-      console.log('Error: Invalid or missing numbers');
-      return res.status(400).json({ error: 'Por favor, selecione pelo menos um número' });
-    }
-    if (!buyerName || !buyerPhone || !userId) {
-      console.log('Error: Missing name, phone, or userId');
-      return res.status(400).json({ error: 'Nome, telefone e userId são obrigatórios' });
-    }
-    if (!quantity || quantity !== numbers.length) {
-      console.log('Error: Invalid quantity');
-      return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
-    }
+2. **Atualizar o Frontend (`index.html`)**:
+   - Substitua o arquivo `index.html` no seu repositório (ex.: `ederamorimth.github.io`) pelo código fornecido no artefato anterior (ID: `db24f4bd-f32b-4831-9ba0-296e41464b17`).
+   - Isso atualiza a função `checkPassword` para usar a rota `/verify_password` antes de redirecionar, melhorando a experiência do usuário e o tratamento de erros.
 
-    const validNumbers = await db.collection('purchases').find({
-      numbers: { $in: numbers },
-      status: 'reserved',
-      userId
-    }).toArray();
-    if (validNumbers.length !== numbers.length) {
-      console.error('[' + new Date().toISOString() + '] Números não estão reservados para o usuário: ' + userId);
-      return res.status(400).json({ error: 'Números não estão reservados para este usuário' });
-    }
+3. **Verificações no Render**:
+   - Confirme que o diretório `public` contém o arquivo `sorteio.html` e que ele está acessível.
+   - Verifique os logs no Render (seção **Logs** no painel) para identificar possíveis erros, como falhas na entrega do arquivo ou problemas de conexão com o MongoDB.
+   - Se o erro persistir, aumente o timeout do servidor no Render ajustando as configurações de escalabilidade ou contate o suporte do Render para verificar possíveis limitações de rede.
 
-    const preference = new Preference(mp);
-    const preferenceData = {
-      body: {
-        items: [{
-          title: 'Rifa - ' + quantity + ' número(s)',
-          quantity: Number(quantity),
-          unit_price: 20,
-        }],
-        payer: {
-          name: buyerName,
-          phone: { number: buyerPhone },
-        },
-        back_urls: {
-          success: "https://ederamorimth.github.io/rifa-miguel/sucesso.html",
-          failure: "https://ederamorimth.github.io/rifa-miguel/erro.html",
-          pending: "https://ederamorimth.github.io/rifa-miguel/pendente.html"
-        },
-        auto_return: "approved",
-        external_reference: JSON.stringify({ buyerName, buyerPhone, numbers, userId }),
-        notification_url: "https://rifa-miguel.onrender.com/webhook"
-      }
-    };
+4. **Testar a Solução**:
+   - Acesse a página principal (ex.: `https://ederamorimth.github.io/rifa-miguel/index.html`).
+   - Clique no botão "Sorteio" na navegação e insira a senha `VAIDACERTO`.
+   - O sistema deve validar a senha via `/verify_password` e redirecionar para `https://rifa-miguel.onrender.com/sorteio`, exibindo a página `sorteio.html`.
 
-    const response = await preference.create(preferenceData);
-    console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id);
-    res.json({ init_point: response.init_point, preference_id: response.id });
-  } catch (error) {
-    console.error('Error in /create_preference at: ' + new Date().toISOString(), error.message, 'Stack:', error.stack);
-    res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
-  }
-});
+### Explicação das Mudanças
+- **Backend (`index.js`)**: A rota `/sorteio` agora retorna respostas JSON claras para erros (ex.: senha incorreta ou arquivo não encontrado), facilitando a depuração. O uso de `res.sendFile` com callback de erro garante que falhas no acesso ao arquivo `sorteio.html` sejam tratadas adequadamente.
+- **Frontend (`index.html`)**: A função `checkPassword` faz uma chamada assíncrona à rota `/verify_password` e só redireciona se a senha for válida, exibindo mensagens de erro claras para o usuário em caso de falha.
+- **Render**: A configuração correta da variável `SORTEIO_PASSWORD` e do diretório `public` elimina problemas de ambiente, enquanto os logs ajudam a diagnosticar variações, como timeouts ou erros de CORS.
 
-app.post('/webhook', async (req, res) => {
-  try {
-    console.log('Webhook received at: ' + new Date().toISOString(), 'Method:', req.method, 'Raw Body:', JSON.stringify(req.body, null, 2));
-    if (req.method !== 'POST') {
-      console.log('Method not allowed:', req.method);
-      return res.status(405).send('Method Not Allowed');
-    }
+### Resolução do Erro "Cannot GET /sorteio"
+O erro ocorre porque o Render não conseguiu servir o arquivo `sorteio.html` ou a senha não foi validada corretamente. As mudanças acima garantem que:
+- A senha é verificada de forma robusta.
+- O arquivo `sorteio.html` é servido com tratamento de erro.
+- O frontend lida com falhas de forma amigável, evitando redirecionamentos diretos que podem falhar devido a variações no Render.
 
-    const body = req.body;
-    let paymentId = null;
-
-    if (body.type === 'payment' && body.data && body.data.id) {
-      paymentId = body.data.id;
-    } else if (body.resource && typeof body.resource === 'string' && body.resource.match(/^\d+$/)) {
-      paymentId = body.resource;
-    } else if (body.action === 'payment.updated' && body.data && body.data.id) {
-      paymentId = body.data.id;
-    } else if (body.topic === 'merchant_order' && body.resource) {
-      const merchantOrderId = body.resource.match(/\/(\d+)$/)[1];
-      const payment = new Payment(mp);
-      const orders = await payment.search({ filters: { merchant_order_id: merchantOrderId } });
-      if (orders.results && orders.results.length > 0) {
-        paymentId = orders.results[0].id;
-      }
-    }
-
-    if (!paymentId) {
-      console.log('No valid payment ID found:', JSON.stringify(body, null, 2));
-      return res.status(200).send('OK');
-    }
-
-    const payment = new Payment(mp);
-    const paymentDetails = await payment.get({ id: paymentId });
-    console.log('Payment details:', {
-      id: paymentDetails.id,
-      status: paymentDetails.status,
-      preference_id: paymentDetails.preference_id || 'Não encontrado',
-      external_reference: paymentDetails.external_reference || 'Não encontrado',
-      transaction_amount: paymentDetails.transaction_amount || 'Não encontrado',
-      date_approved: paymentDetails.date_approved || 'Não aprovado ainda'
-    });
-
-    if (paymentDetails.status === 'approved') {
-      let externalReference;
-      try {
-        externalReference = JSON.parse(paymentDetails.external_reference || '{}');
-      } catch (e) {
-        console.error('[' + new Date().toISOString() + '] Erro ao parsear external_reference:', e);
-        return res.status(400).send('Invalid external reference');
-      }
-      const { numbers, userId, buyerName, buyerPhone } = externalReference;
-
-      if (!numbers || !userId || !buyerName || !buyerPhone) {
-        console.error('[' + new Date().toISOString() + '] Dados incompletos no external_reference:', externalReference);
-        return res.status(400).send('Dados incompletos no external_reference');
-      }
-
-      if (!db) {
-        console.error('MongoDB não conectado');
-        return res.status(500).send('Erro: MongoDB não conectado');
-      }
-
-      const validNumbers = await db.collection('purchases').find({
-        numbers: { $in: numbers },
-        status: 'reserved',
-        userId
-      }).toArray();
-
-      if (validNumbers.length !== numbers.length) {
-        console.error('[' + new Date().toISOString() + '] Números não estão reservados para o usuário: ' + userId + ', encontrados: ' + validNumbers.length + ', esperados: ' + numbers.length);
-        return res.status(400).send('Números não estão reservados para o usuário');
-      }
-
-      const session = client.startSession();
-      try {
-        await session.withTransaction(async () => {
-          const updateResult = await db.collection('purchases').updateOne(
-            { numbers: { $all: numbers }, status: 'reserved', userId },
-            {
-              $set: {
-                status: 'approved',
-                buyerName,
-                buyerPhone,
-                paymentId: paymentDetails.id,
-                date_approved: paymentDetails.date_approved || new Date(),
-                preference_id: paymentDetails.preference_id || 'Não encontrado',
-                userId: null,
-                timestamp: null
-              }
-            },
-            { session }
-          );
-
-          if (updateResult.modifiedCount === 0) {
-            console.error('[' + new Date().toISOString() + '] Nenhum documento atualizado para números: ' + numbers.join(', ') + ', userId: ' + userId);
-            throw new Error('Nenhum documento correspondente encontrado para atualização');
-          }
-
-          console.log('[' + new Date().toISOString() + '] Pagamento ' + paymentId + ' aprovado. Números ' + numbers.join(', ') + ' marcados como aprovados para ' + buyerName + '.');
-        });
-      } catch (error) {
-        console.error('[' + new Date().toISOString() + '] Erro na transação:', error);
-        throw error;
-      } finally {
-        session.endSession();
-      }
-    } else {
-      console.log('[' + new Date().toISOString() + '] Pagamento ' + paymentId + ' não está aprovado. Status: ' + paymentDetails.status);
-    }
-
-    return res.status(200).send('OK');
-  } catch (error) {
-    console.error('Erro no webhook:', error.message);
-    return res.status(200).send('OK');
-  }
-});
-
-app.get('/test_payment/:id', async (req, res) => {
-  try {
-    const paymentId = req.params.id;
-    const payment = new Payment(mp);
-    const paymentDetails = await payment.get({ id: paymentId });
-    res.json({ paymentDetails, preferenceId: paymentDetails.preference_id || 'Não encontrado' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/test_preference/:id', async (req, res) => {
-  try {
-    const preferenceId = req.params.id;
-    const preference = new Preference(mp);
-    const preferenceDetails = await preference.get({ id: preferenceId });
-    res.json({ preferenceDetails, externalReference: preferenceDetails.external_reference || 'Não encontrado' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/', (req, res) => {
-  res.send('API da Rifa está online!');
-});
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log('Servidor rodando na porta ' + PORT + ' at ' + new Date().toISOString());
-});
+Se o erro persistir após essas alterações, verifique os logs do Render para detalhes específicos (ex.: arquivo `sorteio.html` não encontrado ou timeout de rede) e compartilhe-os para análise adicional.
