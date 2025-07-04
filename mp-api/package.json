@@ -10,6 +10,7 @@
     "express": "^4.17.1",
     "cors": "^2.8.5",
     "mercadopago": "^2.5.17",
-    "mongodb": "^6.3.0"
+    "mongodb": "^6.3.0",
+    "uuid": "^9.0.1"
   }
 }
