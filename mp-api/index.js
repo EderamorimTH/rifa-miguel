@@ -160,28 +160,14 @@ app.post('/verify_password', (req, res) => {
 
 app.get('/sorteio', async (req, res) => {
   try {
-    const password = req.query.password;
-    const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO';
-    console.log(`[${new Date().toISOString()}] Verificando acesso à página de sorteio com senha fornecida`);
-
-    if (!password) {
-      console.log(`[${new Date().toISOString()}] Senha não fornecida`);
-      return res.status(400).json({ error: 'Senha não fornecida' });
-    }
-
-    if (password === correctPassword) {
-      console.log(`[${new Date().toISOString()}] Senha válida, servindo sorteio.html`);
-      const filePath = path.join(__dirname, 'sorteio.html');
-      res.sendFile(filePath, (err) => {
-        if (err) {
-          console.error(`[${new Date().toISOString()}] Erro ao servir sorteio.html:`, err.message);
-          return res.status(500).json({ error: 'Erro ao carregar a página de sorteio', details: err.message });
-        }
-      });
-    } else {
-      console.log(`[${new Date().toISOString()}] Senha inválida`);
-      return res.status(401).json({ error: 'Acesso não autorizado. Senha incorreta.' });
-    }
+    console.log(`[${new Date().toISOString()}] Servindo sorteio.html`);
+    const filePath = path.join(__dirname, 'sorteio.html');
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        console.error(`[${new Date().toISOString()}] Erro ao servir sorteio.html:`, err.message);
+        return res.status(500).json({ error: 'Erro ao carregar a página de sorteio', details: err.message });
+      }
+    });
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Erro ao processar a rota /sorteio:`, error.message);
     return res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
