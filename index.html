@@ -61,7 +61,7 @@
             text-align: center;
             color: white;
             transition: width 0.3s ease-in-out;
-            width: 0%; /* Inicializa em 0% */
+            width: 0%;
         }
         .number-grid {
             display: grid;
@@ -117,17 +117,6 @@
             font-weight: bold;
             margin: 8px 0;
         }
-        .form-container a.check-winner {
-            display: inline-block;
-            color: #007bff;
-            font-weight: bold;
-            text-decoration: none;
-            margin: 8px 0;
-            transition: color 0.3s;
-        }
-        .form-container a.check-winner:hover {
-            color: #0056b3;
-        }
         footer {
             background-color: #333;
             color: white;
@@ -163,6 +152,20 @@
             gap: 8px;
             justify-content: center;
             margin-top: 15px;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button-container button:first-child {
+            background-color: #ffc107;
+            color: black;
+        }
+        .button-container button:last-child {
+            background-color: #28a745;
+            color: white;
         }
         .error-message {
             max-width: 90%;
@@ -234,19 +237,19 @@
             <a href="/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
             <a href="/rifa-miguel/sobre-estrabismo.html" class="nav-button">Estrabismo</a>
             <a href="/rifa-miguel/orcamento.html" class="nav-button">Orçamento</a>
-            <a href="/rifa-miguel/numero-premiado.html" class="nav-button">Número Premiado</a>
+            <a href="#" class="nav-button" onclick="checkPassword()">Sorteio</a>
         </nav>
     </header>
 
     <section class="hero" id="home">
         <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
-        <p>Compre números por R$ 20 e concorra a R$ 1.500. Todo o valor será usado para a cirurgia de estrabismo do Miguel! Alguns números podem ter prêmios instantâneos!</p>
+        <p>Compre números por R$ 20 e concorra a R$ 1.500. Todo o valor será usado para a cirurgia de estrabismo do Miguel!</p>
         <div class="progress-container">
             <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
         </div>
         <div class="button-container">
-            <button onclick="scrollToNumbers()" style="background-color: #ffc107; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Escolha seus números agora</button>
-            <button onclick="selectRandomNumbers()" style="background-color: #28a745; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white;">Escolher 5 Números Aleatórios</button>
+            <button onclick="scrollToNumbers()">Escolha seus números agora</button>
+            <button onclick="selectRandomNumbers()">Escolher 5 Números Aleatórios</button>
         </div>
     </section>
 
@@ -262,8 +265,7 @@
             <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
             <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
             <p>Total: R$ <span id="total-price">0</span></p>
-            <p class="info">Após o pagamento, volte aqui para verificar se seu número é premiado com um prêmio instantâneo!</p>
-            <a href="/rifa-miguel/numero-premiado.html" class="check-winner">Verificar se meu número é premiado</a>
+            <p class="info">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
             <button type="submit">Pagar com Pix/Cartão</button>
         </form>
     </section>
@@ -285,9 +287,10 @@
         let selectedNumbers = [];
         const pricePerNumber = 20;
         const totalNumbers = 900;
+        const SORTEIO_PASSWORD = 'VAIDACERTO';
 
         function showError(message) {
-            errorMessage.textContent = message;
+            errorMessage.innerHTML = message;
             errorMessage.style.display = 'block';
             reloadButton.style.display = 'block';
             console.error(`[${new Date().toISOString()}] Erro exibido: ${message}`);
@@ -296,6 +299,15 @@
         function hideError() {
             errorMessage.style.display = 'none';
             reloadButton.style.display = 'none';
+        }
+
+        function checkPassword() {
+            const password = prompt("Digite a senha para acessar a página de sorteio:");
+            if (password === SORTEIO_PASSWORD) {
+                window.location.href = "https://ederamorimth.github.io/rifa-miguel/sorteio.html";
+            } else {
+                alert("Senha incorreta!");
+            }
         }
 
         function generateUserId() {
@@ -312,7 +324,7 @@
                 const response = await fetch('https://rifa-miguel.onrender.com/reserve_numbers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ numbers, userId: localStorage.getItem('userId') || generateUserId() })
+                    body: JSON.stringify({ numbers, userId: localStorage.getItem('userId') || generateUserId(), expiry: 5 * 60 * 1000 }) // 5 minutos
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -397,7 +409,6 @@
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-                    // Verificar conexão com o banco
                     const healthRes = await fetch('https://rifa-miguel.onrender.com/test_db', {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
@@ -409,7 +420,6 @@
                     const healthData = await healthRes.json();
                     console.log(`[${new Date().toISOString()}] Health check:`, healthData);
 
-                    // Carregar progresso
                     const progressRes = await fetch('https://rifa-miguel.onrender.com/progress', {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
@@ -425,7 +435,6 @@
                     progressBar.style.width = `${progress}%`;
                     progressBar.textContent = `${Math.round(progress)}% Arrecadado`;
 
-                    // Carregar números disponíveis
                     const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
