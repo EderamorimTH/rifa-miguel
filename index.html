@@ -287,7 +287,6 @@
         let selectedNumbers = [];
         const pricePerNumber = 20;
         const totalNumbers = 900;
-        const SORTEIO_PASSWORD = 'VAIDACERTO';
 
         function showError(message) {
             errorMessage.innerHTML = message;
@@ -303,10 +302,10 @@
 
         function checkPassword() {
             const password = prompt("Digite a senha para acessar a página de sorteio:");
-            if (password === SORTEIO_PASSWORD) {
-                window.location.href = "https://ederamorimth.github.io/rifa-miguel/sorteio.html";
+            if (password) {
+                window.location.href = `https://rifa-miguel.onrender.com/sorteio?password=${encodeURIComponent(password)}`;
             } else {
-                alert("Senha incorreta!");
+                alert("Por favor, digite uma senha.");
             }
         }
 
@@ -324,7 +323,7 @@
                 const response = await fetch('https://rifa-miguel.onrender.com/reserve_numbers', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ numbers, userId: localStorage.getItem('userId') || generateUserId(), expiry: 5 * 60 * 1000 }) // 5 minutos
+                    body: JSON.stringify({ numbers, userId: localStorage.getItem('userId') || generateUserId(), expiry: 5 * 60 * 1000 })
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
