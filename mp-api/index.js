@@ -1,7 +1,13 @@
+```javascript
 import express from 'express';
 import cors from 'cors';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { MongoClient } from 'mongodb';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors({
@@ -10,13 +16,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type']
 }));
 app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Configura o MercadoPago
 const mp = new MercadoPagoConfig({
   accessToken: process.env.ACCESS_TOKEN_MP
 });
 
-// Conecta ao MongoDB
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
 let db;
@@ -32,7 +37,6 @@ async function connectDB() {
 }
 connectDB();
 
-// Função para limpar reservas expiradas (5 minutos)
 async function clearExpiredReservations() {
   try {
     if (!db) throw new Error('MongoDB não conectado');
@@ -42,17 +46,14 @@ async function clearExpiredReservations() {
       timestamp: { $lt: fiveMinutesAgo }
     });
     if (result.deletedCount > 0) {
-      console.log(`[${new Date().toISOString()}] ${result.deletedCount} reservas expiradas removidas de numeros-instantaneo.purchases.`);
+      console.log(`[${new Date().toISOString()}] ${result.deletedCount} reservas expiradas removidas.`);
     }
   } catch (error) {
     console.error('Erro ao limpar reservas expiradas:', error.message);
   }
 }
-
-// Executa a limpeza de reservas a cada 5 minutos
 setInterval(clearExpiredReservations, 5 * 60 * 1000);
 
-// Test endpoint to check Mercado Pago
 app.get('/test_mp', async (req, res) => {
   try {
     const preference = new Preference(mp);
@@ -63,7 +64,6 @@ app.get('/test_mp', async (req, res) => {
   }
 });
 
-// Test endpoint to check MongoDB
 app.get('/test_db', async (req, res) => {
   try {
     await db.collection('purchases').findOne();
@@ -74,21 +74,13 @@ app.get('/test_db', async (req, res) => {
   }
 });
 
-// Endpoint para verificar números disponíveis
 app.get('/available_numbers', async (req, res) => {
   try {
     if (!db) throw new Error('MongoDB não conectado');
-    console.log('Consultando coleção purchases...');
     const purchases = await db.collection('purchases').find().toArray();
-    console.log(`Número de documentos na coleção purchases: ${purchases.length}`);
     const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
-    console.log(`Números vendidos ou reservados encontrados: ${soldOrReservedNumbers.length}`);
     const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0'));
     const availableNumbers = allNumbers.filter(num => !soldOrReservedNumbers.includes(num));
-    console.log(`Números disponíveis retornados: ${availableNumbers.length}`);
-    if (availableNumbers.length === 0) {
-      console.warn('Nenhum número disponível encontrado');
-    }
     res.json(availableNumbers);
   } catch (error) {
     console.error('Erro ao buscar números disponíveis:', error.message);
@@ -96,7 +88,6 @@ app.get('/available_numbers', async (req, res) => {
   }
 });
 
-// Endpoint para calcular progresso
 app.get('/progress', async (req, res) => {
   try {
     const totalNumbers = 900;
@@ -110,7 +101,6 @@ app.get('/progress', async (req, res) => {
   }
 });
 
-// Endpoint para reservar números
 app.post('/reserve_numbers', async (req, res) => {
   try {
     const { numbers, userId } = req.body;
@@ -139,7 +129,6 @@ app.post('/reserve_numbers', async (req, res) => {
   }
 });
 
-// Endpoint para dados do sorteio
 app.get('/purchases', async (req, res) => {
   try {
     const purchases = await db.collection('purchases').find().toArray();
@@ -150,7 +139,6 @@ app.get('/purchases', async (req, res) => {
   }
 });
 
-// Endpoint para verificar a senha
 app.post('/verify_password', (req, res) => {
   try {
     const { password } = req.body;
@@ -175,7 +163,16 @@ app.post('/verify_password', (req, res) => {
   }
 });
 
-// Endpoint para verificar compra
+app.get('/sorteio', (req, res) => {
+  const password = req.query.password;
+  const correctPassword = process.env.SORTEIO_PASSWORD || 'VAIDACERTO';
+  if (password === correctPassword) {
+    res.sendFile(path.join(__dirname, 'public', 'sorteio.html'));
+  } else {
+    res.status(401).send('Acesso não autorizado. Senha incorreta.');
+  }
+});
+
 app.post('/check_purchase', async (req, res) => {
   try {
     const { numbers, buyerPhone } = req.body;
@@ -201,7 +198,6 @@ app.post('/check_purchase', async (req, res) => {
   }
 });
 
-// Endpoint para buscar números premiados
 app.get('/winning_numbers', async (req, res) => {
   try {
     if (!db) throw new Error('MongoDB não conectado');
@@ -214,7 +210,6 @@ app.get('/winning_numbers', async (req, res) => {
   }
 });
 
-// Endpoint para buscar ganhadores
 app.get('/get_winners', async (req, res) => {
   try {
     if (!db) throw new Error('MongoDB não conectado');
@@ -226,7 +221,6 @@ app.get('/get_winners', async (req, res) => {
   }
 });
 
-// Endpoint para salvar ganhador
 app.post('/save_winner', async (req, res) => {
   try {
     const winner = req.body;
@@ -246,13 +240,11 @@ app.post('/save_winner', async (req, res) => {
   }
 });
 
-// Test endpoint to debug request body
 app.post('/test_create_preference', (req, res) => {
   console.log('Test request body:', req.body);
   res.json({ received: req.body, status: 'Test endpoint working' });
 });
 
-// Endpoint para criar preferência de pagamento
 app.post('/create_preference', async (req, res) => {
   try {
     const { quantity, buyerName, buyerPhone, numbers, userId } = req.body;
@@ -271,7 +263,6 @@ app.post('/create_preference', async (req, res) => {
       return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
     }
 
-    console.log('Verifying reserved numbers...');
     const validNumbers = await db.collection('purchases').find({
       numbers: { $in: numbers },
       status: 'reserved',
@@ -282,7 +273,6 @@ app.post('/create_preference', async (req, res) => {
       return res.status(400).json({ error: 'Números não estão reservados para este usuário' });
     }
 
-    console.log('Creating Mercado Pago preference...');
     const preference = new Preference(mp);
     const preferenceData = {
       body: {
@@ -306,7 +296,6 @@ app.post('/create_preference', async (req, res) => {
       }
     };
 
-    console.log('Preference data being sent:', JSON.stringify(preferenceData, null, 2));
     const response = await preference.create(preferenceData);
     console.log('Preference created successfully, init_point:', response.init_point, 'Preference ID:', response.id);
     res.json({ init_point: response.init_point, preference_id: response.id });
@@ -316,7 +305,6 @@ app.post('/create_preference', async (req, res) => {
   }
 });
 
-// Endpoint para webhook
 app.post('/webhook', async (req, res) => {
   try {
     console.log('Webhook received at:', new Date().toISOString(), 'Method:', req.method, 'Raw Body:', JSON.stringify(req.body, null, 2));
@@ -434,24 +422,6 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Função auxiliar para buscar preference_id
-async function getPreferenceIdFromPayment(paymentId) {
-  try {
-    const payment = new Payment(mp);
-    const paymentDetails = await payment.get({ id: paymentId });
-    console.log('Payment details for preference_id:', {
-      paymentId,
-      preference_id: paymentDetails.preference_id || 'Não encontrado',
-      status: paymentDetails.status
-    });
-    return paymentDetails.preference_id || null;
-  } catch (error) {
-    console.error('Erro ao buscar preference_id:', error.message);
-    return null;
-  }
-}
-
-// Endpoint temporário para testar pagamento
 app.get('/test_payment/:id', async (req, res) => {
   try {
     const paymentId = req.params.id;
@@ -463,7 +433,6 @@ app.get('/test_payment/:id', async (req, res) => {
   }
 });
 
-// Endpoint temporário para testar preferência
 app.get('/test_preference/:id', async (req, res) => {
   try {
     const preferenceId = req.params.id;
@@ -483,3 +452,4 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT} at ${new Date().toISOString()}`);
 });
+```
