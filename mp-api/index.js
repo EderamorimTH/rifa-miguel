@@ -3,6 +3,7 @@ import cors from 'cors';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { MongoClient } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 const app = express();
 app.use(cors({
@@ -360,6 +361,19 @@ app.post('/webhook', async (req, res) => {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro no webhook:`, error.message);
     return res.status(200).send('OK');
   }
+});
+
+// Novo endpoint para obter o hash da senha
+app.get('/get-page-password', (req, res) => {
+  const requestId = uuidv4();
+  console.log(`[${new Date().toISOString()}] [${requestId}] Solicitação para obter hash da senha`);
+  const password = process.env.PAGE_PASSWORD;
+  if (!password) {
+    console.error(`[${new Date().toISOString()}] [${requestId}] Senha não configurada no servidor`);
+    return res.status(500).json({ error: 'Senha não configurada no servidor' });
+  }
+  const hash = crypto.createHash('sha256').update(password).digest('hex');
+  res.json({ passwordHash: hash });
 });
 
 // Test endpoints
