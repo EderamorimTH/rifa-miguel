@@ -11,7 +11,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type']
 }));
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname)));
 
 const mp = new MercadoPagoConfig({
   accessToken: process.env.ACCESS_TOKEN_MP
@@ -171,7 +171,7 @@ app.get('/sorteio', async (req, res) => {
 
     if (password === correctPassword) {
       console.log(`[${new Date().toISOString()}] Senha válida, servindo sorteio.html`);
-      const filePath = path.join(__dirname, 'public', 'sorteio.html');
+      const filePath = path.join(__dirname, 'sorteio.html');
       res.sendFile(filePath, (err) => {
         if (err) {
           console.error(`[${new Date().toISOString()}] Erro ao servir sorteio.html:`, err.message);
