@@ -122,7 +122,7 @@
             <a href="/rifa-miguel/como-funciona.html">Como Funciona</a>
             <a href="/rifa-miguel/sobre-estrabismo.html">Sobre o Estrabismo</a>
             <a href="#contato">Contato</a>
-            <a href="/rifa-miguel/sorteio.html">Sorteio</a>
+            <a href="https://ederamorimth.github.io/rifa-miguel/sorteio.html">Sorteio</a>
             <a href="/rifa-miguel/sorteio-ao-vivo.html">Sorteio ao Vivo</a>
         </nav>
     </header>
@@ -166,7 +166,6 @@
         let purchasesData = [];
         let currentWinner = null;
 
-        // Carregar compras
         async function loadPurchases() {
             const errorMessage = document.getElementById('error-message');
             const noDataMessage = document.getElementById('no-data-message');
@@ -176,7 +175,7 @@
 
             while (retries < maxRetries) {
                 try {
-                    console.log(`Tentativa ${retries + 1} de carregar compras at ${new Date().toISOString()}...`);
+                    console.log(`Tentativa ${retries + 1} de carregar compras em ${new Date().toISOString()}...`);
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 5000);
                     const response = await fetch('https://rifa-miguel.onrender.com/purchases', {
@@ -207,7 +206,7 @@
                             <td>${purchase.buyerName || 'N/A'}</td>
                             <td>${purchase.buyerPhone || 'N/A'}</td>
                             <td>${purchase.numbers ? purchase.numbers.join(', ') : 'N/A'}</td>
-                            <td>${purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleString('pt-BR') : 'N/A'}</td>
+                            <td>${purchase.date_approved ? new Date(purchase.date_approved).toLocaleString('pt-BR') : 'N/A'}</td>
                             <td>${purchase.paymentId || 'N/A'}</td>
                         `;
                         purchasesBody.appendChild(row);
@@ -217,7 +216,7 @@
                     errorMessage.style.display = 'none';
                     return;
                 } catch (error) {
-                    console.error(`Erro na tentativa ${retries + 1} at ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack);
+                    console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message);
                     retries++;
                     if (retries === maxRetries) {
                         errorMessage.textContent = 'Erro ao carregar compras. Tente novamente mais tarde.';
@@ -230,7 +229,6 @@
             }
         }
 
-        // Realizar sorteio simples
         function performDraw() {
             const winnerMessage = document.getElementById('winner-message');
             if (purchasesData.length === 0) {
@@ -267,44 +265,17 @@
                 <button class="view-phone-button" onclick="viewWinnerPhone()">Ver Telefone do Ganhador</button>
             `;
             winnerMessage.style.display = 'block';
-            console.log(`Sorteio realizado at ${new Date().toISOString()}: Número ${winningNumber}, Ganhador: ${winner.buyerName}`);
+            console.log(`Sorteio realizado em ${new Date().toISOString()}: Número ${winningNumber}, Ganhador: ${winner.buyerName}`);
         }
 
-        // Mostrar telefone completo com senha do Render
-        async function viewWinnerPhone() {
+        function viewWinnerPhone() {
             if (!currentWinner) {
                 alert('Nenhum ganhador selecionado.');
                 return;
             }
-
-            const password = prompt('Digite a senha para ver o telefone do ganhador:');
-            if (!password) {
-                alert('Por favor, digite uma senha.');
-                return;
-            }
-
-            try {
-                const response = await fetch('https://rifa-miguel.onrender.com/verify_password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
-                });
-
-                if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-                const result = await response.json();
-
-                if (result.valid) {
-                    alert(`Telefone do ganhador (${currentWinner.buyerName}): ${currentWinner.buyerPhone}`);
-                } else {
-                    alert('Senha incorreta!');
-                }
-            } catch (error) {
-                console.error('Erro ao verificar senha:', error);
-                alert('Erro ao conectar ao servidor. Tente novamente.');
-            }
+            alert(`Telefone do ganhador (${currentWinner.buyerName}): ${currentWinner.buyerPhone}`);
         }
 
-        // Carregar compras ao abrir a página
         loadPurchases();
     </script>
 </body>
