@@ -169,11 +169,47 @@
             return masked + lastFour;
         }
 
-        // Função para lançar confetes infinitos
+        // Carregar compras
+        async function loadPurchases() {
+            const maxRetries = 3;
+            let retries = 0;
+
+            while (retries < maxRetries) {
+                try {
+                    console.log(`Tentativa ${retries + 1} de carregar compras em ${new Date().toISOString()}...`);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    const response = await fetch('https://rifa-miguel.onrender.com/purchases', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        throw new Error(`Erro HTTP: ${response.status}`);
+                    }
+
+                    purchasesData = await response.json();
+                    console.log('Compras carregadas com sucesso:', purchasesData);
+                    return;
+                } catch (error) {
+                    console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message);
+                    retries++;
+                    if (retries === maxRetries) {
+                        alert('Erro ao carregar compras. Tente novamente ou contate o suporte (+65 98473-9520 ou +65 99973-1992).');
+                    } else {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+            }
+        }
+
+        // Lançar confetes infinitos
         function launchConfetti() {
             if (typeof confetti === 'undefined') {
-                console.error('Biblioteca canvas-confetti não carregada. Verifique o CDN ou a conexão de rede.');
-                alert('Não foi possível carregar a animação de confetes. Tente novamente mais tarde.');
+                console.error('Biblioteca canvas-confetti não carregada.');
+                alert('Não foi possível carregar a animação de confetes. Tente novamente.');
                 return;
             }
             console.log('Acionando confetes infinitos...');
@@ -190,43 +226,7 @@
                 });
                 burstCount++;
                 console.log(`Burst de confetes #${burstCount}`);
-            }, 1000); // Intervalo de 1 segundo
-        }
-
-        // Carregar compras
-        async function loadPurchases() {
-            const maxRetries = 3;
-            let retries = 0;
-
-            while (retries < maxRetries) {
-                try {
-                    console.log(`Tentativa ${retries + 1} de carregar compras at ${new Date().toISOString()}...`);
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000);
-                    const response = await fetch('https://rifa-miguel.onrender.com/purchases', {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' },
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error: ${response.status}`);
-                    }
-
-                    purchasesData = await response.json();
-                    console.log('Compras carregadas com sucesso:', purchasesData);
-                    return;
-                } catch (error) {
-                    console.error(`Erro na tentativa ${retries + 1} at ${new Date().toISOString()}:`, error.message, 'Stack:', error.stack);
-                    retries++;
-                    if (retries === maxRetries) {
-                        console.error('Falha ao carregar compras após várias tentativas.');
-                    } else {
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-                    }
-                }
-            }
+            }, 1000);
         }
 
         // Iniciar sorteio ao vivo com temporizador
@@ -235,15 +235,17 @@
             const timer = document.getElementById('timer');
             const winnerMessage = document.getElementById('live-winner-message');
 
-            if (purchasesData.length === 0) {
-                winnerMessage.textContent = 'Nenhuma compra registrada para realizar o sorteio.';
+            // Filtrar apenas compras aprovadas
+            const approvedPurchases = purchasesData.filter(purchase => purchase.status === 'approved');
+            if (approvedPurchases.length === 0) {
+                winnerMessage.textContent = 'Nenhuma compra aprovada para realizar o sorteio.';
                 winnerMessage.style.display = 'block';
                 return;
             }
 
-            const allNumbers = purchasesData.flatMap(purchase => purchase.numbers || []);
+            const allNumbers = approvedPurchases.flatMap(purchase => purchase.numbers || []);
             if (allNumbers.length === 0) {
-                winnerMessage.textContent = 'Nenhum número comprado encontrado para o sorteio.';
+                winnerMessage.textContent = 'Nenhum número aprovado encontrado para o sorteio.';
                 winnerMessage.style.display = 'block';
                 return;
             }
@@ -262,7 +264,7 @@
 
                     const randomIndex = Math.floor(Math.random() * allNumbers.length);
                     const winningNumber = allNumbers[randomIndex];
-                    const winner = purchasesData.find(purchase => purchase.numbers && purchase.numbers.includes(winningNumber));
+                    const winner = approvedPurchases.find(purchase => purchase.numbers && purchase.numbers.includes(winningNumber));
 
                     if (!winner) {
                         winnerMessage.textContent = 'Erro: Comprador não encontrado para o número sorteado.';
@@ -283,9 +285,8 @@
                     `;
                     winnerMessage.style.display = 'block';
                     startButton.disabled = false;
-                    console.log(`Sorteio ao vivo realizado at ${new Date().toISOString()}: Número ${winningNumber}, Ganhador: ${winner.buyerName}`);
+                    console.log(`Sorteio ao vivo realizado em ${new Date().toISOString()}: Número ${winningNumber}, Ganhador: ${winner.buyerName}`);
                     
-                    // Acionar confetes infinitos
                     launchConfetti();
                 }
             }, 1000);
