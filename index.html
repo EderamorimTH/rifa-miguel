@@ -21,7 +21,7 @@
             overflow: hidden;
         }
         header img {
-            max-width: 250px; /* Aumentado o tamanho da foto */
+            max-width: 250px;
             height: auto;
             border-radius: 50%;
             border: 5px solid #fff;
@@ -266,15 +266,11 @@
         <div class="progress-container">
             <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
         </div>
-        <div class="button-container">
-            <button onclick="scrollToNumbers()">Escolha seus números agora</button>
-            <button onclick="selectRandomNumbers()">Escolher 5 Números Aleatórios</button>
-        </div>
+        <section id="numbers" class="number-grid"></section>
     </section>
 
     <div id="error-message" class="error-message"></div>
     <button id="reload-button" class="reload-button" onclick="loadData()">Tentar novamente</button>
-    <section id="numbers" class="number-grid"></section>
     <div id="loading-message" class="loading-message">Aguarde um momento, o número está sendo marcado...</div>
 
     <section class="form-container">
