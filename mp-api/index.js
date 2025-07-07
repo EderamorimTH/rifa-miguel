@@ -35,11 +35,13 @@ async function connectDB() {
       }
       await initializeNumbers();
       await restoreApprovedNumbers();
+      console.log(`[${new Date().toISOString()}] Conexão com MongoDB estabelecida com sucesso`);
       return;
     } catch (error) {
       console.error(`[${new Date().toISOString()}] [${uuidv4()}] Erro ao conectar ao MongoDB (tentativa ${retries + 1}): ${error.message}`);
       retries++;
       if (retries === maxRetries) {
+        console.error(`[${new Date().toISOString()}] Falha ao conectar ao MongoDB após ${maxRetries} tentativas`);
         process.exit(1);
       }
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -61,6 +63,7 @@ async function initializeNumbers() {
         status: 'available',
         timestamp: new Date()
       });
+      console.log(`[${new Date().toISOString()}] [${requestId}] Coleção available_numbers criada com 900 números`);
     }
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao inicializar números: ${error.message}`);
@@ -73,7 +76,7 @@ async function restoreApprovedNumbers() {
     if (!db) throw new Error('MongoDB não conectado');
     const approvedPurchases = await db.collection('purchases').find({ status: 'approved' }).toArray();
     const approvedCount = approvedPurchases.reduce((sum, purchase) => sum + (purchase.numbers?.length || 0), 0);
-    console.log(`[${new Date().toISOString()}] [${requestId}] ${approvedCount} números aprovados restaurados.`);
+    console.log(`[${new Date().toISOString()}] [${requestId}] ${approvedCount} números aprovados restaurados`);
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao restaurar números aprovados: ${error.message}`);
   }
@@ -89,7 +92,7 @@ async function clearExpiredReservations() {
       timestamp: { $lt: fiveMinutesAgo }
     });
     if (result.deletedCount > 0) {
-      console.log(`[${new Date().toISOString()}] [${requestId}] ${result.deletedCount} reservas/pendentes expirados removidos.`);
+      console.log(`[${new Date().toISOString()}] [${requestId}] ${result.deletedCount} reservas/pendentes expirados removidos`);
     }
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao limpar reservas/pendentes expirados: ${error.message}`);
@@ -130,7 +133,7 @@ app.get('/available_numbers', async (req, res) => {
     const availableNumbersDoc = await db.collection('available_numbers').findOne({ status: 'available' });
     const allNumbers = availableNumbersDoc ? availableNumbersDoc.numbers : Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0'));
     const availableNumbers = allNumbers.filter(num => !soldNumbers.includes(num));
-    console.log(`[${new Date().toISOString()}] [${requestId}] Números disponíveis: ${availableNumbers.length}`);
+    console.log(`[${new Date().toISOString()}] [${requestId}] Retornando ${availableNumbers.length} números disponíveis`);
     res.json(availableNumbers);
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao buscar números disponíveis: ${error.message}`);
@@ -229,6 +232,7 @@ app.post('/save_winner', async (req, res) => {
       ...winner,
       timestamp: new Date()
     });
+    console.log(`[${new Date().toISOString()}] [${requestId}] Ganhador salvo: ${winner.number}`);
     res.json({ success: true, insertId: insertResult.insertedId });
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao salvar ganhador: ${error.message}`);
@@ -380,7 +384,7 @@ app.post('/webhook', async (req, res) => {
         if (updateResult.matchedCount === 0) {
           throw new Error('Nenhum documento correspondente encontrado para atualização');
         }
-        console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} aprovado. Números ${numbers.join(', ')} aprovados para ${buyerName}.`);
+        console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} aprovado. Números ${numbers.join(', ')} aprovados para ${buyerName}`);
       });
     } catch (error) {
       console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação do webhook: ${error.message}`);
