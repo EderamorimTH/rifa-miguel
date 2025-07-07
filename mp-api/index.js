@@ -1,3 +1,4 @@
+```javascript
 import express from 'express';
 import cors from 'cors';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
@@ -109,7 +110,7 @@ app.get('/test_db', async (req, res) => {
     res.json({ status: 'MongoDB connected successfully' });
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Teste MongoDB falhou:`, error.message);
-    res.status(500).json({ error: 'MongoDB connection failed', details: error.message });
+    res  .status(500).json({ error: 'MongoDB connection failed', details: error.message });
   }
 });
 
