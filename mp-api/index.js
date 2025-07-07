@@ -18,7 +18,7 @@ const mp = new MercadoPagoConfig({
   accessToken: process.env.ACCESS_TOKEN_MP
 });
 
-// Conecta ao MongoDB com retry
+// Conecta ao MongoDB
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
 let db;
@@ -31,6 +31,7 @@ async function connectDB() {
       await client.connect();
       db = client.db('numeros-instantaneo');
       console.log('Conectado ao MongoDB!');
+      await restoreApprovedNumbers();
       return;
     } catch (error) {
       console.error(`Erro ao conectar ao MongoDB (tentativa ${retries + 1}):`, error.message);
@@ -43,25 +44,39 @@ async function connectDB() {
     }
   }
 }
-connectDB();
 
-// Função para limpar reservas expiradas (5 minutos)
+// Função para restaurar números aprovados na inicialização
+async function restoreApprovedNumbers() {
+  const requestId = uuidv4();
+  console.log(`[${new Date().toISOString()}] [${requestId}] Restaurando números aprovados...`);
+  try {
+    if (!db) throw new Error('MongoDB não conectado');
+    const approvedPurchases = await db.collection('purchases').find({ status: 'approved' }).toArray();
+    const approvedCount = approvedPurchases.reduce((sum, purchase) => sum + (purchase.numbers?.length || 0), 0);
+    console.log(`[${new Date().toISOString()}] [${requestId}] ${approvedCount} números aprovados restaurados.`);
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao restaurar números aprovados:`, error.message);
+  }
+}
+
+// Função para limpar reservas e pendentes expirados (5 minutos)
 async function clearExpiredReservations() {
   try {
     if (!db) throw new Error('MongoDB não conectado');
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     const result = await db.collection('purchases').deleteMany({
-      status: 'reserved',
+      status: { $in: ['reserved', 'pending'] },
       timestamp: { $lt: fiveMinutesAgo }
     });
     if (result.deletedCount > 0) {
-      console.log(`[${new Date().toISOString()}] ${result.deletedCount} reservas expiradas removidas.`);
+      console.log(`[${new Date().toISOString()}] ${result.deletedCount} reservas/pendentes expirados removidos.`);
     }
   } catch (error) {
-    console.error('Erro ao limpar reservas expiradas:', error.message);
+    console.error('Erro ao limpar reservas/pendentes expirados:', error.message);
   }
 }
 
+connectDB();
 setInterval(clearExpiredReservations, 5 * 60 * 1000);
 
 // Test endpoints
@@ -91,10 +106,10 @@ app.get('/available_numbers', async (req, res) => {
   console.log(`[${new Date().toISOString()}] [${requestId}] Consultando números disponíveis...`);
   try {
     if (!db) throw new Error('MongoDB não conectado');
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
+    const purchases = await db.collection('purchases').find({ status: 'approved' }).toArray();
+    const soldNumbers = purchases.flatMap(p => p.numbers || []);
     const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0'));
-    const availableNumbers = allNumbers.filter(num => !soldOrReservedNumbers.includes(num));
+    const availableNumbers = allNumbers.filter(num => !soldNumbers.includes(num));
     console.log(`[${new Date().toISOString()}] [${requestId}] Números disponíveis: ${availableNumbers.length}`);
     res.json(availableNumbers);
   } catch (error) {
@@ -109,8 +124,8 @@ app.get('/progress', async (req, res) => {
   console.log(`[${new Date().toISOString()}] [${requestId}] Calculando progresso...`);
   try {
     const totalNumbers = 900;
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.filter(p => p.status === 'sold' || p.status === 'approved').flatMap(p => p.numbers || []).length;
+    const purchases = await db.collection('purchases').find({ status: 'approved' }).toArray();
+    const soldNumbers = purchases.reduce((sum, p) => sum + (p.numbers?.length || 0), 0);
     const progress = (soldNumbers / totalNumbers) * 100;
     res.json({ progress: progress.toFixed(2) });
   } catch (error) {
@@ -128,9 +143,9 @@ app.post('/reserve_numbers', async (req, res) => {
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0 || !userId) {
       return res.status(400).json({ error: 'Números ou userId inválidos' });
     }
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
-    const invalidNumbers = numbers.filter(num => soldOrReservedNumbers.includes(num));
+    const purchases = await db.collection('purchases').find({ status: 'approved' }).toArray();
+    const soldNumbers = purchases.flatMap(p => p.numbers || []);
+    const invalidNumbers = numbers.filter(num => soldNumbers.includes(num));
     if (invalidNumbers.length > 0) {
       return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
     }
@@ -142,7 +157,7 @@ app.post('/reserve_numbers', async (req, res) => {
       buyerName: '',
       buyerPhone: ''
     });
-    console.log(`[${new Date().toISOString()}] [${requestId}] Números reservados: ${numbers.join(', ')} paratta userId: ${userId}`);
+    console.log(`[${new Date().toISOString()}] [${requestId}] Números reservados: ${numbers.join(', ')} para userId: ${userId}`);
     res.json({ success: true, insertId: insertResult.insertedId });
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao reservar números:`, error.message);
@@ -155,7 +170,7 @@ app.get('/purchases', async (req, res) => {
   const requestId = uuidv4();
   console.log(`[${new Date().toISOString()}] [${requestId}] Buscando compras...`);
   try {
-    const purchases = await db.collection('purchases').find().toArray();
+    const purchases = await db.collection('purchases').find({ status: 'approved' }).toArray();
     res.json(purchases);
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao buscar compras:`, error.message);
@@ -187,7 +202,7 @@ app.get('/get_winners', async (req, res) => {
     const winners = await db.collection('winners').find().toArray();
     res.json(winners);
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao buscar ganhadores:`, error.message);
+    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao buscar ganhadores:`, error.message Maori);
     res.status(500).json({ error: 'Erro ao buscar ganhadores', details: error.message });
   }
 });
@@ -229,14 +244,11 @@ app.post('/create_preference', async (req, res) => {
       return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
     }
 
-    const validNumbers = await db.collection('purchases').find({
-      numbers: { $in: numbers },
-      status: 'reserved',
-      userId
-    }).toArray();
-    if (validNumbers.length !== numbers.length) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados para o usuário: ${userId}`);
-      return res.status(400).json({ error: 'Números não estão reservados para este usuário' });
+    const purchases = await db.collection('purchases').find({ status: 'approved' }).toArray();
+    const soldNumbers = purchases.flatMap(p => p.numbers || []);
+    const invalidNumbers = numbers.filter(num => soldNumbers.includes(num));
+    if (invalidNumbers.length > 0) {
+      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
     }
 
     const preference = new Preference(mp);
@@ -262,12 +274,26 @@ app.post('/create_preference', async (req, res) => {
       }
     };
 
+    // Atualizar ou inserir documento com status pending
+    await db.collection('purchases').updateOne(
+      { userId, status: 'reserved', numbers: { $all: numbers } },
+      {
+        $set: {
+          status: 'pending',
+          buyerName,
+          buyerPhone,
+          timestamp: new Date()
+        }
+      },
+      { upsert: true }
+    );
+
     const response = await preference.create(preferenceData);
     console.log(`[${new Date().toISOString()}] [${requestId}] Preferência criada: ${response.id}`);
     res.json({ init_point: response.init_point, preference_id: response.id });
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao criar preferência:`, error.message);
-    res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
+    res.status(500).      json({ error: 'Erro ao criar preferência', details: error.message });
   }
 });
 
@@ -328,22 +354,11 @@ app.post('/webhook', async (req, res) => {
       return res.status(200).send('OK');
     }
 
-    const validNumbers = await db.collection('purchases').find({
-      numbers: { $in: numbers },
-      status: 'reserved',
-      userId
-    }).toArray();
-
-    if (validNumbers.length !== numbers.length) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados para o usuário: ${userId}`);
-      return res.status(400).send('Números não estão reservados');
-    }
-
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
         const updateResult = await db.collection('purchases').updateOne(
-          { numbers: { $in: numbers }, status: 'reserved', userId },
+          { userId, status: 'pending', numbers: { $all: numbers } },
           {
             $set: {
               status: 'approved',
@@ -377,7 +392,7 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Novo endpoint para obter o hash da senha
+// Endpoint para obter o hash da senha
 app.get('/get-page-password', (req, res) => {
   const requestId = uuidv4();
   console.log(`[${new Date().toISOString()}] [${requestId}] Solicitação para obter hash da senha`);
