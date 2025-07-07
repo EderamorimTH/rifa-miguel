@@ -33,13 +33,14 @@ async function connectDB() {
       // Limpa duplicatas na inicialização
       const duplicates = await db.collection('purchases').aggregate([
         { $match: { status: { $ne: 'approved' } } },
-        { $group: { _id: { numbers: "$numbers", userId: "$userId" }, count: { $sum: 1 }, ids: { $push: "$_id" } } },
+        { $group: { _id: { numbers: "$numbers", userId: "$userId" }, count: { $sum: 1 }, ids: { $push: "_id" } } },
         { $match: { count: { $gt: 1 } } }
       ]).toArray();
       for (const dup of duplicates) {
         const idsToRemove = dup.ids.slice(1);
         await db.collection('purchases').deleteMany({ _id: { $in: idsToRemove } });
       }
+
       return;
     } catch (error) {
       console.error(`Erro ao conectar ao MongoDB (tentativa ${retries + 1}):`, error.message);
@@ -53,6 +54,16 @@ async function connectDB() {
   }
 }
 connectDB();
+
+// Novo endpoint para testar conexão com DB
+app.get('/test_db', async (req, res) => {
+  try {
+    const collections = await db.listCollections().toArray();
+    res.json({ status: 'MongoDB conectado!', collections });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro no MongoDB', message: error.message });
+  }
+});
 
 async function clearExpiredReservations() {
   try {
