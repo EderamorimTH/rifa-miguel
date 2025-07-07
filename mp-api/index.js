@@ -409,7 +409,7 @@ app.get('/get-page-password', (req, res) => {
     }
     const hash = crypto.createHash('sha256').update(password).digest('hex');
     res.json({ passwordHash: hash });
-  }_CXXFLAGS
+  } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao obter hash da senha: ${error.message}`);
     res.status(500).json({ error: 'Erro ao obter hash da senha', details: error.message });
   }
