@@ -28,88 +28,153 @@ async function connectDB() {
     try {
       await client.connect();
       db = client.db('numeros-instantaneo');
-      const collections = await db.listCollections().toArray();
-      const collectionExists = collections.some(col => col.name === 'purchases');
-      if (!collectionExists) {
-        await db.createCollection('purchases');
+      console.log('Conectado ao MongoDB!');
+
+      // Limpa duplicatas na inicialização
+      const duplicates = await db.collection('purchases').aggregate([
+        { $match: { status: { $ne: 'approved' } } },
+        { $group: { _id: { numbers: "$numbers", userId: "$userId" }, count: { $sum: 1 }, ids: { $push: "$_id" } } },
+        { $match: { count: { $gt: 1 } } }
+      ]).toArray();
+      for (const dup of duplicates) {
+        const idsToRemove = dup.ids.slice(1);
+        await db.collection('purchases').deleteMany({ _id: { $in: idsToRemove } });
       }
-      await initializeNumbers();
-      await restoreApprovedNumbers();
-      console.log(`[${new Date().toISOString()}] Conexão com MongoDB estabelecida com sucesso`);
       return;
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] [${uuidv4()}] Erro ao conectar ao MongoDB (tentativa ${retries + 1}): ${error.message}`);
+      console.error(`Erro ao conectar ao MongoDB (tentativa ${retries + 1}):`, error.message);
       retries++;
       if (retries === maxRetries) {
-        console.error(`[${new Date().toISOString()}] Falha ao conectar ao MongoDB após ${maxRetries} tentativas`);
+        console.error('Falha ao conectar ao MongoDB após várias tentativas.');
         process.exit(1);
       }
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
 }
-
-async function initializeNumbers() {
-  const requestId = uuidv4();
-  try {
-    if (!db) throw new Error('MongoDB não conectado');
-    const collections = await db.listCollections().toArray();
-    const availableNumbersExists = collections.some(col => col.name === 'available_numbers');
-    if (!availableNumbersExists) {
-      const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0'));
-      await db.createCollection('available_numbers');
-      await db.collection('available_numbers').insertOne({
-        numbers: allNumbers,
-        status: 'available',
-        timestamp: new Date()
-      });
-      console.log(`[${new Date().toISOString()}] [${requestId}] Coleção available_numbers criada com 900 números`);
-    }
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao inicializar números: ${error.message}`);
-  }
-}
-
-async function restoreApprovedNumbers() {
-  const requestId = uuidv4();
-  try {
-    if (!db) throw new Error('MongoDB não conectado');
-    const approvedPurchases = await db.collection('purchases').find({ status: 'approved' }).toArray();
-    const approvedCount = approvedPurchases.reduce((sum, purchase) => sum + (purchase.numbers?.length || 0), 0);
-    console.log(`[${new Date().toISOString()}] [${requestId}] ${approvedCount} números aprovados restaurados`);
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao restaurar números aprovados: ${error.message}`);
-  }
-}
+connectDB();
 
 async function clearExpiredReservations() {
-  const requestId = uuidv4();
   try {
     if (!db) throw new Error('MongoDB não conectado');
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     const result = await db.collection('purchases').deleteMany({
-      status: { $in: ['reserved', 'pending'] },
+      status: 'reserved',
       timestamp: { $lt: fiveMinutesAgo }
     });
     if (result.deletedCount > 0) {
-      console.log(`[${new Date().toISOString()}] [${requestId}] ${result.deletedCount} reservas/pendentes expirados removidos`);
+      console.log(`[${new Date().toISOString()}] ${result.deletedCount} reservas expiradas removidas.`);
     }
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao limpar reservas/pendentes expirados: ${error.message}`);
+    console.error('Erro ao limpar reservas expiradas:', error.message);
   }
 }
-
-connectDB();
 setInterval(clearExpiredReservations, 5 * 60 * 1000);
 
-// Aqui viriam todas as rotas e lógicas que você já tem definidas, mantendo exatamente o que você enviou
-// Para não exceder o limite, o restante já está correto conforme seu código anterior.
-
-app.get('/', (req, res) => {
-  res.send('API da Rifa está online!');
+app.get('/available_numbers', async (req, res) => {
+  const requestId = uuidv4();
+  try {
+    const purchases = await db.collection('purchases').find({ status: { $in: ['reserved', 'approved'] } }).toArray();
+    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
+    const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0'));
+    const availableNumbers = allNumbers.filter(num => !soldOrReservedNumbers.includes(num));
+    res.json(availableNumbers);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar números disponíveis', details: error.message });
+  }
 });
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT} em ${new Date().toISOString()}`);
+app.post('/reserve_numbers', async (req, res) => {
+  const requestId = uuidv4();
+  const { numbers, userId } = req.body;
+  if (!numbers || !Array.isArray(numbers) || numbers.length === 0 || !userId) {
+    return res.status(400).json({ error: 'Números ou userId inválidos' });
+  }
+
+  const purchases = await db.collection('purchases').find({ status: { $in: ['reserved', 'approved'] } }).toArray();
+  const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
+  const invalidNumbers = numbers.filter(num => soldOrReservedNumbers.includes(num));
+  if (invalidNumbers.length > 0) {
+    return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
+  }
+
+  const existing = await db.collection('purchases').findOne({ userId, status: 'reserved' });
+  if (existing) {
+    await db.collection('purchases').updateOne(
+      { _id: existing._id },
+      { $addToSet: { numbers: { $each: numbers } }, $set: { timestamp: new Date() } }
+    );
+    res.json({ success: true, updated: true });
+  } else {
+    const insertResult = await db.collection('purchases').insertOne({
+      numbers,
+      userId,
+      status: 'reserved',
+      timestamp: new Date(),
+      buyerName: '',
+      buyerPhone: ''
+    });
+    res.json({ success: true, insertId: insertResult.insertedId });
+  }
+});
+
+app.post('/webhook', async (req, res) => {
+  const requestId = uuidv4();
+  try {
+    const body = req.body;
+    const paymentId = body.data?.id;
+    if (!paymentId) return res.status(200).send('OK');
+
+    const payment = new Payment(mp);
+    const paymentDetails = await payment.get({ id: paymentId });
+    if (paymentDetails.status !== 'approved') return res.status(200).send('OK');
+
+    let externalReference;
+    try {
+      externalReference = JSON.parse(paymentDetails.external_reference || '{}');
+    } catch (e) {
+      return res.status(400).send('Invalid external reference');
+    }
+    const { numbers, userId, buyerName, buyerPhone } = externalReference;
+    if (!numbers || !userId || !buyerName || !buyerPhone) {
+      return res.status(400).send('Dados incompletos');
+    }
+
+    const existingPurchase = await db.collection('purchases').findOne({
+      paymentId: paymentDetails.id,
+      status: 'approved'
+    });
+    if (existingPurchase) return res.status(200).send('OK');
+
+    const valid = await db.collection('purchases').findOne({
+      status: 'reserved',
+      userId,
+      numbers: { $all: numbers }
+    });
+
+    if (!valid) return res.status(400).send('Números não estão reservados');
+
+    await db.collection('purchases').updateOne(
+      { _id: valid._id },
+      {
+        $set: {
+          status: 'approved',
+          buyerName,
+          buyerPhone,
+          paymentId: paymentDetails.id,
+          date_approved: paymentDetails.date_approved || new Date(),
+          preference_id: paymentDetails.preference_id || 'Não encontrado',
+          userId: null,
+          timestamp: null
+        }
+      }
+    );
+    res.status(200).send('OK');
+  } catch (error) {
+    return res.status(200).send('OK');
+  }
+});
+
+app.listen(process.env.PORT || 10000, () => {
+  console.log(`Servidor rodando na porta ${process.env.PORT || 10000}`);
 });
