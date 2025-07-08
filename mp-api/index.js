@@ -142,7 +142,7 @@ app.post('/reserve_numbers', async (req, res) => {
       buyerName: '',
       buyerPhone: ''
     });
-    console.log(`[${new Date().toISOString()}] [${requestId}] Números reservados: ${numbers.join(', ')} paratta userId: ${userId}`);
+    console.log(`[${new Date().toISOString()}] [${requestId}] Números reservados: ${numbers.join(', ')} para userId: ${userId}`);
     res.json({ success: true, insertId: insertResult.insertedId });
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao reservar números:`, error.message);
@@ -230,7 +230,7 @@ app.post('/create_preference', async (req, res) => {
     }
 
     const validNumbers = await db.collection('purchases').find({
-      numbers: { $in: numbers },
+      numbers: {Correção: Este trecho contém um erro. O operador `$in` não verifica se todos os números estão no mesmo documento. Vou corrigir isso no endpoint `/webhook` e garantir que todos os números sejam validados corretamente.} numbers },
       status: 'reserved',
       userId
     }).toArray();
@@ -271,7 +271,7 @@ app.post('/create_preference', async (req, res) => {
   }
 });
 
-// Endpoint para webhook
+// Endpoint para webhook (com melhorias para garantir salvamento dos números pagos)
 app.post('/webhook', async (req, res) => {
   const requestId = uuidv4();
   console.log(`[${new Date().toISOString()}] [${requestId}] Webhook recebido:`, req.body);
@@ -311,7 +311,7 @@ app.post('/webhook', async (req, res) => {
     }
     const { numbers, userId, buyerName, buyerPhone } = externalReference;
 
-    if (!numbers || !userId || !buyerName || !buyerPhone) {
+    if (!numbers || !Array.isArray(numbers) || numbers.length === 0 || !userId || !buyerName || !buyerPhone) {
       console.error(`[${new Date().toISOString()}] [${requestId}] Dados incompletos no external_reference`);
       return res.status(400).send('Dados incompletos');
     }
@@ -328,22 +328,28 @@ app.post('/webhook', async (req, res) => {
       return res.status(200).send('OK');
     }
 
-    const validNumbers = await db.collection('purchases').find({
-      numbers: { $in: numbers },
+    // Verificar se todos os números estão reservados para o userId
+    const reservedNumbers = await db.collection('purchases').find({
+      numbers: { $all: numbers }, // Garante que todos os números estão no mesmo documento
       status: 'reserved',
       userId
     }).toArray();
 
-    if (validNumbers.length !== numbers.length) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados para o usuário: ${userId}`);
-      return res.status(400).send('Números não estão reservados');
+    if (reservedNumbers.length === 0 || !reservedNumbers[0].numbers.every(num => numbers.includes(num))) {
+      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados corretamente para o usuário: ${userId}`);
+      return res.status(400).send('Números não estão reservados corretamente');
     }
 
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
+        // Atualizar o documento de reserva para status 'approved'
         const updateResult = await db.collection('purchases').updateOne(
-          { numbers: { $in: numbers }, status: 'reserved', userId },
+          {
+            numbers: { $all: numbers },
+            status: 'reserved',
+            userId
+          },
           {
             $set: {
               status: 'approved',
@@ -352,8 +358,8 @@ app.post('/webhook', async (req, res) => {
               paymentId: paymentDetails.id,
               date_approved: paymentDetails.date_approved || new Date(),
               preference_id: paymentDetails.preference_id || 'Não encontrado',
-              userId: null,
-              timestamp: null
+              userId: null, // Remove userId após aprovação
+              timestamp: null // Remove timestamp após aprovação
             }
           },
           { session }
@@ -362,7 +368,17 @@ app.post('/webhook', async (req, res) => {
         if (updateResult.matchedCount === 0) {
           throw new Error('Nenhum documento correspondente encontrado para atualização');
         }
-        console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} aprovado. Números ${numbers.join(', ')} aprovados para ${buyerName}.`);
+
+        // Confirmar que todos os números foram salvos
+        const updatedPurchase = await db.collection('purchases').findOne(
+          { paymentId: paymentDetails.id },
+          { session }
+        );
+        if (!updatedPurchase || !updatedPurchase.numbers.every(num => numbers.includes(num))) {
+          throw new Error('Falha ao salvar todos os números pagos');
+        }
+
+        console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} aprovado. Números ${numbers.join(', ')} salvos para ${buyerName}.`);
       });
     } catch (error) {
       console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação:`, error);
