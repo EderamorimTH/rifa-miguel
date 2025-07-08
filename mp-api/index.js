@@ -155,33 +155,43 @@ app.post('/reserve_numbers', async (req, res) => {
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0 || !userId) {
       return res.status(400).json({ error: 'Números ou userId inválidos' });
     }
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
-    const allPossibleNumbers = Array.from({ length: 290 }, (_, i) => String(i + 1).padStart(4, '0'));
-    const availableNumbers = allPossibleNumbers.filter(num => !soldOrReservedNumbers.includes(num)).slice(0, 264);
-    
-    // Verificar se os números solicitados estão no intervalo de 0001 a 0290
-    const invalidRangeNumbers = numbers.filter(num => parseInt(num) > 290 || parseInt(num) < 1);
-    if (invalidRangeNumbers.length > 0) {
-      return res.status(400).json({ error: `Números fora do intervalo permitido (0001 a 0290): ${invalidRangeNumbers.join(', ')}` });
+    const session = client.startSession();
+    try {
+      await session.withTransaction(async () => {
+        const purchases = await db.collection('purchases').find({}, { session }).toArray();
+        const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
+        const allPossibleNumbers = Array.from({ length: 290 }, (_, i) => String(i + 1).padStart(4, '0'));
+        const availableNumbers = allPossibleNumbers.filter(num => !soldOrReservedNumbers.includes(num)).slice(0, 264);
+        
+        // Verificar se os números solicitados estão no intervalo de 0001 a 0290
+        const invalidRangeNumbers = numbers.filter(num => parseInt(num) > 290 || parseInt(num) < 1);
+        if (invalidRangeNumbers.length > 0) {
+          return res.status(400).json({ error: `Números fora do intervalo permitido (0001 a 0290): ${invalidRangeNumbers.join(', ')}` });
+        }
+        
+        // Verificar se os números solicitados estão disponíveis
+        const invalidNumbers = numbers.filter(num => !availableNumbers.includes(num));
+        if (invalidNumbers.length > 0) {
+          return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
+        }
+        
+        const insertResult = await db.collection('purchases').insertOne({
+          numbers,
+          userId,
+          status: 'reserved',
+          timestamp: new Date(),
+          buyerName: '',
+          buyerPhone: ''
+        }, { session });
+        console.log(`[${new Date().toISOString()}] [${requestId}] Números reservados: ${numbers.join(', ')} para userId: ${userId}`);
+        res.json({ success: true, insertId: insertResult.insertedId });
+      });
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação:`, error);
+      throw error;
+    } finally {
+      session.endSession();
     }
-    
-    // Verificar se os números solicitados estão disponíveis
-    const invalidNumbers = numbers.filter(num => !availableNumbers.includes(num));
-    if (invalidNumbers.length > 0) {
-      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
-    }
-    
-    const insertResult = await db.collection('purchases').insertOne({
-      numbers,
-      userId,
-      status: 'reserved',
-      timestamp: new Date(),
-      buyerName: '',
-      buyerPhone: ''
-    });
-    console.log(`[${new Date().toISOString()}] [${requestId}] Números reservados: ${numbers.join(', ')} para userId: ${userId}`);
-    res.json({ success: true, insertId: insertResult.insertedId });
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao reservar números:`, error.message);
     res.status(500).json({ error: 'Erro ao reservar números', details: error.message });
@@ -267,63 +277,63 @@ app.post('/create_preference', async (req, res) => {
       return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
     }
 
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
-    const allPossibleNumbers = Array.from({ length: 290 }, (_, i) => String(i + 1).padStart(4, '0'));
-    const availableNumbers = allPossibleNumbers.filter(num => !soldOrReservedNumbers.includes(num)).slice(0, 264);
-    
-    // Verificar se os números solicitados estão no intervalo de 0001 a 0290
-    const invalidRangeNumbers = numbers.filter(num => parseInt(num) > 290 || parseInt(num) < 1);
-    if (invalidRangeNumbers.length > 0) {
-      return res.status(400).json({ error: `Números fora do intervalo permitido (0001 a 0290): ${invalidRangeNumbers.join(', ')}` });
+    const session = client.startSession();
+    try {
+      await session.withTransaction(async () => {
+        // Verificar se todos os números estão reservados para o userId
+        const validNumbers = await db.collection('purchases').find({
+          numbers: { $in: numbers },
+          status: 'reserved',
+          userId
+        }, { session }).toArray();
+
+        const reservedNumbers = validNumbers.flatMap(p => p.numbers);
+        const missingNumbers = numbers.filter(num => !reservedNumbers.includes(num));
+        if (missingNumbers.length > 0) {
+          console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados para o usuário ${userId}: ${missingNumbers.join(', ')}`);
+          return res.status(400).json({ error: `Números não estão reservados para este usuário: ${missingNumbers.join(', ')}` });
+        }
+
+        // Verificar se o total de números vendidos não excede 300
+        const purchases = await db.collection('purchases').find({ status: { $in: ['sold', 'approved'] } }, { session }).toArray();
+        const totalSold = purchases.flatMap(p => p.numbers || []).length;
+        if (totalSold + numbers.length > 300) {
+          return res.status(400).json({ error: 'Limite de 300 números na rifa excedido' });
+        }
+
+        const preference = new Preference(mp);
+        const preferenceData = {
+          body: {
+            items: [{
+              title: `Rifa - ${quantity} número(s)`,
+              quantity: Number(quantity),
+              unit_price: 20,
+            }],
+            payer: {
+              name: buyerName,
+              phone: { number: buyerPhone },
+            },
+            back_urls: {
+              success: "https://ederamorimth.github.io/rifa-miguel/sucesso.html",
+              failure: "https://ederamorimth.github.io/rifa-miguel/erro.html",
+              pending: "https://ederamorimth.github.io/rifa-miguel/pendente.html"
+            },
+            auto_return: "approved",
+            external_reference: JSON.stringify({ buyerName, buyerPhone, numbers, userId }),
+            notification_url: "https://rifa-miguel.onrender.com/webhook"
+          }
+        };
+
+        const response = await preference.create(preferenceData);
+        console.log(`[${new Date().toISOString()}] [${requestId}] Preferência criada: ${response.id}`);
+        res.json({ init_point: response.init_point, preference_id: response.id });
+      });
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação:`, error);
+      throw error;
+    } finally {
+      session.endSession();
     }
-    
-    // Verificar se os números solicitados estão disponíveis
-    const invalidNumbers = numbers.filter(num => !availableNumbers.includes(num));
-    if (invalidNumbers.length > 0) {
-      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
-    }
-
-    // Verificar se todos os números estão reservados para o userId
-    const validNumbers = await db.collection('purchases').find({
-      numbers: { $in: numbers },
-      status: 'reserved',
-      userId
-    }).toArray();
-
-    const reservedNumbers = validNumbers.flatMap(p => p.numbers);
-    const missingNumbers = numbers.filter(num => !reservedNumbers.includes(num));
-    if (missingNumbers.length > 0) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados para o usuário ${userId}: ${missingNumbers.join(', ')}`);
-      return res.status(400).json({ error: `Números não estão reservados para este usuário: ${missingNumbers.join(', ')}` });
-    }
-
-    const preference = new Preference(mp);
-    const preferenceData = {
-      body: {
-        items: [{
-          title: `Rifa - ${quantity} número(s)`,
-          quantity: Number(quantity),
-          unit_price: 20,
-        }],
-        payer: {
-          name: buyerName,
-          phone: { number: buyerPhone },
-        },
-        back_urls: {
-          success: "https://ederamorimth.github.io/rifa-miguel/sucesso.html",
-          failure: "https://ederamorimth.github.io/rifa-miguel/erro.html",
-          pending: "https://ederamorimth.github.io/rifa-miguel/pendente.html"
-        },
-        auto_return: "approved",
-        external_reference: JSON.stringify({ buyerName, buyerPhone, numbers, userId }),
-        notification_url: "https://rifa-miguel.onrender.com/webhook"
-      }
-    };
-
-    const response = await preference.create(preferenceData);
-    console.log(`[${new Date().toISOString()}] [${requestId}] Preferência criada: ${response.id}`);
-    res.json({ init_point: response.init_point, preference_id: response.id });
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao criar preferência:`, error.message);
     res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
@@ -377,41 +387,40 @@ app.post('/webhook', async (req, res) => {
 
     if (!db) throw new Error('MongoDB não conectado');
 
-    // Verificar se o pagamento já foi processado
-    const existingPurchase = await db.collection('purchases').findOne({
-      paymentId: paymentDetails.id,
-      status: 'approved'
-    });
-    if (existingPurchase) {
-      console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} já processado. Ignorando.`);
-      return res.status(200).send('OK');
-    }
-
-    // Verificar se todos os números estão reservados para o userId
-    const reservedNumbers = await db.collection('purchases').find({
-      numbers: { $in: numbers },
-      status: 'reserved',
-      userId
-    }).toArray();
-
-    const reservedNumbersList = reservedNumbers.flatMap(p => p.numbers);
-    const missingNumbers = numbers.filter(num => !reservedNumbersList.includes(num));
-    if (missingNumbers.length > 0) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados corretamente para o usuário ${userId}: ${missingNumbers.join(', ')}`);
-      return res.status(400).send(`Números não estão reservados corretamente: ${missingNumbers.join(', ')}`);
-    }
-
-    // Verificar se o total de números vendidos não excede 300
-    const totalSold = (await db.collection('purchases').find({ status: { $in: ['sold', 'approved'] } }).toArray())
-      .flatMap(p => p.numbers || []).length;
-    if (totalSold + numbers.length > 300) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Limite de 300 números na rifa excedido`);
-      return res.status(400).send('Limite de 300 números na rifa excedido');
-    }
-
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
+        const existingPurchase = await db.collection('purchases').findOne({
+          paymentId: paymentDetails.id,
+          status: 'approved'
+        }, { session });
+        if (existingPurchase) {
+          console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} já processado. Ignorando.`);
+          return res.status(200).send('OK');
+        }
+
+        // Verificar se todos os números estão reservados para o userId
+        const reservedNumbers = await db.collection('purchases').find({
+          numbers: { $in: numbers },
+          status: 'reserved',
+          userId
+        }, { session }).toArray();
+
+        const reservedNumbersList = reservedNumbers.flatMap(p => p.numbers);
+        const missingNumbers = numbers.filter(num => !reservedNumbersList.includes(num));
+        if (missingNumbers.length > 0) {
+          console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados corretamente para o usuário ${userId}: ${missingNumbers.join(', ')}`);
+          return res.status(400).send(`Números não estão reservados corretamente: ${missingNumbers.join(', ')}`);
+        }
+
+        // Verificar se o total de números vendidos não excede 300
+        const totalSold = (await db.collection('purchases').find({ status: { $in: ['sold', 'approved'] } }, { session }).toArray())
+          .flatMap(p => p.numbers || []).length;
+        if (totalSold + numbers.length > 300) {
+          console.error(`[${new Date().toISOString()}] [${requestId}] Limite de 300 números na rifa excedido`);
+          return res.status(400).send('Limite de 300 números na rifa excedido');
+        }
+
         const updateResult = await db.collection('purchases').updateMany(
           {
             numbers: { $in: numbers },
