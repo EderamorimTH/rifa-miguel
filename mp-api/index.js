@@ -229,12 +229,14 @@ app.post('/create_preference', async (req, res) => {
       return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
     }
 
+    // Verificar se todos os números estão reservados para o userId
     const validNumbers = await db.collection('purchases').find({
-      numbers: {Correção: Este trecho contém um erro. O operador `$in` não verifica se todos os números estão no mesmo documento. Vou corrigir isso no endpoint `/webhook` e garantir que todos os números sejam validados corretamente.} numbers },
+      numbers: { $all: numbers }, // Garante que todos os números estão no mesmo documento
       status: 'reserved',
       userId
     }).toArray();
-    if (validNumbers.length !== numbers.length) {
+
+    if (validNumbers.length === 0 || !validNumbers[0].numbers.every(num => numbers.includes(num))) {
       console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados para o usuário: ${userId}`);
       return res.status(400).json({ error: 'Números não estão reservados para este usuário' });
     }
@@ -271,7 +273,7 @@ app.post('/create_preference', async (req, res) => {
   }
 });
 
-// Endpoint para webhook (com melhorias para garantir salvamento dos números pagos)
+// Endpoint para webhook
 app.post('/webhook', async (req, res) => {
   const requestId = uuidv4();
   console.log(`[${new Date().toISOString()}] [${requestId}] Webhook recebido:`, req.body);
