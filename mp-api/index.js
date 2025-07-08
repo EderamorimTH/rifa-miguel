@@ -231,14 +231,17 @@ app.post('/create_preference', async (req, res) => {
 
     // Verificar se todos os números estão reservados para o userId
     const validNumbers = await db.collection('purchases').find({
-      numbers: { $all: numbers }, // Garante que todos os números estão no mesmo documento
+      numbers: { $in: numbers }, // Verifica se cada número está reservado
       status: 'reserved',
       userId
     }).toArray();
 
-    if (validNumbers.length === 0 || !validNumbers[0].numbers.every(num => numbers.includes(num))) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados para o usuário: ${userId}`);
-      return res.status(400).json({ error: 'Números não estão reservados para este usuário' });
+    // Confirmar que todos os números solicitados estão nos documentos encontrados
+    const reservedNumbers = validNumbers.flatMap(p => p.numbers);
+    const missingNumbers = numbers.filter(num => !reservedNumbers.includes(num));
+    if (missingNumbers.length > 0) {
+      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados para o usuário ${userId}: ${missingNumbers.join(', ')}`);
+      return res.status(400).json({ error: `Números não estão reservados para este usuário: ${missingNumbers.join(', ')}` });
     }
 
     const preference = new Preference(mp);
@@ -332,23 +335,25 @@ app.post('/webhook', async (req, res) => {
 
     // Verificar se todos os números estão reservados para o userId
     const reservedNumbers = await db.collection('purchases').find({
-      numbers: { $all: numbers }, // Garante que todos os números estão no mesmo documento
+      numbers: { $in: numbers }, // Verifica se cada número está reservado
       status: 'reserved',
       userId
     }).toArray();
 
-    if (reservedNumbers.length === 0 || !reservedNumbers[0].numbers.every(num => numbers.includes(num))) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados corretamente para o usuário: ${userId}`);
-      return res.status(400).send('Números não estão reservados corretamente');
+    const reservedNumbersList = reservedNumbers.flatMap(p => p.numbers);
+    const missingNumbers = numbers.filter(num => !reservedNumbersList.includes(num));
+    if (missingNumbers.length > 0) {
+      console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados corretamente para o usuário ${userId}: ${missingNumbers.join(', ')}`);
+      return res.status(400).send(`Números não estão reservados corretamente: ${missingNumbers.join(', ')}`);
     }
 
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
-        // Atualizar o documento de reserva para status 'approved'
-        const updateResult = await db.collection('purchases').updateOne(
+        // Atualizar todos os documentos que contêm os números reservados
+        const updateResult = await db.collection('purchases').updateMany(
           {
-            numbers: { $all: numbers },
+            numbers: { $in: numbers },
             status: 'reserved',
             userId
           },
@@ -360,8 +365,8 @@ app.post('/webhook', async (req, res) => {
               paymentId: paymentDetails.id,
               date_approved: paymentDetails.date_approved || new Date(),
               preference_id: paymentDetails.preference_id || 'Não encontrado',
-              userId: null, // Remove userId após aprovação
-              timestamp: null // Remove timestamp após aprovação
+              userId: null,
+              timestamp: null
             }
           },
           { session }
@@ -372,11 +377,12 @@ app.post('/webhook', async (req, res) => {
         }
 
         // Confirmar que todos os números foram salvos
-        const updatedPurchase = await db.collection('purchases').findOne(
+        const updatedPurchases = await db.collection('purchases').find(
           { paymentId: paymentDetails.id },
           { session }
-        );
-        if (!updatedPurchase || !updatedPurchase.numbers.every(num => numbers.includes(num))) {
+        ).toArray();
+        const updatedNumbers = updatedPurchases.flatMap(p => p.numbers);
+        if (!numbers.every(num => updatedNumbers.includes(num))) {
           throw new Error('Falha ao salvar todos os números pagos');
         }
 
