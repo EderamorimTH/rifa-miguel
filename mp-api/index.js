@@ -64,6 +64,67 @@ async function clearExpiredReservations() {
 
 setInterval(clearExpiredReservations, 5 * 60 * 1000);
 
+// Endpoint para números disponíveis
+app.get('/available_numbers', async (req, res) => {
+  const requestId = uuidv4();
+  console.log(`[${new Date().toISOString()}] [${requestId}] Consultando números disponíveis...`);
+  try {
+    if (!db) throw new Error('MongoDB não conectado');
+    const purchases = await db.collection('purchases').find().toArray();
+    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
+    
+    // Gerar números de 0001 a 0290
+    const allPossibleNumbers = Array.from({ length: 290 }, (_, i) => String(i + 1).padStart(4, '0'));
+    
+    // Filtrar números disponíveis (excluindo pagos ou reservados)
+    let availableNumbers = allPossibleNumbers.filter(num => !soldOrReservedNumbers.includes(num));
+    
+    // Limitar a 264 números disponíveis (300 totais - 36 pagos)
+    availableNumbers = availableNumbers.slice(0, 264);
+    
+    console.log(`[${new Date().toISOString()}] [${requestId}] Números disponíveis: ${availableNumbers.length}`);
+    res.json(availableNumbers);
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao buscar números disponíveis:`, error.message);
+    res.status(500).json({ error: 'Erro ao buscar números disponíveis', details: error.message });
+  }
+});
+
+// Endpoint para progresso
+app.get('/progress', async (req, res) => {
+  const requestId = uuidv4();
+  console.log(`[${new Date().toISOString()}] [${requestId}] Calculando progresso...`);
+  try {
+    const totalNumbers = 300; // Total de números na rifa
+    const purchases = await db.collection('purchases').find().toArray();
+    const soldNumbers = purchases.filter(p => p.status === 'sold' || p.status === 'approved').flatMap(p => p.numbers || []).length;
+    const progress = (soldNumbers / totalNumbers) * 100;
+    res.json({ progress: progress.toFixed(2) });
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao calcular progresso:`, error.message);
+    res.status(500).json({ error: 'Erro ao calcular progresso' });
+  }
+});
+
+// Endpoint para verificar total de números disponíveis
+app.get('/total_available', async (req, res) => {
+  const requestId = uuidv4();
+  console.log(`[${new Date().toISOString()}] [${requestId}] Verificando total de números disponíveis...`);
+  try {
+    if (!db) throw new Error('MongoDB não conectado');
+    const purchases = await db.collection('purchases').find().toArray();
+    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
+    const allPossibleNumbers = Array.from({ length: 290 }, (_, i) => String(i + 1).padStart(4, '0'));
+    const availableNumbers = allPossibleNumbers.filter(num => !soldOrReservedNumbers.includes(num)).slice(0, 264);
+    const totalAvailable = availableNumbers.length;
+    const totalSold = soldOrReservedNumbers.filter(num => purchases.find(p => p.numbers.includes(num) && (p.status === 'sold' || p.status === 'approved'))).length;
+    res.json({ totalAvailable, totalSold, totalRaffle: 300 });
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao verificar total:`, error.message);
+    res.status(500).json({ error: 'Erro ao verificar total', details: error.message });
+  }
+});
+
 // Test endpoints
 app.get('/test_mp', async (req, res) => {
   try {
@@ -85,40 +146,6 @@ app.get('/test_db', async (req, res) => {
   }
 });
 
-// Endpoint para números disponíveis
-app.get('/available_numbers', async (req, res) => {
-  const requestId = uuidv4();
-  console.log(`[${new Date().toISOString()}] [${requestId}] Consultando números disponíveis...`);
-  try {
-    if (!db) throw new Error('MongoDB não conectado');
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
-    const allNumbers = Array.from({ length: 900 }, (_, i) => String(i + 1).padStart(4, '0'));
-    const availableNumbers = allNumbers.filter(num => !soldOrReservedNumbers.includes(num));
-    console.log(`[${new Date().toISOString()}] [${requestId}] Números disponíveis: ${availableNumbers.length}`);
-    res.json(availableNumbers);
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao buscar números disponíveis:`, error.message);
-    res.status(500).json({ error: 'Erro ao buscar números disponíveis', details: error.message });
-  }
-});
-
-// Endpoint para progresso
-app.get('/progress', async (req, res) => {
-  const requestId = uuidv4();
-  console.log(`[${new Date().toISOString()}] [${requestId}] Calculando progresso...`);
-  try {
-    const totalNumbers = 900;
-    const purchases = await db.collection('purchases').find().toArray();
-    const soldNumbers = purchases.filter(p => p.status === 'sold' || p.status === 'approved').flatMap(p => p.numbers || []).length;
-    const progress = (soldNumbers / totalNumbers) * 100;
-    res.json({ progress: progress.toFixed(2) });
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao calcular progresso:`, error.message);
-    res.status(500).json({ error: 'Erro ao calcular progresso' });
-  }
-});
-
 // Endpoint para reservar números
 app.post('/reserve_numbers', async (req, res) => {
   const requestId = uuidv4();
@@ -130,10 +157,21 @@ app.post('/reserve_numbers', async (req, res) => {
     }
     const purchases = await db.collection('purchases').find().toArray();
     const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
-    const invalidNumbers = numbers.filter(num => soldOrReservedNumbers.includes(num));
+    const allPossibleNumbers = Array.from({ length: 290 }, (_, i) => String(i + 1).padStart(4, '0'));
+    const availableNumbers = allPossibleNumbers.filter(num => !soldOrReservedNumbers.includes(num)).slice(0, 264);
+    
+    // Verificar se os números solicitados estão no intervalo de 0001 a 0290
+    const invalidRangeNumbers = numbers.filter(num => parseInt(num) > 290 || parseInt(num) < 1);
+    if (invalidRangeNumbers.length > 0) {
+      return res.status(400).json({ error: `Números fora do intervalo permitido (0001 a 0290): ${invalidRangeNumbers.join(', ')}` });
+    }
+    
+    // Verificar se os números solicitados estão disponíveis
+    const invalidNumbers = numbers.filter(num => !availableNumbers.includes(num));
     if (invalidNumbers.length > 0) {
       return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
     }
+    
     const insertResult = await db.collection('purchases').insertOne({
       numbers,
       userId,
@@ -229,14 +267,30 @@ app.post('/create_preference', async (req, res) => {
       return res.status(400).json({ error: 'Quantidade inválida ou não corresponde aos números selecionados' });
     }
 
+    const purchases = await db.collection('purchases').find().toArray();
+    const soldOrReservedNumbers = purchases.flatMap(p => p.numbers || []);
+    const allPossibleNumbers = Array.from({ length: 290 }, (_, i) => String(i + 1).padStart(4, '0'));
+    const availableNumbers = allPossibleNumbers.filter(num => !soldOrReservedNumbers.includes(num)).slice(0, 264);
+    
+    // Verificar se os números solicitados estão no intervalo de 0001 a 0290
+    const invalidRangeNumbers = numbers.filter(num => parseInt(num) > 290 || parseInt(num) < 1);
+    if (invalidRangeNumbers.length > 0) {
+      return res.status(400).json({ error: `Números fora do intervalo permitido (0001 a 0290): ${invalidRangeNumbers.join(', ')}` });
+    }
+    
+    // Verificar se os números solicitados estão disponíveis
+    const invalidNumbers = numbers.filter(num => !availableNumbers.includes(num));
+    if (invalidNumbers.length > 0) {
+      return res.status(400).json({ error: `Números indisponíveis: ${invalidNumbers.join(', ')}` });
+    }
+
     // Verificar se todos os números estão reservados para o userId
     const validNumbers = await db.collection('purchases').find({
-      numbers: { $in: numbers }, // Verifica se cada número está reservado
+      numbers: { $in: numbers },
       status: 'reserved',
       userId
     }).toArray();
 
-    // Confirmar que todos os números solicitados estão nos documentos encontrados
     const reservedNumbers = validNumbers.flatMap(p => p.numbers);
     const missingNumbers = numbers.filter(num => !reservedNumbers.includes(num));
     if (missingNumbers.length > 0) {
@@ -335,7 +389,7 @@ app.post('/webhook', async (req, res) => {
 
     // Verificar se todos os números estão reservados para o userId
     const reservedNumbers = await db.collection('purchases').find({
-      numbers: { $in: numbers }, // Verifica se cada número está reservado
+      numbers: { $in: numbers },
       status: 'reserved',
       userId
     }).toArray();
@@ -347,10 +401,17 @@ app.post('/webhook', async (req, res) => {
       return res.status(400).send(`Números não estão reservados corretamente: ${missingNumbers.join(', ')}`);
     }
 
+    // Verificar se o total de números vendidos não excede 300
+    const totalSold = (await db.collection('purchases').find({ status: { $in: ['sold', 'approved'] } }).toArray())
+      .flatMap(p => p.numbers || []).length;
+    if (totalSold + numbers.length > 300) {
+      console.error(`[${new Date().toISOString()}] [${requestId}] Limite de 300 números na rifa excedido`);
+      return res.status(400).send('Limite de 300 números na rifa excedido');
+    }
+
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
-        // Atualizar todos os documentos que contêm os números reservados
         const updateResult = await db.collection('purchases').updateMany(
           {
             numbers: { $in: numbers },
@@ -401,7 +462,7 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Novo endpoint para obter o hash da senha
+// Endpoint para obter o hash da senha
 app.get('/get-page-password', (req, res) => {
   const requestId = uuidv4();
   console.log(`[${new Date().toISOString()}] [${requestId}] Solicitação para obter hash da senha`);
