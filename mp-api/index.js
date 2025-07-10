@@ -13,9 +13,10 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
-// Configura o MercadoPago
+// Configura o MercadoPago com timeout
 const mp = new MercadoPagoConfig({
-  accessToken: process.env.ACCESS_TOKEN_MP
+  accessToken: process.env.ACCESS_TOKEN_MP,
+  options: { timeout: 5000 } // Timeout de 5 segundos para chamadas ao Mercado Pago
 });
 
 // Conecta ao MongoDB com retry
@@ -30,13 +31,13 @@ async function connectDB() {
     try {
       await client.connect();
       db = client.db('numeros-instantaneo');
-      console.log('Conectado ao MongoDB!');
+      console.log(`[${new Date().toISOString()}] Conectado ao MongoDB!`);
       return;
     } catch (error) {
-      console.error(`Erro ao conectar ao MongoDB (tentativa ${retries + 1}):`, error.message);
+      console.error(`[${new Date().toISOString()}] Erro ao conectar ao MongoDB (tentativa ${retries + 1}):`, error.message);
       retries++;
       if (retries === maxRetries) {
-        console.error('Falha ao conectar ao MongoDB após várias tentativas.');
+        console.error(`[${new Date().toISOString()}] Falha ao conectar ao MongoDB após várias tentativas.`);
         process.exit(1);
       }
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -58,7 +59,7 @@ async function clearExpiredReservations() {
       console.log(`[${new Date().toISOString()}] ${result.deletedCount} reservas expiradas removidas.`);
     }
   } catch (error) {
-    console.error('Erro ao limpar reservas expiradas:', error.message);
+    console.error(`[${new Date().toISOString()}] Erro ao limpar reservas expiradas:`, error.message);
   }
 }
 
@@ -131,7 +132,7 @@ app.get('/test_mp', async (req, res) => {
     const preference = new Preference(mp);
     res.json({ status: 'Mercado Pago SDK initialized successfully' });
   } catch (error) {
-    console.error('Mercado Pago test error:', error);
+    console.error(`[${new Date().toISOString()}] Mercado Pago test error:`, error.message);
     res.status(500).json({ error: 'Mercado Pago initialization failed', details: error.message });
   }
 });
@@ -141,7 +142,7 @@ app.get('/test_db', async (req, res) => {
     await db.collection('purchases').findOne();
     res.json({ status: 'MongoDB connected successfully' });
   } catch (error) {
-    console.error('MongoDB test error:', error);
+    console.error(`[${new Date().toISOString()}] MongoDB test error:`, error.message);
     res.status(500).json({ error: 'MongoDB connection failed', details: error.message });
   }
 });
@@ -187,7 +188,7 @@ app.post('/reserve_numbers', async (req, res) => {
         res.json({ success: true, insertId: insertResult.insertedId });
       });
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação:`, error);
+      console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação:`, error.message);
       throw error;
     } finally {
       session.endSession();
@@ -207,7 +208,7 @@ app.get('/purchases', async (req, res) => {
     res.json(purchases);
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao buscar compras:`, error.message);
-    res.status(500).json({ error: 'Erro ao buscar compras' });
+    res.status(500).json({ error: 'Erro ao buscar compras', details: error.message });
   }
 });
 
@@ -329,7 +330,7 @@ app.post('/create_preference', async (req, res) => {
         res.json({ init_point: response.init_point, preference_id: response.id });
       });
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação:`, error);
+      console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação:`, error.message);
       throw error;
     } finally {
       session.endSession();
@@ -344,9 +345,19 @@ app.post('/create_preference', async (req, res) => {
 app.post('/webhook', async (req, res) => {
   const requestId = uuidv4();
   console.log(`[${new Date().toISOString()}] [${requestId}] Webhook recebido:`, req.body);
+
+  // Função auxiliar para enviar resposta e garantir que seja única
+  const sendResponse = (status, body) => {
+    if (res.headersSent) {
+      console.warn(`[${new Date().toISOString()}] [${requestId}] Tentativa de enviar resposta após headers já enviados. Ignorando.`);
+      return;
+    }
+    res.status(status).send(body);
+  };
+
   try {
     if (req.method !== 'POST') {
-      return res.status(405).send('Method Not Allowed');
+      return sendResponse(405, 'Method Not Allowed');
     }
 
     const body = req.body;
@@ -361,28 +372,52 @@ app.post('/webhook', async (req, res) => {
 
     if (!paymentId) {
       console.log(`[${new Date().toISOString()}] [${requestId}] Nenhum ID de pagamento válido encontrado`);
-      return res.status(200).send('OK');
+      return sendResponse(200, 'OK');
     }
+
+    // Verificar se o pagamento já está sendo processado ou foi processado
+    const existingPurchase = await db.collection('purchases').findOne({
+      paymentId: paymentId,
+      $or: [{ status: 'approved' }, { status: 'processing' }]
+    });
+
+    if (existingPurchase) {
+      console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} já processado ou em processamento. Ignorando.`);
+      return sendResponse(200, 'OK');
+    }
+
+    // Marcar o pagamento como em processamento
+    await db.collection('purchases').updateOne(
+      { paymentId: paymentId },
+      { $set: { status: 'processing', processingTimestamp: new Date() } },
+      { upsert: true }
+    );
 
     const payment = new Payment(mp);
     const paymentDetails = await payment.get({ id: paymentId });
+
     if (paymentDetails.status !== 'approved') {
       console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} não está aprovado. Status: ${paymentDetails.status}`);
-      return res.status(200).send('OK');
+      // Remover marcação de processamento
+      await db.collection('purchases').deleteOne({ paymentId: paymentId, status: 'processing' });
+      return sendResponse(200, 'OK');
     }
 
     let externalReference;
     try {
       externalReference = JSON.parse(paymentDetails.external_reference || '{}');
     } catch (e) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao parsear external_reference:`, e);
-      return res.status(400).send('Invalid external reference');
+      console.error(`[${new Date().toISOString()}] [${requestId}] Erro ao parsear external_reference:`, e.message);
+      await db.collection('purchases').deleteOne({ paymentId: paymentId, status: 'processing' });
+      return sendResponse(400, 'Invalid external reference');
     }
+
     const { numbers, userId, buyerName, buyerPhone } = externalReference;
 
     if (!numbers || !Array.isArray(numbers) || numbers.length === 0 || !userId || !buyerName || !buyerPhone) {
       console.error(`[${new Date().toISOString()}] [${requestId}] Dados incompletos no external_reference`);
-      return res.status(400).send('Dados incompletos');
+      await db.collection('purchases').deleteOne({ paymentId: paymentId, status: 'processing' });
+      return sendResponse(400, 'Dados incompletos');
     }
 
     if (!db) throw new Error('MongoDB não conectado');
@@ -390,15 +425,6 @@ app.post('/webhook', async (req, res) => {
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
-        const existingPurchase = await db.collection('purchases').findOne({
-          paymentId: paymentDetails.id,
-          status: 'approved'
-        }, { session });
-        if (existingPurchase) {
-          console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} já processado. Ignorando.`);
-          return res.status(200).send('OK');
-        }
-
         // Verificar se todos os números estão reservados para o userId
         const reservedNumbers = await db.collection('purchases').find({
           numbers: { $in: numbers },
@@ -410,7 +436,8 @@ app.post('/webhook', async (req, res) => {
         const missingNumbers = numbers.filter(num => !reservedNumbersList.includes(num));
         if (missingNumbers.length > 0) {
           console.error(`[${new Date().toISOString()}] [${requestId}] Números não estão reservados corretamente para o usuário ${userId}: ${missingNumbers.join(', ')}`);
-          return res.status(400).send(`Números não estão reservados corretamente: ${missingNumbers.join(', ')}`);
+          await db.collection('purchases').deleteOne({ paymentId: paymentId, status: 'processing' }, { session });
+          return sendResponse(400, `Números não estão reservados corretamente: ${missingNumbers.join(', ')}`);
         }
 
         // Verificar se o total de números vendidos não excede 300
@@ -418,9 +445,11 @@ app.post('/webhook', async (req, res) => {
           .flatMap(p => p.numbers || []).length;
         if (totalSold + numbers.length > 300) {
           console.error(`[${new Date().toISOString()}] [${requestId}] Limite de 300 números na rifa excedido`);
-          return res.status(400).send('Limite de 300 números na rifa excedido');
+          await db.collection('purchases').deleteOne({ paymentId: paymentId, status: 'processing' }, { session });
+          return sendResponse(400, 'Limite de 300 números na rifa excedido');
         }
 
+        // Atualizar números como aprovados
         const updateResult = await db.collection('purchases').updateMany(
           {
             numbers: { $in: numbers },
@@ -459,15 +488,20 @@ app.post('/webhook', async (req, res) => {
         console.log(`[${new Date().toISOString()}] [${requestId}] Pagamento ${paymentId} aprovado. Números ${numbers.join(', ')} salvos para ${buyerName}.`);
       });
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação:`, error);
+      console.error(`[${new Date().toISOString()}] [${requestId}] Erro na transação:`, error.message);
       throw error;
     } finally {
       session.endSession();
+      // Limpar marcação de processamento em caso de sucesso ou falha
+      await db.collection('purchases').deleteOne({ paymentId: paymentId, status: 'processing' });
     }
-    return res.status(200).send('OK');
+
+    return sendResponse(200, 'OK');
   } catch (error) {
     console.error(`[${new Date().toISOString()}] [${requestId}] Erro no webhook:`, error.message);
-    return res.status(200).send('OK');
+    // Limpar marcação de processamento em caso de erro
+    await db.collection('purchases').deleteOne({ paymentId: paymentId, status: 'processing' });
+    return sendResponse(200, 'OK');
   }
 });
 
@@ -519,5 +553,5 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT} em ${new Date().toISOString()}`);
+  console.log(`[${new Date().toISOString()}] Servidor rodando na porta ${PORT}`);
 });
