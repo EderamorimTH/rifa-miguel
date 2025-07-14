@@ -132,6 +132,16 @@
             font-weight: bold;
             margin: 8px 0;
         }
+        .hero .payment-button {
+            background-color: #28a745;
+            color: white;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
         footer {
             background-color: #333;
             color: white;
@@ -266,25 +276,24 @@
         <div class="progress-container">
             <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
         </div>
+        <div class="form-container">
+            <p class="info">Atenção: É importante colocar seu número correto, pois entraremos em contato com todos os compradores.</p>
+            <h3>Finalize sua compra</h3>
+            <form id="payment-form">
+                <input type="text" id="buyer-name" placeholder="Nome Completo" required>
+                <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
+                <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
+                <p>Total: R$ <span id="total-price">0</span></p>
+                <p class="info">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
+                <button type="submit" class="payment-button">Pagar com Pix/Cartão</button>
+            </form>
+        </div>
         <section id="numbers" class="number-grid"></section>
     </section>
 
     <div id="error-message" class="error-message"></div>
     <button id="reload-button" class="reload-button" onclick="loadData()">Tentar novamente</button>
     <div id="loading-message" class="loading-message">Aguarde um momento, o número está sendo marcado...</div>
-
-    <section class="form-container">
-        <p class="info">Atenção: É importante colocar seu número correto, pois entraremos em contato com todos os compradores.</p>
-        <h3>Finalize sua compra</h3>
-        <form id="payment-form">
-            <input type="text" id="buyer-name" placeholder="Nome Completo" required>
-            <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
-            <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
-            <p>Total: R$ <span id="total-price">0</span></p>
-            <p class="info">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
-            <button type="submit">Pagar com Pix/Cartão</button>
-        </form>
-    </section>
 
     <footer id="contato">
         <p>Contato:</p>
@@ -294,7 +303,7 @@
         <p>Eder: <a href="https://www.instagram.com/ederamorim65">@ederamorim65</a></p>
         <p>Evelyn: <a href="https://www.instagram.com/evelyn.caprinii">@evelyn.caprinii</a></p>
         <p>Para dúvidas, entre em contato via WhatsApp!</p>
-        <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html%20%转为%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
+        <p>Compartilhe no WhatsApp: <a href="https://wa.me/?text=Conheça%20a%20causa%20do%20Miguel%20e%20ajude%20na%20rifa%20solidária!%20Saiba%20mais%20sobre%20o%20estrabismo%20e%20participe:%20https://ederamorimth.github.io/rifa-miguel/sobre-estrabismo.html%20%F0%9F%91%80%20+65984739520%20ou%20+65999731992" class="share-button">Compartilhar</a></p>
         <p>© 2025 Rifa Solidária para o Miguel</p>
     </footer>
 
