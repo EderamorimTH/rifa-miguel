@@ -228,6 +228,47 @@
             z-index: 1000;
             display: none;
         }
+        .modal {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .modal-content button {
+            background-color: #28a745;
+            color: white;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .modal-content p.info {
+            color: #d32f2f;
+            font-weight: bold;
+            margin: 8px 0;
+        }
         @media (max-width: 600px) {
             nav {
                 flex-direction: column;
@@ -254,10 +295,26 @@
                 font-size: 0.7em;
                 padding: 6px;
             }
+            .modal-content {
+                margin: 30% auto;
+                width: 90%;
+            }
         }
     </style>
 </head>
 <body>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <p class="info">Por favor, informe seu nome e telefone (WhatsApp)</p>
+            <p class="info">Atenção: É importante colocar seu número correto, pois entraremos em contato com todos os compradores.</p>
+            <form id="modal-form">
+                <input type="text" id="modal-buyer-name" placeholder="Nome Completo" required>
+                <input type="tel" id="modal-buyer-phone" placeholder="Telefone (WhatsApp)" required>
+                <button type="submit">Continuar</button>
+            </form>
+        </div>
+    </div>
+
     <header>
         <img src="/rifa-miguel/imagens/miguel.jpg" alt="Foto do Miguel">
         <h1>Rifa Solidária para o Miguel</h1>
@@ -277,14 +334,11 @@
             <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
         </div>
         <div class="form-container">
-            <p class="info">Atenção: É importante colocar seu número correto, pois entraremos em contato com todos os compradores.</p>
-            <h3>Finalize sua compra</h3>
+            <p class="info">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
+            <p class="info">Como participar: 1. Escolha os números disponíveis (em verde) clicando neles. 2. Clique em 'Pagar com Pix/Cartão' para finalizar a compra.</p>
             <form id="payment-form">
-                <input type="text" id="buyer-name" placeholder="Nome Completo" required>
-                <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
                 <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
                 <p>Total: R$ <span id="total-price">0</span></p>
-                <p class="info">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
                 <button type="submit" class="payment-button">Pagar com Pix/Cartão</button>
             </form>
         </div>
@@ -312,6 +366,7 @@
         const loadingMessage = document.getElementById('loading-message');
         const errorMessage = document.getElementById('error-message');
         const reloadButton = document.getElementById('reload-button');
+        const modal = document.getElementById('modal');
         let selectedNumbers = [];
         const pricePerNumber = 20;
         const totalNumbers = 900;
@@ -563,16 +618,33 @@
         window.onload = function() {
             const savedName = localStorage.getItem('buyerName');
             const savedPhone = localStorage.getItem('buyerPhone');
-            if (savedName) document.getElementById('buyer-name').value = savedName;
-            if (savedPhone) document.getElementById('buyer-phone').value = savedPhone;
-            loadData();
+            if (savedName && savedPhone) {
+                modal.style.display = 'none';
+                loadData();
+            } else {
+                modal.style.display = 'block';
+            }
+
+            document.getElementById('modal-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const buyerName = document.getElementById('modal-buyer-name').value;
+                const buyerPhone = document.getElementById('modal-buyer-phone').value;
+                if (!buyerName || !buyerPhone) {
+                    alert('Por favor, preencha todos os campos.');
+                    return;
+                }
+                localStorage.setItem('buyerName', buyerName);
+                localStorage.setItem('buyerPhone', buyerPhone);
+                modal.style.display = 'none';
+                loadData();
+            });
         };
 
         document.getElementById('payment-form').addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const buyerName = document.getElementById('buyer-name').value;
-            const buyerPhone = document.getElementById('buyer-phone').value;
+            const buyerName = localStorage.getItem('buyerName');
+            const buyerPhone = localStorage.getItem('buyerPhone');
             const quantity = selectedNumbers.length;
             const userId = localStorage.getItem('userId') || generateUserId();
 
@@ -583,12 +655,10 @@
                 return;
             }
             if (!buyerName || !buyerPhone) {
-                showError('Por favor, preencha todos os campos.');
+                showError('Por favor, preencha os dados de contato no formulário inicial.');
+                modal.style.display = 'block';
                 return;
             }
-
-            localStorage.setItem('buyerName', buyerName);
-            localStorage.setItem('buyerPhone', buyerPhone);
 
             const paymentData = {
                 quantity,
