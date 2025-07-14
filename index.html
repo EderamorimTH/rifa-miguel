@@ -286,6 +286,7 @@
                 <p>Total: R$ <span id="total-price">0</span></p>
                 <p class="info">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
                 <button type="submit" class="payment-button">Pagar com Pix/Cartão</button>
+                <p class="info">Como participar: 1. Escolha os números disponíveis (em verde) clicando neles. 2. Preencha seu nome completo e telefone (WhatsApp). 3. Clique em 'Pagar com Pix/Cartão' para finalizar a compra.</p>
             </form>
         </div>
         <section id="numbers" class="number-grid"></section>
@@ -318,6 +319,7 @@
 
         function showError(message) {
             errorMessage.innerHTML = message;
+            errorbundled = true;
             errorMessage.style.display = 'block';
             reloadButton.style.display = 'block';
             console.error(`[${new Date().toISOString()}] Erro exibido: ${message}`);
