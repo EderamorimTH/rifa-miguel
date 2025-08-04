@@ -19,7 +19,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* Fundo transparente */
+            background-color: rgba(0, 0, 0, 0.6);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -81,10 +81,9 @@
                 transform: translateY(10px);
             }
         }
-        /* Bloqueia interações com o conteúdo do site */
         .content-blocked {
             pointer-events: none;
-            filter: blur(2px); /* Efeito de desfoque no fundo */
+            filter: blur(2px);
         }
         header {
             background-color: #007bff;
@@ -96,23 +95,24 @@
         }
         header img {
             max-width: 250px;
-@@ -27,15 +99,9 @@
             border: 5px solid #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             margin: 10px 0;
             transform: scale(1);
             transition: transform 0.3s ease;
         }
-        header img:hover {
-            transform: scale(1.1);
-        }
         nav {
             display: flex;
             flex-wrap: wrap;
-            justify-content: center;
+            justifying-content: center;
             gap: 8px;
             padding: 10px 0;
-@@ -48,559 +114,62 @@
+        }
+        .nav-button {
+            background-color: #0056b3;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
             text-decoration: none;
             font-size: 1em;
             font-weight: bold;
@@ -309,23 +309,18 @@
             header img {
                 max-width: 120px;
             }
-            .hero h2 {
             .event-screen h1 {
                 font-size: 1.5em;
             }
-            .hero p {
-                font-size: 0.9em;
             .event-screen p {
                 font-size: 1em;
             }
             .number-grid {
                 grid-template-columns: repeat(auto-fit, minmax(35px, 1fr));
+            }
             .event-screen .contact-info {
                 font-size: 0.9em;
             }
-            .number {
-                font-size: 0.7em;
-                padding: 6px;
             .arrow-down {
                 border-left: 15px solid transparent;
                 border-right: 15px solid transparent;
@@ -365,20 +360,6 @@
                 <p class="info">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
                 <button type="submit" class="payment-button">Pagar com Pix/Cartão</button>
             </form>
-    <div class="event-screen">
-        <h1>Almoço Beneficente para o Miguel</h1>
-        <p>Está chegando o dia do <span class="highlight">almoço beneficente</span> para a cirurgia do Miguel!</p>
-        <p>Todo o nosso esforço está focado para o almoço que será no <span class="highlight">próximo domingo, dia 03</span>, no <span class="highlight">Espaço Subzero em Cuiabá</span>.</p>
-        <p>Teremos espaço para quem quiser almoçar no local!</p>
-        <p><span class="highlight">Se deseja adquirir o almoço, entre em contato pelo WhatsApp ou Instagram!</span></p>
-        <div class="arrow-down"></div>
-        <div class="contact-info">
-            <p>Contato:</p>
-            <p>Evelyn, Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
-            <p>Eder, Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
-            <p>Instagram:</p>
-            <p>Eder: <a href="https://www.instagram.com/ederamorim65" target="_blank">@ederamorim65</a></p>
-            <p>Evelyn: <a href="https://www.instagram.com/evelyn.caprinii" target="_blank">@evelyn.caprinii</a></p>
         </div>
         <section id="numbers" class="number-grid"></section>
     </section>
@@ -694,22 +675,5 @@
             await sendPaymentRequest(paymentData);
         });
     </script>
-    </div>
-
-    <!-- Conteúdo original do site (visível, mas bloqueado) -->
-    <div class="content-blocked">
-        <header>
-            <img src="/rifa-miguel/imagens/miguel.jpg" alt="Foto do Miguel">
-            <h1>Rifa Solidária para o Miguel</h1>
-            <nav>
-                <a href="/rifa-miguel/index.html" class="nav-button">Início</a>
-                <a href="/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
-                <a href="/rifa-miguel/sobre-estrabismo.html" class="nav-button">Estrabismo</a>
-                <a href="/rifa-miguel/orcamento.html" class="nav-button">Orçamento</a>
-                <a href="https://ederamorimth.github.io/rifa-miguel/sorteio.html" class="nav-button">Sorteio</a>
-            </nav>
-        </header>
-        <!-- Adicione o restante do conteúdo do site aqui, se necessário -->
-    </div>
 </body>
 </html>
