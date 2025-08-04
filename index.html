@@ -11,165 +11,716 @@
             padding: 0;
             background-color: #f4f4f4;
             color: #333;
-            position: relative;
         }
-        .event-screen {
+        /* Estilos da tela de manutenção */
+        .maintenance-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* Fundo transparente */
+            background-color: rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 3000;
+            z-index: 3000; /* Maior que o modal (z-index: 2000) */
             color: white;
             text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
         }
-        .event-screen h1 {
-            font-size: 2em;
-            margin: 0 0 15px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+        .maintenance-screen p {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            background: linear-gradient(135deg, #007bff, #28a745);
-            -webkit-background-clip: text;
-            color: transparent;
         }
-        .event-screen p {
-            font-size: 1.2em;
-            margin: 8px 0;
-            line-height: 1.5;
-            max-width: 600px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #fff;
+            border-top: 5px solid #28a745;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-        .event-screen .highlight {
-            font-weight: bold;
-            color: #ffc107;
-        }
-        .event-screen .contact-info {
-            margin-top: 15px;
-            font-size: 1em;
-        }
-        .event-screen .contact-info a {
-            color: #ffc107;
-            text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s;
-        }
-        .event-screen .contact-info a:hover {
-            color: #ffca28;
-        }
-        .arrow-down {
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 30px solid #ffc107;
-            margin: 15px 0;
-            animation: bounce 1s infinite;
-        }
-        @keyframes bounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(10px);
-            }
-        }
-        /* Bloqueia interações com o conteúdo do site */
-        .content-blocked {
-            pointer-events: none;
-            filter: blur(2px); /* Efeito de desfoque no fundo */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         header {
             background-color: #007bff;
             color: white;
-            padding: 10px 20px;
+@@ -262,47 +228,6 @@
+            z-index: 1000;
+            display: none;
+        }
+        .modal {
+            display: none; /* Modal desativado durante manutenção */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 90%;
+            width: 400px;
             text-align: center;
         }
-        header img {
-            max-width: 250px;
-            height: auto;
-            border-radius: 50%;
-            border: 5px solid #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            margin: 10px 0;
-        }
-        nav {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 0;
-        }
-        .nav-button {
-            background-color: #0056b3;
-            color: white;
-            padding: 6px 12px;
+        .modal-content input {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
             border-radius: 5px;
-            text-decoration: none;
-            font-size: 1em;
-            font-weight: bold;
         }
-        .nav-button:hover {
-            background-color: #ffc107;
-            color: black;
+        .modal-content button {
+            background-color: #28a745;
+            color: white;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .modal-content p.info {
+            color: #d32f2f;
+            font-weight: bold;
+            margin: 8px 0;
         }
         @media (max-width: 600px) {
-            .event-screen h1 {
-                font-size: 1.5em;
+            nav {
+                flex-direction: column;
+@@ -329,39 +254,10 @@
+                font-size: 0.7em;
+                padding: 6px;
             }
-            .event-screen p {
-                font-size: 1em;
+            .modal-content {
+                margin: 30% auto;
+                width: 90%;
             }
-            .event-screen .contact-info {
-                font-size: 0.9em;
+            .maintenance-screen p {
+                font-size: 1.2em;
+                margin: 15px;
             }
-            .arrow-down {
-                border-left: 15px solid transparent;
-                border-right: 15px solid transparent;
-                border-top: 20px solid #ffc107;
-                margin: 10px 0;
+            .spinner {
+                width: 40px;
+                height: 40px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="event-screen">
-        <h1>Almoço Beneficente para o Miguel</h1>
-        <p>Está chegando o dia do <span class="highlight">almoço beneficente</span> para a cirurgia do Miguel!</p>
-        <p>Todo o nosso esforço está focado para o almoço que será no <span class="highlight">próximo domingo, dia 03</span>, no <span class="highlight">Espaço Subzero em Cuiabá</span>.</p>
-        <p>Teremos espaço para quem quiser almoçar no local!</p>
-        <p><span class="highlight">Se deseja adquirir o almoço, entre em contato pelo WhatsApp ou Instagram!</span></p>
-        <div class="arrow-down"></div>
-        <div class="contact-info">
-            <p>Contato:</p>
-            <p>Evelyn, Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
-            <p>Eder, Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
-            <p>Instagram:</p>
-            <p>Eder: <a href="https://www.instagram.com/ederamorim65" target="_blank">@ederamorim65</a></p>
-            <p>Evelyn: <a href="https://www.instagram.com/evelyn.caprinii" target="_blank">@evelyn.caprinii</a></p>
+    <div class="maintenance-screen">
+        <p>ATENÇÃO SITE EM MANUTENÇÃO AGUARDE . . . .</p>
+        <div class="spinner"></div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <p class="info">Por favor, informe seu nome e telefone (WhatsApp)</p>
+            <p class="info">Atenção: É importante colocar seu número correto, pois entraremos em contato com todos os compradores.</p>
+            <form id="modal-form">
+                <input type="text" id="modal-buyer-name" placeholder="Nome Completo" required>
+                <input type="tel" id="modal-buyer-phone" placeholder="Telefone (WhatsApp)" required>
+                <button type="submit">Continuar</button>
+            </form>
         </div>
     </div>
 
-    <!-- Conteúdo original do site (visível, mas bloqueado) -->
-    <div class="content-blocked">
-        <header>
-            <img src="/rifa-miguel/imagens/miguel.jpg" alt="Foto do Miguel">
-            <h1>Rifa Solidária para o Miguel</h1>
-            <nav>
-                <a href="/rifa-miguel/index.html" class="nav-button">Início</a>
-                <a href="/rifa-miguel/como-funciona.html" class="nav-button">Como Funciona</a>
-                <a href="/rifa-miguel/sobre-estrabismo.html" class="nav-button">Estrabismo</a>
-                <a href="/rifa-miguel/orcamento.html" class="nav-button">Orçamento</a>
-                <a href="https://ederamorimth.github.io/rifa-miguel/sorteio.html" class="nav-button">Sorteio</a>
-            </nav>
-        </header>
-        <!-- Adicione o restante do conteúdo do site aqui, se necessário -->
-    </div>
+    <header>
+        <img src="/rifa-miguel/imagens/miguel.jpg" alt="Foto do Miguel">
+        <h1>Rifa Solidária para o Miguel</h1>
+@@ -381,11 +277,14 @@
+            <div class="progress-bar" id="progress-bar">0% Arrecadado</div>
+        </div>
+        <div class="form-container">
+            <p class="info">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
+            <p class="info">Como participar: 1. Escolha os números disponíveis (em verde) clicando neles. 2. Clique em 'Pagar com Pix/Cartão' para finalizar a compra.</p>
+            <p class="info">Atenção: É importante colocar seu número correto, pois entraremos em contato com todos os compradores.</p>
+            <h3>Finalize sua compra</h3>
+            <form id="payment-form">
+                <input type="text" id="buyer-name" placeholder="Nome Completo" required>
+                <input type="tel" id="buyer-phone" placeholder="Telefone (WhatsApp)" required>
+                <p>Números selecionados: <span id="selected-numbers">Nenhum</span></p>
+                <p>Total: R$ <span id="total-price">0</span></p>
+                <p class="info">Atenção: Você tem 5 minutos para realizar o pagamento, ou os números selecionados serão liberados. Volte ao site para verificar a disponibilidade.</p>
+                <button type="submit" class="payment-button">Pagar com Pix/Cartão</button>
+            </form>
+        </div>
+@@ -409,320 +308,299 @@
+    </footer>
+
+    <script>
+        // Impede a execução do carregamento de dados durante a manutenção
+        const maintenanceMode = true;
+
+        if (!maintenanceMode) {
+            const numberContainer = document.getElementById('numbers');
+            const loadingMessage = document.getElementById('loading-message');
+            const errorMessage = document.getElementById('error-message');
+            const reloadButton = document.getElementById('reload-button');
+            const modal = document.getElementById('modal');
+            let selectedNumbers = [];
+            const pricePerNumber = 20;
+            const totalNumbers = 900;
+
+            function showError(message) {
+                errorMessage.innerHTML = message;
+                errorMessage.style.display = 'block';
+                reloadButton.style.display = 'block';
+                console.error(`[${new Date().toISOString()}] Erro exibido: ${message}`);
+        const numberContainer = document.getElementById('numbers');
+        const loadingMessage = document.getElementById('loading-message');
+        const errorMessage = document.getElementById('error-message');
+        const reloadButton = document.getElementById('reload-button');
+        let selectedNumbers = [];
+        const pricePerNumber = 20;
+        const totalNumbers = 900;
+
+        function showError(message) {
+            errorMessage.innerHTML = message;
+            errorMessage.style.display = 'block';
+            reloadButton.style.display = 'block';
+            console.error(`[${new Date().toISOString()}] Erro exibido: ${message}`);
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+            reloadButton.style.display = 'none';
+        }
+
+        function generateUserId() {
+            const userId = Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('userId', userId);
+            console.log(`[${new Date().toISOString()}] Novo userId gerado: ${userId}`);
+            return userId;
+        }
+
+        async function reserveNumbers(numbers) {
+            try {
+                loadingMessage.style.display = 'block';
+                console.log(`[${new Date().toISOString()}] Reservando números: ${numbers}`);
+                const response = await fetch('https://rifa-miguel.onrender.com/reserve_numbers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ numbers, userId: localStorage.getItem('userId') || generateUserId() })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Erro HTTP ${response.status}: ${errorData.error || 'Erro desconhecido'}`);
+                }
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Alguns números já estão reservados.');
+                }
+                console.log(`[${new Date().toISOString()}] Números reservados com sucesso: ${numbers}`);
+                return true;
+            } catch (error) {
+                console.error(`[${new Date().toISOString()}] Erro ao reservar números:`, error.message);
+                showError(error.message || 'Erro ao reservar números. Tente novamente.');
+                return false;
+            } finally {
+                loadingMessage.style.display = 'none';
+            }
+        }
+
+            function hideError() {
+                errorMessage.style.display = 'none';
+                reloadButton.style.display = 'none';
+            }
+        function scrollToNumbers() {
+            document.getElementById('numbers').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function selectRandomNumbers() {
+            try {
+                loadingMessage.style.display = 'block';
+                console.log(`[${new Date().toISOString()}] Carregando números disponíveis para seleção aleatória`);
+                const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (!availableRes.ok) {
+                    const errorData = await availableRes.json();
+                    throw new Error(`Erro HTTP ${availableRes.status}: ${errorData.error || 'Erro desconhecido'}`);
+                }
+                const availableNumbers = await availableRes.json();
+                console.log(`[${new Date().toISOString()}] Números disponíveis: ${availableNumbers.length} números`);
+
+                selectedNumbers.forEach(num => {
+                    const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
+                    if (numDiv) numDiv.classList.remove('selected');
+                });
+                selectedNumbers = [];
+
+                if (availableNumbers.length === 0) {
+                    console.warn(`[${new Date().toISOString()}] Nenhum número disponível para seleção aleatória`);
+                    showError('Nenhum número disponível para seleção. Tente novamente mais tarde.');
+                    return;
+                }
+
+            function generateUserId() {
+                const userId = Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('userId', userId);
+                console.log(`[${new Date().toISOString()}] Novo userId gerado: ${userId}`);
+                return userId;
+                const shuffled = availableNumbers.sort(() => 0.5 - Math.random());
+                const randomNumbers = shuffled.slice(0, Math.min(5, availableNumbers.length));
+
+                if (await reserveNumbers(randomNumbers)) {
+                    randomNumbers.forEach(num => {
+                        const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
+                        if (numDiv && !numDiv.classList.contains('sold')) {
+                            numDiv.classList.add('selected');
+                            selectedNumbers.push(num);
+                        }
+                    });
+                    document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                    document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                    console.log(`[${new Date().toISOString()}] Números aleatórios selecionados: ${randomNumbers}`);
+                }
+            } catch (error) {
+                console.error(`[${new Date().toISOString()}] Erro ao selecionar números aleatórios:`, error.message);
+                showError(error.message || 'Erro ao carregar números disponíveis. Tente novamente.');
+            } finally {
+                loadingMessage.style.display = 'none';
+            }
+        }
+
+        async function loadData() {
+            const maxRetries = 3;
+            let retries = 0;
+
+            async function reserveNumbers(numbers) {
+            while (retries < maxRetries) {
+                try {
+                    loadingMessage.style.display = 'block';
+                    console.log(`[${new Date().toISOString()}] Reservando números: ${numbers}`);
+                    const response = await fetch('https://rifa-miguel.onrender.com/reserve_numbers', {
+                        method: 'POST',
+                    console.log(`[${new Date().toISOString()}] Tentativa ${retries + 1} de carregar números`);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                    const healthRes = await fetch('https://rifa-miguel.onrender.com/test_db', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ numbers, userId: localStorage.getItem('userId') || generateUserId() })
+                        signal: controller.signal
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`Erro HTTP ${response.status}: ${errorData.error || 'Erro desconhecido'}`);
+                    }
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.error || 'Alguns números já estão reservados.');
+                    if (!healthRes.ok) {
+                        throw new Error(`Erro no health check: ${healthRes.status} ${healthRes.statusText}`);
+                    }
+                    console.log(`[${new Date().toISOString()}] Números reservados com sucesso: ${numbers}`);
+                    return true;
+                } catch (error) {
+                    console.error(`[${new Date().toISOString()}] Erro ao reservar números:`, error.message);
+                    showError(error.message || 'Erro ao reservar números. Tente novamente.');
+                    return false;
+                } finally {
+                    loadingMessage.style.display = 'none';
+                }
+            }
+                    const healthData = await healthRes.json();
+                    console.log(`[${new Date().toISOString()}] Health check:`, healthData);
+
+            function scrollToNumbers() {
+                document.getElementById('numbers').scrollIntoView({ behavior: 'smooth' });
+            }
+                    const progressRes = await fetch('https://rifa-miguel.onrender.com/progress', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal
+                    });
+                    if (!progressRes.ok) {
+                        const errorData = await progressRes.json();
+                        throw new Error(`Erro HTTP ${progressRes.status}: ${errorData.error || 'Erro ao carregar progresso'}`);
+                    }
+                    const { progress } = await progressRes.json();
+                    console.log(`[${new Date().toISOString()}] Progresso recebido: ${progress}%`);
+                    const progressBar = document.getElementById('progress-bar');
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.textContent = `${Math.round(progress)}% Arrecadado`;
+
+            async function selectRandomNumbers() {
+                try {
+                    loadingMessage.style.display = 'block';
+                    console.log(`[${new Date().toISOString()}] Carregando números disponíveis para seleção aleatória`);
+                    const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: controller.signal
+                    });
+                    if (!availableRes.ok) {
+                        const errorData = await availableRes.json();
+                        throw new Error(`Erro HTTP ${availableRes.status}: ${errorData.error || 'Erro desconhecido'}`);
+                        throw new Error(`Erro HTTP ${availableRes.status}: ${errorData.error || 'Erro ao carregar números disponíveis'}`);
+                    }
+                    const availableNumbers = await availableRes.json();
+                    console.log(`[${new Date().toISOString()}] Números disponíveis: ${availableNumbers.length} números`);
+
+                    selectedNumbers.forEach(num => {
+                        const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
+                        if (numDiv) numDiv.classList.remove('selected');
+                    });
+                    selectedNumbers = [];
+                    console.log(`[${new Date().toISOString()}] Números disponíveis recebidos: ${availableNumbers.length} números`);
+
+                    numberContainer.innerHTML = '';
+                    if (availableNumbers.length === 0) {
+                        console.warn(`[${new Date().toISOString()}] Nenhum número disponível para seleção aleatória`);
+                        showError('Nenhum número disponível para seleção. Tente novamente mais tarde.');
+                        console.warn(`[${new Date().toISOString()}] Nenhum número disponível retornado`);
+                        showError('Nenhum número disponível para compra no momento. Tente novamente mais tarde ou contate o suporte.');
+                        return;
+                    }
+
+                    const shuffled = availableNumbers.sort(() => 0.5 - Math.random());
+                    const randomNumbers = shuffled.slice(0, Math.min(5, availableNumbers.length));
+
+                    if (await reserveNumbers(randomNumbers)) {
+                        randomNumbers.forEach(num => {
+                            const numDiv = Array.from(numberContainer.children).find(div => div.textContent === num);
+                            if (numDiv && !numDiv.classList.contains('sold')) {
+                                numDiv.classList.add('selected');
+                                selectedNumbers.push(num);
+                            }
+                        });
+                        document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                        document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                        console.log(`[${new Date().toISOString()}] Números aleatórios selecionados: ${randomNumbers}`);
+                    }
+                } catch (error) {
+                    console.error(`[${new Date().toISOString()}] Erro ao selecionar números aleatórios:`, error.message);
+                    showError(error.message || 'Erro ao carregar números disponíveis. Tente novamente.');
+                } finally {
+                    loadingMessage.style.display = 'none';
+                }
+            }
+                    hideError();
+                    for (let i = 1; i <= totalNumbers; i++) {
+                        const num = String(i).padStart(4, '0');
+                        const numDiv = document.createElement('div');
+                        numDiv.classList.add('number');
+                        numDiv.textContent = num;
+
+            async function loadData() {
+                const maxRetries = 3;
+                let retries = 0;
+
+                while (retries < maxRetries) {
+                    try {
+                        console.log(`[${new Date().toISOString()}] Tentativa ${retries + 1} de carregar números`);
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                        const healthRes = await fetch('https://rifa-miguel.onrender.com/test_db', {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' },
+                            signal: controller.signal
+                        });
+                        if (!healthRes.ok) {
+                            throw new Error(`Erro no health check: ${healthRes.status} ${healthRes.statusText}`);
+                        }
+                        const healthData = await healthRes.json();
+                        console.log(`[${new Date().toISOString()}] Health check:`, healthData);
+
+                        const progressRes = await fetch('https://rifa-miguel.onrender.com/progress', {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' },
+                            signal: controller.signal
+                        });
+                        if (!progressRes.ok) {
+                            const errorData = await progressRes.json();
+                            throw new Error(`Erro HTTP ${progressRes.status}: ${errorData.error || 'Erro ao carregar progresso'}`);
+                        }
+                        const { progress } = await progressRes.json();
+                        console.log(`[${new Date().toISOString()}] Progresso recebido: ${progress}%`);
+                        const progressBar = document.getElementById('progress-bar');
+                        progressBar.style.width = `${progress}%`;
+                        progressBar.textContent = `${Math.round(progress)}% Arrecadado`;
+
+                        const availableRes = await fetch('https://rifa-miguel.onrender.com/available_numbers', {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' },
+                            signal: controller.signal
+                        });
+                        if (!availableRes.ok) {
+                            const errorData = await availableRes.json();
+                            throw new Error(`Erro HTTP ${availableRes.status}: ${errorData.error || 'Erro ao carregar números disponíveis'}`);
+                        }
+                        const availableNumbers = await availableRes.json();
+                        console.log(`[${new Date().toISOString()}] Números disponíveis recebidos: ${availableNumbers.length} números`);
+
+                        numberContainer.innerHTML = '';
+                        if (availableNumbers.length === 0) {
+                            console.warn(`[${new Date().toISOString()}] Nenhum número disponível retornado`);
+                            showError('Nenhum número disponível para compra no momento. Tente novamente mais tarde ou contate o suporte.');
+                            return;
+                        }
+
+                        hideError();
+                        for (let i = 1; i <= totalNumbers; i++) {
+                            const num = String(i).padStart(4, '0');
+                            const numDiv = document.createElement('div');
+                            numDiv.classList.add('number');
+                            numDiv.textContent = num;
+
+                            if (!availableNumbers.includes(num)) {
+                                numDiv.classList.add('sold');
+                            } else {
+                                numDiv.addEventListener('click', async () => {
+                                    if (!numDiv.classList.contains('sold')) {
+                                        const isSelected = numDiv.classList.contains('selected');
+                                        if (!isSelected) {
+                                            if (await reserveNumbers([num])) {
+                                                numDiv.classList.add('selected');
+                                                selectedNumbers.push(num);
+                                            } else {
+                                                return;
+                                            }
+                        if (!availableNumbers.includes(num)) {
+                            numDiv.classList.add('sold');
+                        } else {
+                            numDiv.addEventListener('click', async () => {
+                                if (!numDiv.classList.contains('sold')) {
+                                    const isSelected = numDiv.classList.contains('selected');
+                                    if (!isSelected) {
+                                        if (await reserveNumbers([num])) {
+                                            numDiv.classList.add('selected');
+                                            selectedNumbers.push(num);
+                                        } else {
+                                            numDiv.classList.remove('selected');
+                                            const index = selectedNumbers.indexOf(num);
+                                            if (index > -1) selectedNumbers.splice(index, 1);
+                                            return;
+                                        }
+                                        document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                                        document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                                    } else {
+                                        numDiv.classList.remove('selected');
+                                        const index = selectedNumbers.indexOf(num);
+                                        if (index > -1) selectedNumbers.splice(index, 1);
+                                    }
+                                });
+                            }
+
+                            numberContainer.appendChild(numDiv);
+                                    document.getElementById('selected-numbers').textContent = selectedNumbers.length > 0 ? selectedNumbers.join(', ') : 'Nenhum';
+                                    document.getElementById('total-price').textContent = selectedNumbers.length * pricePerNumber;
+                                }
+                            });
+                        }
+
+                        console.log('Números carregados com sucesso em:', new Date().toISOString());
+                        clearTimeout(timeoutId);
+                        return;
+                    } catch (error) {
+                        console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message);
+                        retries++;
+                        if (retries === maxRetries) {
+                            showError(`Erro ao conectar ao servidor: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`);
+                        } else {
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                        numberContainer.appendChild(numDiv);
+                    }
+
+                    console.log('Números carregados com sucesso em:', new Date().toISOString());
+                    clearTimeout(timeoutId);
+                    return;
+                } catch (error) {
+                    console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message);
+                    retries++;
+                    if (retries === maxRetries) {
+                        showError(`Erro ao conectar ao servidor: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`);
+                    } else {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+            }
+        }
+
+            async function sendPaymentRequest(data) {
+                const maxRetries = 3;
+                let retries = 0;
+
+                while (retries < maxRetries) {
+                    try {
+                        console.log(`Tentativa ${retries + 1} de enviar pagamento em ${new Date().toISOString()}...`, data);
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 10000);
+                        const response = await fetch('https://rifa-miguel.onrender.com/create_preference', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data),
+                            signal: controller.signal
+                        });
+
+                        clearTimeout(timeoutId);
+                        console.log(`Status da resposta: ${response.status} em ${new Date().toISOString()}`);
+                        const responseData = await response.json();
+                        console.log('Resposta da API:', responseData);
+
+                        if (responseData.init_point) {
+                            window.location.href = responseData.init_point;
+                        } else {
+                            showError(responseData.error || 'Erro ao criar o pagamento. Tente novamente.');
+                        }
+                        return;
+                    } catch (error) {
+                        console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message);
+                        retries++;
+                        if (retries === maxRetries) {
+                            showError(`Erro ao conectar ao servidor após várias tentativas: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`);
+                        } else {
+                            await new Promise(resolve => setTimeout(resolve, 3000));
+                        }
+        async function sendPaymentRequest(data) {
+            const maxRetries = 3;
+            let retries = 0;
+
+            while (retries < maxRetries) {
+                try {
+                    console.log(`Tentativa ${retries + 1} de enviar pagamento em ${new Date().toISOString()}...`, data);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    const response = await fetch('https://rifa-miguel.onrender.com/create_preference', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+                    console.log(`Status da resposta: ${response.status} em ${new Date().toISOString()}`);
+                    const responseData = await response.json();
+                    console.log('Resposta da API:', responseData);
+
+                    if (responseData.init_point) {
+                        window.location.href = responseData.init_point;
+                    } else {
+                        showError(responseData.error || 'Erro ao criar o pagamento. Tente novamente.');
+                    }
+                    return;
+                } catch (error) {
+                    console.error(`Erro na tentativa ${retries + 1} em ${new Date().toISOString()}:`, error.message);
+                    retries++;
+                    if (retries === maxRetries) {
+                        showError(`Erro ao conectar ao servidor após várias tentativas: ${error.message}. Tente novamente ou contate o suporte (<a href="https://wa.me/65984739520">Evelyn: +65 98473-9520</a> ou <a href="https://wa.me/65999731992">Eder: +65 99973-1992</a>).`);
+                    } else {
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                    }
+                }
+            }
+        }
+
+            window.onload = function() {
+                const savedName = localStorage.getItem('buyerName');
+                const savedPhone = localStorage.getItem('buyerPhone');
+                if (savedName && savedPhone) {
+                    modal.style.display = 'none';
+                    loadData();
+                } else {
+                    modal.style.display = 'block';
+                }
+        window.onload = function() {
+            const savedName = localStorage.getItem('buyerName');
+            const savedPhone = localStorage.getItem('buyerPhone');
+            if (savedName) document.getElementById('buyer-name').value = savedName;
+            if (savedPhone) document.getElementById('buyer-phone').value = savedPhone;
+            loadData();
+        };
+
+                document.getElementById('modal-form').addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    const buyerName = document.getElementById('modal-buyer-name').value;
+                    const buyerPhone = document.getElementById('modal-buyer-phone').value;
+                    if (!buyerName || !buyerPhone) {
+                        alert('Por favor, preencha todos os campos.');
+                        return;
+                    }
+                    localStorage.setItem('buyerName', buyerName);
+                    localStorage.setItem('buyerPhone', buyerPhone);
+                    modal.style.display = 'none';
+                    loadData();
+                });
+            };
+        document.getElementById('payment-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            document.getElementById('payment-form').addEventListener('submit', async (event) => {
+                event.preventDefault();
+            const buyerName = document.getElementById('buyer-name').value;
+            const buyerPhone = document.getElementById('buyer-phone').value;
+            const quantity = selectedNumbers.length;
+            const userId = localStorage.getItem('userId') || generateUserId();
+
+                const buyerName = localStorage.getItem('buyerName');
+                const buyerPhone = localStorage.getItem('buyerPhone');
+                const quantity = selectedNumbers.length;
+                const userId = localStorage.getItem('userId') || generateUserId();
+            console.log('Números selecionados antes de enviar em:', new Date().toISOString(), selectedNumbers);
+            if (selectedNumbers.length === 0) {
+                console.warn('Nenhum número selecionado antes de enviar em:', new Date().toISOString());
+                showError('Por favor, selecione pelo menos um número.');
+                return;
+            }
+            if (!buyerName || !buyerPhone) {
+                showError('Por favor, preencha todos os campos.');
+                return;
+            }
+
+                console.log('Números selecionados antes de enviar em:', new Date().toISOString(), selectedNumbers);
+                if (selectedNumbers.length === 0) {
+                    console.warn('Nenhum número selecionado antes de enviar em:', new Date().toISOString());
+                    showError('Por favor, selecione pelo menos um número.');
+                    return;
+                }
+                if (!buyerName || !buyerPhone) {
+                    showError('Por favor, preencha os dados de contato no formulário inicial.');
+                    modal.style.display = 'block';
+                    return;
+                }
+            localStorage.setItem('buyerName', buyerName);
+            localStorage.setItem('buyerPhone', buyerPhone);
+
+                const paymentData = {
+                    quantity,
+                    buyerName,
+                    buyerPhone,
+                    numbers: selectedNumbers,
+                    userId
+                };
+                console.log('Enviando solicitação de pagamento em:', new Date().toISOString(), paymentData);
+            const paymentData = {
+                quantity,
+                buyerName,
+                buyerPhone,
+                numbers: selectedNumbers,
+                userId
+            };
+            console.log('Enviando solicitação de pagamento em:', new Date().toISOString(), paymentData);
+
+                await sendPaymentRequest(paymentData);
+            });
+        }
+            await sendPaymentRequest(paymentData);
+        });
+    </script>
 </body>
 </html>
