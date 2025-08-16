@@ -12,6 +12,7 @@
             background-color: #f4f4f4;
             color: #333;
             position: relative;
+            overflow: hidden;
         }
         .event-screen {
             position: fixed;
@@ -83,7 +84,9 @@
         }
         .content-blocked {
             pointer-events: none;
-            filter: blur(2px);
+            filter: blur(5px);
+            position: relative;
+            z-index: 1;
         }
         header {
             background-color: #007bff;
@@ -331,7 +334,18 @@
     </style>
 </head>
 <body>
-    <header>
+    <div class="event-screen">
+        <h1>Agradecimento Final</h1>
+        <p>Hoje, 16 de agosto de 2025, finalizamos com sucesso a Rifa Solidária para o Miguel! Agradecemos de coração a todos que colaboraram comprando números, compartilhando a causa e apoiando de todas as formas. Um especial obrigado aos voluntários e a todos que tornaram essa jornada possível. Juntos, conseguimos ajudar o Miguel a enxergar o mundo com clareza!</p>
+        <div class="contact-info">
+            <p>Para mais informações, entre em contato:</p>
+            <p>Evelyn: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
+            <p>Eder: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
+        </div>
+        <div class="arrow-down"></div>
+        <p>Logo, vamos dar informações sobre o bingo que realizaremos!</p>
+    </div>
+    <header class="content-blocked">
         <img src="/rifa-miguel/imagens/miguel.jpg" alt="Foto do Miguel">
         <h1>Rifa Solidária para o Miguel</h1>
         <nav>
@@ -343,7 +357,7 @@
         </nav>
     </header>
 
-    <section class="hero" id="home">
+    <section class="hero content-blocked" id="home">
         <h2>Ajude o Miguel a enxergar o mundo com clareza!</h2>
         <p>Compre números por R$ 20 e concorra a R$ 1.500. Todo o valor será usado para a cirurgia de estrabismo do Miguel!</p>
         <div class="progress-container">
@@ -364,11 +378,11 @@
         <section id="numbers" class="number-grid"></section>
     </section>
 
-    <div id="error-message" class="error-message"></div>
-    <button id="reload-button" class="reload-button" onclick="loadData()">Tentar novamente</button>
-    <div id="loading-message" class="loading-message">Aguarde um momento, o número está sendo marcado...</div>
+    <div id="error-message" class="error-message content-blocked"></div>
+    <button id="reload-button" class="reload-button content-blocked" onclick="loadData()">Tentar novamente</button>
+    <div id="loading-message" class="loading-message content-blocked">Aguarde um momento, o número está sendo marcado...</div>
 
-    <footer id="contato">
+    <footer id="contato" class="content-blocked">
         <p>Contato:</p>
         <p>Evelyn Mãe do Miguel: <a href="https://wa.me/65984739520">+65 98473-9520</a></p>
         <p>Eder Pai do Miguel: <a href="https://wa.me/65999731992">+65 99973-1992</a></p>
